@@ -103,7 +103,7 @@ export default function GlobalUsersPage() {
     }, { replace: true });
   };
 
-  const [selectedUser, setSelectedUser] = useState<GlobalUser | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: allBus = [] } = useAllBus();
@@ -115,9 +115,18 @@ export default function GlobalUsersPage() {
     includeTerminated: showTerminated,
   });
 
+  const selectedUser = selectedProfileId
+    ? users.find((u) => u.profile_id === selectedProfileId) ?? null
+    : null;
+
   const handleOpenUser = (user: GlobalUser) => {
-    setSelectedUser(user);
+    setSelectedProfileId(user.profile_id);
     setSheetOpen(true);
+  };
+
+  const handleSheetOpenChange = (open: boolean) => {
+    setSheetOpen(open);
+    if (!open) setSelectedProfileId(null);
   };
 
   const hasActiveFilters = search || buFilter !== "all" || onboardingFilter !== "all" || userTypeFilter !== "all" || showTerminated;
@@ -347,7 +356,7 @@ export default function GlobalUsersPage() {
 
       <UserGlobalSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        onOpenChange={handleSheetOpenChange}
         user={selectedUser}
       />
     </div>

@@ -1,57 +1,74 @@
+## Pré-checklist (consultado)
+
+- `docs/canonical/core/INDEX.md` → tarefa de 1 módulo (BU Management) + cache de queries → carregar `modules/bu.md` e `mem://standards/bu-membership-cache-invalidation`.
+- `mem://index` Core → regras de BU Isolation, Query Optimization, Soft Deletes.
+- `mem://standards/bu-membership-cache-invalidation` → **regra canônica relevante**: toda mutação em `bu_user_memberships` DEVE invalidar `queryKeys.bu.userBusPrefix()`. Hoje `useAddBuAccess`/`useRemoveBuAccess` invalidam só `queryKeys.users.all()` — viola o padrão.
+- `docs/canonical/modules/bu.md` → confirma que memberships são geridas via RPCs `add_user_bu_access` / `remove_user_bu_access` (security definer, platform admin).
+
 ## Diagnóstico
 
-O card **Insights** que aparece em `/okrs` (BU Jet Experience) é o `SharedOkrInsights`, alimentado por `useSharedOkrsInsights` → `useSharedOkrsSummary` (`src/modules/okrs/hooks/queries/useTeamContributedQueries.ts`).
+Em `/hub/users`, ao editar vínculos de BU o toast aparece e o DB grava corretamente (confirmado em `bu_user_memberships`: `updated_at` recente para `tania@jetxp.com.br`). São **dois bugs combinados**, ambos puramente client-side:
 
-A query lê da view `public.v_shared_okrs_summary` sem filtrar por `bu_id`:
+### Bug 1 — Sheet exibe snapshot velho do usuário
 
-```ts
-let query = supabase
-  .from('v_shared_okrs_summary')
-  .select(AGGREGATE_FIELDS.sharedSummary);     // não inclui bu_id
-// nenhum .eq('bu_id', currentBuId)
+`GlobalUsersPage` guarda o usuário aberto em estado local:
+
+```tsx
+const [selectedUser, setSelectedUser] = useState<GlobalUser | null>(null);
+<UserGlobalSheet user={selectedUser} ... />
 ```
 
-A definição atual da view confirma o vazamento:
+`BuAccessManager` recebe `buAccesses={user.bu_accesses}` desse snapshot. As mutations invalidam `queryKeys.users.all()` e a lista refetcha — mas `selectedUser` continua referenciando o objeto antigo. Sheet nunca reflete o novo conjunto de BUs.
 
-- **Não tem `security_invoker=on`** → executa como owner (postgres) e **ignora RLS** de `okr_team_objectives`.
-- **Não expõe a coluna `bu_id`**, então o cliente também não consegue aplicar o filtro.
+### Bug 2 — `BuContext.userBus` fica stale (violação de padrão canônico)
 
-Resultado: na view "company" (sem `teamId`), a hook retorna **todos** os OKRs compartilhados visíveis da view, inclusive os da Jetimob, mesmo no contexto da Jet Experience. Como a Jet Experience não tem nenhum OKR de time, o card só mostra dados da outra BU — exatamente o sintoma reportado.
+`useAddBuAccess` e `useRemoveBuAccess` em `src/modules/users-global/hooks/useUserGlobalActions.ts` só invalidam `queryKeys.users.all()`. Faltam:
 
-Viola duas Core Rules: **BU Isolation** (filtro por `currentBuId`) e **Privilege Policy** (`security_invoker=on` para views de domínio).
+- `queryKeys.bu.userBusPrefix()` — exigido por `mem://standards/bu-membership-cache-invalidation`. Sem isso, se o admin editar suas próprias BUs (ou as de qualquer user logado), o `BuSelector` fica stale até 5 min ou F5, e `selectBu` pode rejeitar silenciosamente uma BU recém-adicionada.
 
 ## Correção
 
-### 1. Migração — recriar `v_shared_okrs_summary`
+### 1) `src/modules/users-global/hooks/useUserGlobalActions.ts`
 
-- Adicionar `o.bu_id` ao SELECT.
-- Recriar com `WITH (security_invoker = on)` para que a RLS de `okr_team_objectives` se aplique sob o usuário corrente.
-- Manter as mesmas colunas/joins existentes; sem mudança de schema consumido a não ser pelo novo `bu_id`.
-- `GRANT SELECT ... TO authenticated` (manter privilégios atuais).
-
-### 2. `AGGREGATE_FIELDS.sharedSummary` (`aggregateUtils.ts`)
-
-Incluir `bu_id` na projeção:
+Em `useAddBuAccess` e `useRemoveBuAccess`, adicionar invalidação canônica no `onSuccess`:
 
 ```ts
-sharedSummary: `
-  objective_id, bu_id, title, primary_team_id, primary_team_name,
-  contributor_count, is_shared, responsibility_model, status
-` as const,
+queryClient.invalidateQueries({ queryKey: queryKeys.users.all(), refetchType: 'active' });
+queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBusPrefix(), refetchType: 'active' });
 ```
 
-### 3. `useSharedOkrsSummary` (`useTeamContributedQueries.ts`)
+### 2) `src/modules/users-global/pages/GlobalUsersPage.tsx`
 
-- Aplicar filtro obrigatório `.eq('bu_id', currentBuId)` (já existe `currentBuId` via `useBu()`; manter o gate `enabled: !!currentBuId`).
-- A query key já contém `currentBuId`, então não muda.
+Trocar o estado `selectedUser: GlobalUser | null` por `selectedProfileId: string | null` e derivar o usuário vivo a partir da lista:
 
-### 4. Verificação
+```tsx
+const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+const liveSelectedUser = selectedProfileId
+  ? users.find(u => u.profile_id === selectedProfileId) ?? null
+  : null;
+...
+<UserGlobalSheet
+  open={sheetOpen}
+  onOpenChange={(open) => { setSheetOpen(open); if (!open) setSelectedProfileId(null); }}
+  user={liveSelectedUser}
+/>
+```
 
-- BU Jet Experience: card de Insights deve sumir (ou exibir contagem zero) já que ela não tem OKRs de time compartilhados.
-- BU Jetimob: card continua mostrando os mesmos dados de antes.
-- Mantém o comportamento ao alternar `teamId`/`year` (filtros adicionais continuam por cima do filtro de BU).
+No clique da linha: `setSelectedProfileId(user.profile_id); setSheetOpen(true);`.
+
+Assim, sempre que `useGlobalUsers` refetcha (disparado por #1), o sheet recebe o objeto atualizado automaticamente — sem fechar a sheet, sem F5.
 
 ## Fora de escopo
 
-- Não mexer em `v_team_contributed_okrs` nesta entrega (a query já é filtrada por `contributor_team_id` ligado à BU ativa; sem evidência de leak). Se necessário, abrir tarefa separada para auditar essa view com o mesmo critério `security_invoker=on`.
-- Sem alterações de UI no `SharedOkrInsights` ou no `OkrDashboardPage`.
+- RPCs `add_user_bu_access` / `remove_user_bu_access`, RLS, identidade.
+- `BuAccessManager` em si (já re-renderiza quando a prop muda).
+- `useUpdateGlobalRole` / `useReactivateUser` / `useResetOnboarding` (não tocam memberships).
+
+## Validação
+
+1. `/hub/users?q=@jetxp` → abrir Tania.
+2. Adicionar uma BU → entrada aparece no painel sem fechar a sheet.
+3. Remover uma BU → some imediatamente.
+4. Definir nova default → estrela move.
+5. Coluna "BUs com Acesso" na tabela reflete a mudança (já funcionava, mantém).
+6. Se editar a própria conta: o `BuSelector` (sidebar) passa a listar a nova BU sem precisar de F5 nem de esperar 5 min.
