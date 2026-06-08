@@ -43,6 +43,12 @@ vi.mock('@/hooks/usePermissions', () => ({
   usePermissions: () => mockPermissions(),
 }));
 
+const mockBu = vi.fn(() => ({ userRole: null as string | null }));
+
+vi.mock('@/contexts/BuContext', () => ({
+  useBu: () => mockBu(),
+}));
+
 // ─── Setup ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -58,6 +64,7 @@ beforeEach(() => {
     permissions: [],
     isImpersonating: false,
   });
+  mockBu.mockReturnValue({ userRole: null });
 });
 
 // ─── useCanEditKr ──────────────────────────────────────────────────────────────
@@ -205,13 +212,19 @@ describe('useCanManageOrgOkr', () => {
     expect(result.current.canManage).toBe(true);
   });
 
-  it('returns canManage=true when user has okrs.org_objective.update:bu permission', () => {
+  it('returns canManage=true when user has an org_objective BU admin permission', () => {
     mockPermissions.mockReturnValue({
-      has: ((key: string) => key === 'okrs.org_objective.update:bu') as (key: string) => boolean,
+      has: ((key: string) => key === 'okrs.org_objective.create:bu') as (key: string) => boolean,
       hasAny: () => false, hasAll: () => false,
       isWildcard: false, isLoading: false,
-      permissions: ['okrs.org_objective.update:bu'], isImpersonating: false,
+      permissions: ['okrs.org_objective.create:bu'], isImpersonating: false,
     });
+    const { result } = renderHook(() => useCanManageOrgOkr());
+    expect(result.current.canManage).toBe(true);
+  });
+
+  it('returns canManage=true when current BU membership role is admin', () => {
+    mockBu.mockReturnValue({ userRole: 'admin' });
     const { result } = renderHook(() => useCanManageOrgOkr());
     expect(result.current.canManage).toBe(true);
   });
