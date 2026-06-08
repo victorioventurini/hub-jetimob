@@ -41,6 +41,7 @@ interface KrData {
   owner_photo?: string | null;
   team_name?: string;
   objective_title?: string;
+  scope?: 'team' | 'org';
 }
 
 interface KrHistoryDialogProps {
