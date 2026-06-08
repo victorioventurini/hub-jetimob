@@ -38,19 +38,24 @@ export function useCanManageTeamOkr(teamId: string | undefined | null) {
 }
 
 /**
- * Hook para verificar se o usuário pode gerenciar OKRs organizacionais.
- * 
- * Regras baseadas em permission keys:
- * - Requer 'okrs.org_objective.update:bu' ou isWildcard
+ * Hook para verificar se o usuário pode gerenciar OKRs organizacionais
+ * em nível de BU (criar, cancelar, deletar).
+ *
+ * BU Admin é detectado pela presença de qualquer permissão BU-scoped do recurso
+ * `org_objective` (create/cancel/delete são exclusivas de admin de BU).
  */
 export function useCanManageOrgOkr() {
   const { has, isWildcard, isLoading } = usePermissions();
-  
+
   const canManage = useMemo(() => {
     if (isWildcard) return true;
-    return has('okrs.org_objective.update:bu');
+    return (
+      has('okrs.org_objective.create:bu') ||
+      has('okrs.org_objective.cancel:bu') ||
+      has('okrs.org_objective.delete:bu')
+    );
   }, [isWildcard, has]);
-  
+
   return {
     canManage,
     isLoading,
