@@ -42,6 +42,7 @@ const trendColors = {
 export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [checkinOpen, setCheckinOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const TrendIcon = trendIcons[orgKr.trend];
   const linkedCount = orgKr.linkedTeamKrs.length;
 
