@@ -536,7 +536,9 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                       state={formData.state}
                       onChange={(city, state) => {
                         setFormData({ ...formData, city, state });
-                        if (errors.city) setErrors({ ...errors, city: undefined });
+                        if (errors.city || errors.state) {
+                          setErrors({ ...errors, city: undefined, state: undefined });
+                        }
                       }}
                       placeholder="Digite sua cidade"
                     />
