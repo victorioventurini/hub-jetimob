@@ -73,6 +73,7 @@ export function useAddBuAccess() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBusPrefix(), refetchType: 'active' });
       toast.success("Acesso à BU adicionado");
     },
     onError: (error) => {
