@@ -172,6 +172,24 @@ export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
           kr={checkinKr}
         />
       )}
+
+      <KrHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        kr={{
+          id: orgKr.id,
+          title: orgKr.title,
+          baseline: orgKr.baseline,
+          current_value: orgKr.current_value,
+          target: orgKr.target,
+          unit: orgKr.unit,
+          direction: orgKr.direction,
+          status: orgKr.status,
+          type: 'contribution',
+          objective_title: orgKr.org_objective_title ?? undefined,
+          scope: 'org',
+        }}
+      />
     </Card>
   );
 }
