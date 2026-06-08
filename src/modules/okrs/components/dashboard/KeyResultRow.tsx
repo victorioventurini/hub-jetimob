@@ -254,7 +254,7 @@ export const KeyResultRow = React.memo(function KeyResultRow({
                     </Button>
                   )}
 
-                  {canDoCheckin && type === 'team' && (
+                  {canDoCheckin && (
                     <Button
                       variant="ghost"
                       size="icon"

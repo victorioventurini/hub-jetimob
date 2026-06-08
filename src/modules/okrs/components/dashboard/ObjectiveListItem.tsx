@@ -431,13 +431,14 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
         />
       )}
 
-      {/* Checkin Dialog (only for team KRs) */}
-      {checkinKr && type === 'team' && checkinKr.team_id && (
+      {/* Checkin Dialog — suporta KRs de time e organizacionais */}
+      {checkinKr && (type === 'org' || checkinKr.team_id) && (
         <CheckinDialog
           open={!!checkinKr}
           onOpenChange={(open) => !open && setCheckinKr(null)}
           kr={{
             id: checkinKr.id,
+            scope: type,
             title: checkinKr.title,
             baseline: checkinKr.baseline,
             current_value: checkinKr.current_value,
@@ -445,7 +446,11 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
             direction: checkinKr.direction,
             unit: checkinKr.unit,
             status: checkinKr.status,
-            team_id: checkinKr.team_id,
+            team_id: type === 'team' ? checkinKr.team_id : undefined,
+            owner_user_id: checkinKr.owner_user_id ?? null,
+            owner: checkinKr.owner ?? undefined,
+            org_objective: type === 'org' ? { title: objective.title } : undefined,
+            team_objective: type === 'team' ? { title: objective.title } : undefined,
           }}
         />
       )}
