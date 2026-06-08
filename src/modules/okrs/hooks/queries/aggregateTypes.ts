@@ -37,6 +37,10 @@ export interface OrgKrWithTeamKrs {
   status: OkrRagStatus;
   progress: number;
   trend: 'up' | 'stable' | 'down';
+  /** Owner profile id — usado para gating de update na UI. */
+  owner_user_id?: string | null;
+  /** Título do objetivo organizacional pai (preenchido quando carregado em contexto). */
+  org_objective_title?: string | null;
   linkedTeamKrs: TeamKrLinked[];
 }
 
