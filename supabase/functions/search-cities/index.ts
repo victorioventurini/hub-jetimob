@@ -200,15 +200,10 @@ serve(async (req) => {
       });
     }
 
-    // 2. Buscar no cache local de cidades populares
+    // 2. Buscar no cache local de cidades populares (sempre prepended ao resultado)
     const localResults = searchLocalCache(query);
-    if (localResults.length >= 3) {
-      console.log('Local cache hit for:', query, '- Found:', localResults.length);
-      searchCache.set(cacheKey, { predictions: localResults, timestamp: Date.now() });
-      return new Response(JSON.stringify({ predictions: localResults, cached: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+
+
 
     // 3. Get Google Maps API key from database
     const apiKey = await getIntegrationApiKey('google-maps');
@@ -243,7 +238,7 @@ serve(async (req) => {
       description: string;
       place_id: string;
     }
-    const predictions = (data.predictions || []).map((prediction: GoogleCityPrediction) => {
+    const googlePredictions: CityPrediction[] = (data.predictions || []).map((prediction: GoogleCityPrediction) => {
       const parts = prediction.description.split(', ');
       const city = parts[0];
       let state = '';
@@ -268,13 +263,26 @@ serve(async (req) => {
       };
     });
 
-    // Salvar no cache
-    searchCache.set(cacheKey, { predictions, timestamp: Date.now() });
-    console.log('Cached results for:', query);
+    // Mesclar resultados locais (prepended) + Google, deduplicando por city+state
+    const dedupeKey = (c: string, s: string) => `${normalizeQuery(c)}|${(s || '').toUpperCase()}`;
+    const seen = new Set<string>();
+    const merged: CityPrediction[] = [];
+    for (const item of [...localResults, ...googlePredictions]) {
+      const key = dedupeKey(item.city, item.state);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(item);
+      if (merged.length >= 8) break;
+    }
 
-    return new Response(JSON.stringify({ predictions }), {
+    // Salvar no cache
+    searchCache.set(cacheKey, { predictions: merged, timestamp: Date.now() });
+    console.log('Cached merged results for:', query, '- Total:', merged.length);
+
+    return new Response(JSON.stringify({ predictions: merged }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
     console.error('Error in search-cities:', error);
     return internalErrorResponse(error instanceof Error ? error.message : 'Unknown error');
