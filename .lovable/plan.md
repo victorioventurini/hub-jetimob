@@ -1,38 +1,21 @@
-# Localização: garantir "Brasília, DF" (e demais capitais) nos resultados
 
-## Contexto
+## Objetivo
 
-O campo "Localização" usa `CityAutocomplete` → edge function `search-cities`, que combina:
-1. Cache local de ~50 capitais/cidades populares (inclui `Brasília / DF`)
-2. Google Places Autocomplete (`types=(cities)`, `country:br`)
+Enviar uma notificação de teste para `luana@ferrigoloadvogados.com.br` (profile `06efb1a2-6470-4fee-a05d-01179caf50e5`, BU Jetimob) usando a infraestrutura existente, sem mudança de código.
 
-Hoje a função só retorna o cache local quando ele tem **3 ou mais matches** (`if (localResults.length >= 3)`). Para `"brasilia"` só existe 1 match local (`Brasília, DF`), então cai no fallback do Google, que devolve apenas distritos/regiões (`Brasília – Plano Piloto`, `Brasília de Minas, MG`, `Brasília Legal`, …) — e `Brasília, DF` some da lista. O mesmo acontece com outras capitais que tenham bairros/distritos famosos.
+## Passos
 
-## Workaround imediato (sem código)
+1. Chamar a RPC `public.send_test_notification_v2` com:
+   - `p_bu_id` = `a0000000-0000-0000-0000-000000000001` (Jetimob)
+   - `p_target_profile_id` = `06efb1a2-6470-4fee-a05d-01179caf50e5`
+   - `p_channels` = `['email','in_app']`
+2. Invocar `process-notification-outbox` para forçar o envio imediato (não esperar o cron de 30s).
+3. Verificar no `notification_outbox` se a linha gerada saiu com `status=sent` e `provider=sendgrid`.
+4. Reportar:
+   - ID do outbox criado
+   - Status final (sent / failed) e erro, se houver
+   - Próximos passos: pedir à Luana checar Caixa de Entrada + Spam/Lixeira, e (se nada chegar) verificar Activity Feed + Suppressions no SendGrid.
 
-Digitar `plano piloto` e selecionar `Brasília – Plano Piloto` (resolve para DF). Ou usar a primeira opção mesmo — apesar do rótulo, o `place_id` é Brasília/DF.
+## Sem alteração de código
 
-## Correção definitiva (1 arquivo)
-
-`supabase/functions/search-cities/index.ts`: mudar estratégia de "ou/ou" para "sempre mesclar":
-
-1. Remover o early-return quando `localResults.length >= 3`.
-2. Sempre executar a busca no Google (quando houver chave).
-3. Mesclar `localResults` (prepended) + `googleResults`, deduplicando por `city+state` normalizado, limitando a 8.
-4. Se Google falhar/indisponível, manter fallback atual (retornar `localResults`).
-
-Resultado: `brasilia` → `Brasília, DF` no topo, seguido das opções do Google. Idem para `são paulo`, `rio`, etc.
-
-## Detalhes técnicos
-
-- Dedupe key: `normalizeQuery(city) + "|" + state.toUpperCase()`.
-- Cache em memória (`searchCache`) guarda o array já mesclado, TTL 1h.
-- CORS, validação Zod, `verify_jwt=false`, logs estruturados — preservados (conforme Edge Function Standard).
-- Sem mudanças em frontend, schema, RLS, query keys ou tipos.
-
-## Validação
-
-1. Onde o `CityAutocomplete` é usado → digitar `brasilia` → primeira opção `Brasília, DF`.
-2. `são paulo` → `São Paulo, SP` no topo.
-3. Cidade fora do cache (ex.: `pirassununga`) → continua via Google.
-4. Sem chave Google ativa → fallback só cache local preservado.
+Tudo executa via RPC e Edge Function já existentes (`send_test_notification_v2`, `process-notification-outbox`). Nenhum arquivo será modificado.
