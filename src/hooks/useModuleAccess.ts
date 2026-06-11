@@ -64,6 +64,14 @@ const MODULE_VIEW_PERMISSIONS: Record<string, string[]> = {
  */
 const ALWAYS_ACCESSIBLE_MODULES = ["profile"];
 
+/**
+ * Módulos acessíveis a usuários externos (partner contacts) na BU atual.
+ * Esses usuários não têm template V2 atribuído, mas precisam acessar tickets
+ * em que estão envolvidos (criador, responsável, fallback de empresa, etc).
+ * RLS + can_view_ticket continuam restringindo o conteúdo no detalhe.
+ */
+const EXTERNAL_ACCESSIBLE_MODULES = ["tickets"];
+
 export interface ModuleAccessResult {
   /** Se o usuário pode ver e acessar o módulo */
   canAccess: boolean;
@@ -112,6 +120,12 @@ export function useModuleAccess(moduleSlug?: string): ModuleAccessResult {
       // Módulos sempre acessíveis
       if (ALWAYS_ACCESSIBLE_MODULES.includes(slug)) return true;
       
+      // Usuários externos (partner contacts) acessam módulos específicos sem
+      // permission template V2 — RLS continua restringindo dados.
+      if (userRole === "external" && EXTERNAL_ACCESSIBLE_MODULES.includes(slug)) {
+        return true;
+      }
+      
       // Verificar se tem alguma permission do módulo
       const modulePermissions = MODULE_VIEW_PERMISSIONS[slug];
       if (!modulePermissions || modulePermissions.length === 0) {
@@ -122,7 +136,7 @@ export function useModuleAccess(moduleSlug?: string): ModuleAccessResult {
       
       return hasAny(modulePermissions);
     };
-  }, [hasFullAccess, hasAny]);
+  }, [hasFullAccess, hasAny, userRole]);
 
   /**
    * Lista de todos os módulos que o usuário pode acessar
