@@ -64,6 +64,14 @@ const MODULE_VIEW_PERMISSIONS: Record<string, string[]> = {
  */
 const ALWAYS_ACCESSIBLE_MODULES = ["profile"];
 
+/**
+ * Módulos acessíveis a usuários externos (partner contacts) na BU atual.
+ * Esses usuários não têm template V2 atribuído, mas precisam acessar tickets
+ * em que estão envolvidos (criador, responsável, fallback de empresa, etc).
+ * RLS + can_view_ticket continuam restringindo o conteúdo no detalhe.
+ */
+const EXTERNAL_ACCESSIBLE_MODULES = ["tickets"];
+
 export interface ModuleAccessResult {
   /** Se o usuário pode ver e acessar o módulo */
   canAccess: boolean;
