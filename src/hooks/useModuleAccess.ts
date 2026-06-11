@@ -120,6 +120,12 @@ export function useModuleAccess(moduleSlug?: string): ModuleAccessResult {
       // Módulos sempre acessíveis
       if (ALWAYS_ACCESSIBLE_MODULES.includes(slug)) return true;
       
+      // Usuários externos (partner contacts) acessam módulos específicos sem
+      // permission template V2 — RLS continua restringindo dados.
+      if (userRole === "external" && EXTERNAL_ACCESSIBLE_MODULES.includes(slug)) {
+        return true;
+      }
+      
       // Verificar se tem alguma permission do módulo
       const modulePermissions = MODULE_VIEW_PERMISSIONS[slug];
       if (!modulePermissions || modulePermissions.length === 0) {
@@ -130,7 +136,7 @@ export function useModuleAccess(moduleSlug?: string): ModuleAccessResult {
       
       return hasAny(modulePermissions);
     };
-  }, [hasFullAccess, hasAny]);
+  }, [hasFullAccess, hasAny, userRole]);
 
   /**
    * Lista de todos os módulos que o usuário pode acessar
