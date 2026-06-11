@@ -39,3 +39,5 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [KPI Value Entry SSOT](mem://features/kpis/kpi-value-entry-ssot) — `KpiValueEntryForm` é o único formulário de "Registrar valor de KPI"; consumido por modal /kpis e por todos os ritos; sempre enviar `input_type` no insert
 - [KPI Status Consolidation](mem://standards/kpi-status-consolidation) — `lifecycle_status` é SSOT; `status` é @deprecated, sincronizado por trigger; filtros novos usam APENAS `lifecycle_status`
 - [All Hands](mem://features/rituals/all-hands-standard) — Rito mensal (1ª sexta) reaproveita steps MBR read-only; cadência via sync-ritual-calendar
+
+- [External User Tickets Access](mem://features/tickets/external-user-module-access) — userRole='external' ganha acesso ao módulo Tickets sem template V2 (RLS can_view_ticket é a defesa)
