@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Brain } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -100,9 +100,16 @@ export default function AnalysisHomePage() {
           description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
           breadcrumbs={[{ label: "Análise Estratégica" }]}
           actions={
-            <Button variant="outline" asChild>
-              <Link to="/analysis/templates">Templates</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild>
+                <Link to="/analysis/chat">
+                  <Brain className="mr-2 h-4 w-4" />Copiloto CEO
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/analysis/templates">Templates</Link>
+              </Button>
+            </div>
           }
         />
 
