@@ -69,7 +69,7 @@ export default function AnalysisChatPage() {
   // Auto-create thread on /analysis/chat
   useEffect(() => {
     if (!threadId && !createThread.isPending) {
-      createThread.mutateAsync().then((id) => navigate(`/analysis/chat/${id}`, { replace: true }));
+      createThread.mutateAsync(undefined).then((id) => navigate(`/analysis/chat/${id}`, { replace: true }));
     }
   }, [threadId, createThread, navigate]);
 
@@ -115,7 +115,7 @@ export default function AnalysisChatPage() {
               <Button
                 size="sm"
                 onClick={async () => {
-                  const id = await createThread.mutateAsync();
+                  const id = await createThread.mutateAsync(undefined);
                   navigate(`/analysis/chat/${id}`);
                 }}
                 disabled={createThread.isPending}
