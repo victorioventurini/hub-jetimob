@@ -52,6 +52,22 @@ export const analysisRoutes = (
       }
     />
     <Route
+      path="/analysis/chat"
+      element={
+        <AnalysisRoute>
+          <AnalysisChatPage />
+        </AnalysisRoute>
+      }
+    />
+    <Route
+      path="/analysis/chat/:threadId"
+      element={
+        <AnalysisRoute>
+          <AnalysisChatPage />
+        </AnalysisRoute>
+      }
+    />
+    <Route
       path="/analysis/:reportId"
       element={
         <AnalysisRoute>
