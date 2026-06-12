@@ -87,7 +87,7 @@ export function useCreateAnalysisThread() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (title?: string): Promise<string> => {
+    mutationFn: async (title?: string | undefined): Promise<string> => {
       if (!currentBu?.id) throw new Error("BU_REQUIRED");
       if (!realProfileId) throw new Error("PROFILE_REQUIRED");
       const { data, error } = await supabase
