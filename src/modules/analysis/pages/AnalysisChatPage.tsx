@@ -104,7 +104,7 @@ export default function AnalysisChatPage() {
           title="Copiloto CEO"
           description="Converse com seus dados — OKRs, KPIs, projetos e rituais — em linguagem natural."
           breadcrumbs={[
-            { label: "Análise Estratégica", to: "/analysis" },
+            { label: "Análise Estratégica", href: "/analysis" },
             { label: "Copiloto" },
           ]}
           actions={
