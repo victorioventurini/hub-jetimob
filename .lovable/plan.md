@@ -1,40 +1,119 @@
 ## Objetivo
-Gerar exportações CSV da BU **Jetimob** com OKRs ativos e KPIs com seus valores de 2026.
 
-## Entregáveis (em `/mnt/documents/`)
-1. `jetimob-okrs-org-2026.csv` — Objetivos organizacionais + seus KRs Org (ano 2026)
-2. `jetimob-okrs-team-q1-2026.csv` — Objetivos de time + KRs do ciclo Q1/2026
-3. `jetimob-okrs-team-q2-2026.csv` — Objetivos de time + KRs do ciclo Q2/2026
-4. `jetimob-kpis-metadata-2026.csv` — Metadados dos KPIs ativos
-5. `jetimob-kpis-values-2026.csv` — Todos os valores de KPI com `period_start` em 2026
+Transformar `/analysis` de **gerador de relatório único** em **copiloto CEO conversacional**, isolado por BU, com qualidade analítica equivalente ao que você obtém colando CSV no Claude.
 
-## Escopo / Filtros
-- BU: `Jetimob` (resolver `bu_id` por nome)
-- **Somente ativos:** `deleted_at IS NULL` + `cancelled_at IS NULL` (objetivos e KRs)
-- KPIs: `lifecycle_status = 'active'` (SSOT — ver memória `kpi-status-consolidation`)
-- Q1/Q2: identificar ciclos da BU Jetimob com `year=2026` e nome/datas correspondentes a Q1 e Q2 (filtrar por `cycles.id` nos objetivos de time)
+## Por que hoje fica aquém do Claude com CSV
 
-## Colunas previstas
+O `/analysis` atual:
+1. Você manda 1 premissa → recebe 1 análise → fim. Sem follow-up.
+2. Os "data collectors" mandam **recortes/resumos** dos módulos, não as linhas cruas.
+3. Modelo configurado por agente — não necessariamente o top da casa.
 
-### OKRs Org (`okr_org_objectives` + `okr_org_key_results`)
-objective_id, objective_title, year, status, kr_id, kr_title, kr_type, baseline, current_value, target, direction, unit, rag_status, owner_name, progress_%, last_checkin_at
+Quando você cola CSV no Claude, ele tem **a tabela inteira** + **conversa iterativa**. Vamos replicar isso.
 
-### OKRs Team Q1 / Q2 (`okr_team_objectives` + `okr_team_key_results` + `teams` + `cycles`)
-cycle_name, team_name, area_name, objective_id, objective_title, status, kr_id, kr_title, kr_type, baseline, current_value, target, direction, unit, rag_status, owner_name, progress_%, last_checkin_at
+## O que muda para o usuário
 
-### KPIs metadata (`kpi_metrics`)
-kpi_id, name, description, unit, direction, frequency_value, consolidation_frequency, update_frequency, update_mode, input_type, lifecycle_status, effective_area, effective_team, responsible_profile_name
+`/analysis` ganha 3 modos (a "premissa" atual continua sendo um atalho):
 
-### KPIs values 2026 (`kpi_values`)
-kpi_id, kpi_name, period_start, period_end, value, input_type, confidence, source, created_at
+1. **Conversa aberta** — chat com threads, hist�órico persistido, "continue", "aprofunda", "e se".
+2. **Premissa rápida** (atual) — gera relatório como hoje, mas com modelo melhor e mais dados.
+3. **Anexos** — você pode colar CSV/texto na conversa (ex: dado externo que não está no Hub).
 
-## Etapas técnicas (read-only, via psql)
-1. Resolver `bu_id` da Jetimob e ids dos ciclos Q1/Q2 2026.
-2. Rodar 5 queries `COPY ... TO STDOUT WITH CSV HEADER` direcionando para `/mnt/documents/`.
-3. Calcular `progress_%` no SQL usando a fórmula canônica (sem clamp): se `direction='up'` → `(current-baseline)/(target-baseline)*100`, caso contrário invertido; tratar `baseline=target` retornando 0/100.
-4. Validar contagens (linhas por arquivo) e emitir 5 tags `<presentation-artifact>`.
+Cada thread é **escopada à BU ativa** (RLS). Trocou de BU → outra lista de threads.
 
-## Notas
-- Não há alterações de schema, código ou dados. Apenas SELECTs e export.
-- Owner/responsável resolvidos via join em `profiles.full_name`.
-- Caso a Jetimob não tenha ciclo Q1 ou Q2/2026 configurado, o CSV correspondente será gerado vazio (apenas cabeçalho) e isso será reportado.
+## Arquitetura técnica
+
+### 1. Modelo
+- Default: **`google/gemini-2.5-pro`** (1M tokens de contexto, raciocínio profundo, melhor da casa para análise tabular).
+- Escalada automática para **`openai/gpt-5.4-pro`** quando o agente detectar premissa de "decisão estratégica" (heurística simples).
+- Flash só para roteamento/sugestão de módulos (passo barato).
+
+### 2. Tools (AI SDK `tool` calls)
+O agente decide quais puxar, sem orquestração rígida. Cada tool é uma RPC server-side já filtrada por `bu_id` via JWT:
+
+| Tool | O que retorna |
+|------|---|
+| `query_okrs` | Org + Times + KRs + progresso canônico (por ciclo, status, área) |
+| `query_kpis` | Metadados + séries de valores (período arbitrário, com variação/tendência calculada) |
+| `query_projects` | Projetos, milestones, riscos, vínculos com KRs |
+| `query_rituals` | Check-ins, decisões, atas MBR/QBR (com sinais qualitativos) |
+| `query_people` | Times, áreas, responsáveis (sem dados pessoais sensíveis) |
+| `cross_search` | Busca textual em descrições/comentários/decisões |
+
+Diferente do `data-collectors.ts` atual (que devolve resumos), as tools devolvem **linhas estruturadas** que o modelo lê e cruza sozinho.
+
+### 3. Persistência de conversa
+Nova tabela `analysis_threads` + `analysis_messages` (BU-scoped, RLS por `auth.uid()` = owner). Mensagens em formato `UIMessage[]` da AI SDK (suporta tool calls + texto).
+
+Rota: `/analysis/:threadId`. Reload restaura a thread. Threads antigas listadas em sidebar.
+
+### 4. Streaming
+Edge function `analysis-chat` com `streamText` + `toUIMessageStreamResponse`. UI usa `useChat` (AI SDK React). Latência: primeiro token em ~2-4s; análise completa 15-40s para queries cross-módulo.
+
+### 5. Manter o que já existe
+- `analysis-generate` (premissa única, salva como `analysis_reports`) → preservado, vira "Gerar relatório" dentro do chat.
+- Templates de premissa em `AnalysisTemplatesPage` → preservados, viram "prompts iniciais" do chat.
+- `AnalysisResultPage` → preservado para visualizar relatórios salvos.
+
+## Escopo desta entrega
+
+**Inclui:**
+- Nova edge function `analysis-chat` (streaming + tools).
+- 5-6 tools de leitura (OKRs, KPIs, Projects, Rituals, People, Search) com cálculo canônico de progresso.
+- Tabelas `analysis_threads` + `analysis_messages` (RLS + grants).
+- UI: chat conversacional em `/analysis` com lista de threads, composer, render de `message.parts` (texto + tool calls visíveis).
+- Roteador de modelo (flash para sugestão, pro para análise).
+- Markdown + tabelas + gráficos inline (Recharts) renderizados a partir do output do modelo.
+
+**Não inclui (fica para depois):**
+- Ações de escrita (criar decisões, editar KRs) — escolhido "só leitura".
+- Cross-BU agregado — escolhido "1 por BU".
+- Anexos binários (PDF/imagem) — só texto/CSV colado por enquanto.
+
+## Detalhes técnicos
+
+```text
+Frontend (React, /analysis)
+  ├─ useChat (AI SDK) — id = threadId
+  ├─ ThreadList sidebar
+  └─ POST → /functions/v1/analysis-chat
+        │
+        ▼
+analysis-chat (edge function)
+  ├─ Auth + BU validation (middleware existente)
+  ├─ streamText({ model: gemini-2.5-pro, tools, stopWhen: stepCountIs(50) })
+  ├─ Tools executam queries server-side com bu_id do contexto
+  ├─ onFinish → persiste assistant message em analysis_messages
+  └─ toUIMessageStreamResponse()
+```
+
+Padrões obrigatórios respeitados:
+- BU isolation via `currentBuId` síncrono (front) + filtro nas tools (back).
+- `tryParseAiJson` para outputs estruturados; `toText` na UI.
+- Tools fazem `.select("colunas explícitas")` — nunca `*`.
+- Progresso de KR sempre via `calculateKrProgress` (`_shared/okr-progress.ts`).
+- Soft delete (`deleted_at IS NULL`, `cancelled_at IS NULL`).
+- `stepCountIs(50)` para o loop de tools.
+- `LOVABLE_API_KEY` server-side; tabelas com GRANT + RLS no mesmo migration.
+- Edge function segue `edge-function-standard-v4` (factory + middleware + structured logs).
+
+## Custo e expectativas
+
+- Conversa típica (3-5 turnos com 2-3 tools cada): R$ 0,30-0,80 em créditos Lovable AI.
+- Análise profunda single-shot (premissa atual): R$ 0,15-0,40.
+- Latência: primeiro token 2-4s; resposta cross-módulo completa 15-40s.
+- Qualidade analítica: equivalente ao Claude Sonnet 4.5 com CSV colado (mesmo gap que você sentia agora desaparece, porque o modelo passa a ter as linhas cruas via tools).
+
+## Riscos
+
+- **Tool calls profundos podem estourar contexto** em BUs com muitos KRs/KPIs. Mitigação: cada tool tem `limit` default + filtros obrigatórios (ciclo/período).
+- **Threads acumulam custo** se conversa ficar muito longa. Mitigação: sumarizar threads >20 mensagens em background.
+- **Modelo top é mais lento.** Mitigação: streaming + skeleton states, e roteamento para flash em perguntas triviais.
+
+## Entregáveis sequenciais
+
+1. Migration: `analysis_threads`, `analysis_messages` + RLS + GRANT.
+2. Tools compartilhadas em `supabase/functions/_shared/analysis-tools/`.
+3. Edge function `analysis-chat` (streaming).
+4. UI nova de chat em `/analysis` (preserva templates + relatórios salvos como tabs).
+5. Atualizar `analysis-generate` para usar `gemini-2.5-pro` (alinha qualidade do modo "premissa rápida").

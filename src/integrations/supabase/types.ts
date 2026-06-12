@@ -625,6 +625,60 @@ export type Database = {
           },
         ]
       }
+      analysis_messages: {
+        Row: {
+          ai_message_id: string | null
+          bu_id: string
+          created_at: string
+          id: string
+          model: string | null
+          parts: Json
+          role: string
+          thread_id: string
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Insert: {
+          ai_message_id?: string | null
+          bu_id: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          parts?: Json
+          role: string
+          thread_id: string
+          tokens_input?: number | null
+          tokens_output?: number | null
+        }
+        Update: {
+          ai_message_id?: string | null
+          bu_id?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          parts?: Json
+          role?: string
+          thread_id?: string
+          tokens_input?: number | null
+          tokens_output?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_messages_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analysis_reports: {
         Row: {
           additional_context: string | null
@@ -881,6 +935,74 @@ export type Database = {
           {
             foreignKeyName: "analysis_templates_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_threads: {
+        Row: {
+          archived_at: string | null
+          bu_id: string
+          created_at: string
+          id: string
+          last_message_at: string
+          message_count: number
+          model: string
+          owner_profile_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          bu_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          message_count?: number
+          model?: string
+          owner_profile_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          bu_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          message_count?: number
+          model?: string
+          owner_profile_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_threads_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_threads_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_threads_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_threads_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
