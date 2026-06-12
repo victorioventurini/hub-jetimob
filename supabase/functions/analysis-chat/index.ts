@@ -17,6 +17,7 @@ import { successResponse, errorResponse } from "../_shared/response.ts";
 import {
   llmCompleteWithFallback,
   type LLMMessage,
+  type LLMTool,
   type ToolCall,
 } from "../_shared/llm-client.ts";
 import { TOOL_SCHEMAS, runTool, type ToolContext } from "./tools.ts";
