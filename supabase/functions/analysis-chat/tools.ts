@@ -370,14 +370,13 @@ async function queryCheckins(args: Json, ctx: ToolContext): Promise<Json> {
 // ---- query_decisions -------------------------------------------------------
 async function queryDecisions(args: Json, ctx: ToolContext): Promise<Json> {
   const { svc, buId } = ctx;
-  const statusFilter = args.status_filter as string[] | undefined;
   const limit = Math.min(Number(args.limit ?? 50), 150);
 
-  let q = svc.from("analysis_decisions")
-    .select("id, title, status, rationale, created_at, created_by")
+  const { data } = await svc.from("analysis_decisions")
+    .select("id, report_id, decisions, created_at, created_by")
     .eq("bu_id", buId)
-    .order("created_at", { ascending: false });
-  if (statusFilter?.length) q = q.in("status", statusFilter);
-  const { data } = await q.limit(limit);
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
   return { decisions: data ?? [] };
 }
