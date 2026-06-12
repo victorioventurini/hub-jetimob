@@ -97,8 +97,9 @@ serve(async (req) => {
       const resp = await llmCompleteWithFallback(serviceClient, preferredModel, llmMessages, {
         maxTokens: 3200,
         temperature: 0.4,
-        tools: [...TOOL_SCHEMAS] as unknown as Parameters<typeof llmCompleteWithFallback>[3] extends infer P
-          ? P extends { tools?: infer T } ? T : never : never,
+        tools: TOOL_SCHEMAS as unknown as Parameters<typeof llmCompleteWithFallback>[3] & {
+          tools: unknown;
+        }["tools"],
         toolChoice: "auto",
         timeoutMs: 90_000,
       });
