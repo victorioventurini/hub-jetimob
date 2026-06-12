@@ -105,7 +105,6 @@ export const TOOL_SCHEMAS = [
       parameters: {
         type: "object",
         properties: {
-          status_filter: { type: "array", items: { type: "string" } },
           limit: { type: "number", description: "Default 50." },
         },
       },
