@@ -66,13 +66,6 @@ export default function AnalysisChatPage() {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-create thread on /analysis/chat
-  useEffect(() => {
-    if (!threadId && !createThread.isPending) {
-      createThread.mutateAsync(undefined).then((id) => navigate(`/analysis/chat/${id}`, { replace: true }));
-    }
-  }, [threadId, createThread, navigate]);
-
   // Auto-scroll on new messages / streaming
   useEffect(() => {
     const el = scrollRef.current;
@@ -80,19 +73,32 @@ export default function AnalysisChatPage() {
   }, [messages.length, send.isPending]);
 
   const canSubmit = useMemo(
-    () => input.trim().length > 1 && !!threadId && !send.isPending,
-    [input, threadId, send.isPending],
+    () => input.trim().length >= 1 && !send.isPending && !createThread.isPending,
+    [input, send.isPending, createThread.isPending],
   );
 
   const onSubmit = async () => {
-    if (!canSubmit || !threadId) return;
+    if (!canSubmit) return;
     const text = input.trim();
+    if (!text) return;
     setInput("");
-    await send.mutateAsync({
-      threadId,
-      history: messages,
-      userText: text,
-    });
+    try {
+      // Lazily create a thread if we don't have one yet
+      let tid = threadId;
+      if (!tid) {
+        tid = await createThread.mutateAsync(text.slice(0, 80));
+        navigate(`/analysis/chat/${tid}`, { replace: true });
+      }
+      await send.mutateAsync({
+        threadId: tid,
+        history: messages,
+        userText: text,
+      });
+    } catch (err) {
+      // Restore input so user can retry
+      setInput(text);
+      console.error("[AnalysisChat] submit failed", err);
+    }
   };
 
   const onSuggest = (text: string) => setInput(text);
