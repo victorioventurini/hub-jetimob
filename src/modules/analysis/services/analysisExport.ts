@@ -407,6 +407,7 @@ async function fetchOkrs(
         progresso_pct: pct(progresses[i] ?? 0),
         status: k.status ?? null,
         responsavel: k.owner?.display_name ?? null,
+        kpi_vinculado: null,
         ultimo_checkin: null,
       });
       allKrIds.push(k.id);
