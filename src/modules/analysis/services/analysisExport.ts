@@ -816,7 +816,7 @@ export async function collectAnalysisExport(params: {
   const [{ definitions, inputs }, okrs, projects] = await Promise.all([
     fetchKpis(params.supabase, params.bu.id, params.period),
     fetchOkrs(params.supabase, params.bu.id, params.period),
-    fetchProjects(params.supabase, params.bu.id),
+    fetchProjects(params.supabase, params.bu.id, params.period),
   ]);
 
   // enrichment: resolver nome do KPI vinculado em cada KR (o service armazena o metric_id em kpi_vinculado)
@@ -833,7 +833,11 @@ export async function collectAnalysisExport(params: {
     generatedBy: params.generatedBy,
     kpis: { definitions, inputs },
     okrs: { ...okrs, keyResults: enrichedKrs },
-    projects: { projects: projects.projects, milestones: projects.milestones },
+    projects: {
+      projects: projects.projects,
+      milestones: projects.milestones,
+      evolution: projects.evolution,
+    },
     readme: buildReadme(params.bu.name, params.period),
     metodologia: buildMetodologia(),
   };
