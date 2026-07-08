@@ -34,6 +34,7 @@ export interface ExportPayload {
   projects: {
     projects: ProjectRow[];
     milestones: MilestoneRow[];
+    evolution: ProjectEvolutionRow[];
   };
   overview: OverviewRow[];
   readme: string[];
