@@ -53,7 +53,7 @@ export function useAnalysisExport() {
         supabase,
         bu: { id: currentBu.id, name: currentBu.name },
         period,
-        generatedBy: profile?.display_name ?? profile?.email ?? "—",
+        generatedBy: profile?.display_name ?? "—",
       });
       const blob = await buildAnalysisWorkbook(payload);
       const filename = `${slugify(currentBu.name)}-performance-${year}-YTD-${format(now, "yyyyMMdd")}.xlsx`;
