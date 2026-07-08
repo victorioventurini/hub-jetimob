@@ -464,14 +464,18 @@ async function fetchOkrs(
 async function fetchProjects(
   supabase: SupabaseClient,
   buId: string,
-): Promise<{ projects: ProjectRow[]; milestones: MilestoneRow[] }> {
+): Promise<{ projects: ProjectRow[]; milestones: MilestoneRow[]; projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }> }> {
   const { data, error } = await supabase
     .from("projects")
     .select(
       `id, name, description, status, start_date, due_date, owner_id, created_at,
        owner:profiles!projects_owner_id_fkey(id, display_name),
        project_teams(teams:teams!project_teams_team_id_fkey(id, name)),
-       project_krs(key_result_id, org_key_result_id),
+       project_krs(
+         key_result_id, org_key_result_id,
+         team_kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title),
+         org_kr:okr_org_key_results!project_krs_org_key_result_id_fkey(id, title)
+       ),
        project_milestones(id, name, status, start_date, due_date, owner_id, notes, created_at, deleted_at)`,
     )
     .eq("bu_id", buId)
@@ -481,6 +485,23 @@ async function fetchProjects(
 
   const projects: ProjectRow[] = [];
   const milestones: MilestoneRow[] = [];
+  const projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }> = [];
+
+  // resolver donos dos milestones
+  const ownerIds = new Set<string>();
+  for (const p of (data ?? []) as any[]) {
+    for (const m of (p.project_milestones ?? []) as any[]) {
+      if (m.owner_id) ownerIds.add(m.owner_id);
+    }
+  }
+  let ownerMap = new Map<string, { display_name: string | null }>();
+  if (ownerIds.size) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", Array.from(ownerIds));
+    ownerMap = new Map((profs ?? []).map((p: any) => [p.id, { display_name: p.display_name }]));
+  }
 
   for (const p of (data ?? []) as any[]) {
     const ms = ((p.project_milestones ?? []) as any[]).filter((m) => !m.deleted_at);
@@ -503,6 +524,14 @@ async function fetchProjects(
       .map((pt) => pt.teams?.name)
       .filter(Boolean)
       .join(", ");
+    const krLinks = (p.project_krs ?? []) as any[];
+    const krTitles = krLinks
+      .map((pk) => pk.team_kr?.title ?? pk.org_kr?.title)
+      .filter(Boolean) as string[];
+    for (const pk of krLinks) {
+      if (pk.key_result_id) projectKrLinks.push({ project_id: p.id, kr_id: pk.key_result_id, kind: "team" });
+      if (pk.org_key_result_id) projectKrLinks.push({ project_id: p.id, kr_id: pk.org_key_result_id, kind: "org" });
+    }
     projects.push({
       id: p.id,
       nome: p.name,
@@ -514,7 +543,8 @@ async function fetchProjects(
       times: teams || null,
       inicio: p.start_date ?? null,
       entrega: p.due_date ?? null,
-      krs_vinculados: ((p.project_krs ?? []) as any[]).length,
+      krs_vinculados: krLinks.length,
+      krs_titulos: krTitles.length ? krTitles.join(" • ") : null,
       criado_em: p.created_at ?? null,
     });
     for (const m of ms) {
@@ -526,14 +556,14 @@ async function fetchProjects(
         status: m.status ?? null,
         inicio: m.start_date ?? null,
         entrega: m.due_date ?? null,
-        owner_id: m.owner_id ?? null,
+        owner: nameFrom(ownerMap, m.owner_id),
         notas: m.notes ?? null,
         criado_em: m.created_at ?? null,
       });
     }
   }
 
-  return { projects, milestones };
+  return { projects, milestones, projectKrLinks };
 }
 
 // ────────────────────────────────────────────────────────────────
