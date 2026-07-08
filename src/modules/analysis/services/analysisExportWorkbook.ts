@@ -145,6 +145,7 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Progresso (%)", key: "progresso_pct" },
     { header: "Status", key: "status" },
     { header: "Responsável", key: "responsavel" },
+    { header: "KPI vinculado", key: "kpi_vinculado", width: 30 },
     { header: "Último check-in", key: "ultimo_checkin", width: 22 },
   ], payload.okrs.keyResults);
 
