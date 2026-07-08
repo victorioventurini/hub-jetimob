@@ -6,17 +6,17 @@
 import ExcelJS from "exceljs";
 import type { ExportPayload } from "./analysisExport";
 
-interface Column<T> {
+interface Column {
   header: string;
-  key: keyof T & string;
+  key: string;
   width?: number;
 }
 
-function addSheet<T extends Record<string, unknown>>(
+function addSheet(
   wb: ExcelJS.Workbook,
   name: string,
-  columns: Column<T>[],
-  rows: T[],
+  columns: Column[],
+  rows: ReadonlyArray<Record<string, unknown>>,
 ) {
   const ws = wb.addWorksheet(name, {
     views: [{ state: "frozen", ySplit: 1 }],
