@@ -361,6 +361,7 @@ async function fetchOkrs(
         progresso_pct: pct(progresses[i] ?? 0),
         status: k.status ?? null,
         responsavel: k.owner?.display_name ?? null,
+        kpi_vinculado: k.metric_id ?? null, // preenchido com nome no collectAnalysisExport
         ultimo_checkin: k.last_checkin_at ?? null,
       });
       allKrIds.push(k.id);
