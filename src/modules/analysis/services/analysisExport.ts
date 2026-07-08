@@ -507,7 +507,72 @@ async function fetchOkrs(
     }));
   }
 
-  return { cycles: cycleRows, objectives, keyResults, checkins };
+  // ── initiatives (só existem para team KRs) ──
+  const teamKrIds = keyResults.filter((k) => k.nivel === "time").map((k) => k.id);
+  let initiatives: InitiativeRow[] = [];
+  if (teamKrIds.length > 0) {
+    const { data: inis, error: iErr } = await supabase
+      .from("okr_initiatives")
+      .select(
+        "id, kr_id, name, description, status, priority, progress, owner_user_id, start_date, expected_end_date, notes, created_at",
+      )
+      .in("kr_id", teamKrIds)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true });
+    if (iErr) throw iErr;
+
+    const iniOwnerIds = Array.from(
+      new Set(((inis ?? []) as any[]).map((i) => i.owner_user_id).filter(Boolean)),
+    );
+    let iniOwnerMap = new Map<string, { display_name: string | null }>();
+    if (iniOwnerIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", iniOwnerIds);
+      iniOwnerMap = new Map((profs ?? []).map((p: any) => [p.id, { display_name: p.display_name }]));
+    }
+
+    const krIndex = new Map(keyResults.map((k) => [k.id, k]));
+    initiatives = ((inis ?? []) as any[]).map((i) => {
+      const kr = krIndex.get(i.kr_id);
+      return {
+        id: i.id,
+        kr_id: i.kr_id,
+        kr_titulo: kr?.titulo ?? "",
+        objetivo: kr?.objetivo ?? "",
+        time: kr?.time ?? null,
+        nome: i.name,
+        descricao: i.description ?? null,
+        status: i.status ?? null,
+        prioridade: i.priority ?? null,
+        progresso_pct: i.progress ?? null,
+        responsavel: nameFrom(iniOwnerMap, i.owner_user_id),
+        inicio: i.start_date ?? null,
+        entrega: i.expected_end_date ?? null,
+        notas: i.notes ?? null,
+        criado_em: i.created_at ?? null,
+      } satisfies InitiativeRow;
+    });
+
+    // enriquecer KRs com contagem de iniciativas
+    const countByKr = new Map<string, { total: number; done: number }>();
+    for (const i of initiatives) {
+      const c = countByKr.get(i.kr_id) ?? { total: 0, done: 0 };
+      c.total += 1;
+      if (i.status === "completed") c.done += 1;
+      countByKr.set(i.kr_id, c);
+    }
+    for (const kr of keyResults) {
+      const c = countByKr.get(kr.id);
+      if (c) {
+        kr.iniciativas_total = c.total;
+        kr.iniciativas_concluidas = c.done;
+      }
+    }
+  }
+
+  return { cycles: cycleRows, objectives, keyResults, checkins, initiatives };
 }
 
 // ────────────────────────────────────────────────────────────────
