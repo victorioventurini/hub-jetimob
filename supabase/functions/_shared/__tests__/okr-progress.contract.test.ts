@@ -33,4 +33,20 @@ describe("_shared/okr-progress — contract (edge)", () => {
   it("piso em 0 (nunca negativo)", () => {
     expect(calculateKrProgress(0, -50, 100, "up")).toBe(0);
   });
+
+  describe("direction='down' com baseline ≤ target (KR-cap)", () => {
+    it("current abaixo do teto → 100% (caso MRR churn)", () => {
+      expect(calculateKrProgress(0, 6389.23, 6700, "down")).toBe(100);
+    });
+    it("current igual ao teto → 100%", () => {
+      expect(calculateKrProgress(0, 6700, 6700, "down")).toBe(100);
+    });
+    it("current acima do teto → penalidade suave (target/current)", () => {
+      expect(calculateKrProgress(0, 7370, 6700, "down")).toBeCloseTo(90.909, 2);
+    });
+    it("redução clássica (baseline > target) preserva fórmula linear", () => {
+      expect(calculateKrProgress(10000, 6389.23, 6700, "down")).toBeCloseTo(109.42, 1);
+    });
+  });
 });
+

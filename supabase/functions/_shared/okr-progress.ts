@@ -36,8 +36,14 @@ function calcDirectionalProgress(
   }
 
   // direction === "down"
-  if (baseline === target) return current <= target ? 100 : 0;
+  // KR-cap: baseline ausente/≤ meta significa "limitar a ≤ target".
+  // Fórmula linear clássica só faz sentido quando há redução real (baseline > target).
+  if (baseline <= target) {
+    if (current <= target) return 100;
+    return Math.max(0, (target / current) * 100);
+  }
   return Math.max(0, ((baseline - current) / (baseline - target)) * 100);
+
 }
 
 function normalizeProgressInputs(
