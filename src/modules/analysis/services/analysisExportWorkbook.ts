@@ -225,6 +225,17 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.projects.milestones);
 
+  // 10. Projetos — Evolução mensal (derivada dos milestones)
+  addSheet(wb, "Projetos — Evolução", [
+    { header: "Projeto (ID)", key: "project_id", width: 38 },
+    { header: "Projeto", key: "projeto", width: 40 },
+    { header: "Mês", key: "mes", width: 10 },
+    { header: "Milestones totais", key: "milestones_totais" },
+    { header: "Milestones concluídos", key: "milestones_concluidos" },
+    { header: "Progresso (%)", key: "progresso_pct" },
+    { header: "Status do projeto", key: "status_projeto" },
+  ], payload.projects.evolution);
+
   const buf = await wb.xlsx.writeBuffer();
   return new Blob([buf], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
