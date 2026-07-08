@@ -305,6 +305,7 @@ async function fetchOkrs(
   objectives: ObjectiveRow[];
   keyResults: KeyResultRow[];
   checkins: CheckinRow[];
+  initiatives: InitiativeRow[];
 }> {
   const yearStart = `${period.year}-01-01`;
   const yearEnd = `${period.year}-12-31`;
