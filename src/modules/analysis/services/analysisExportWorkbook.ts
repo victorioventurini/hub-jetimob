@@ -190,7 +190,7 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Status", key: "status" },
     { header: "Início", key: "inicio", width: 14 },
     { header: "Entrega", key: "entrega", width: 14 },
-    { header: "Owner (ID)", key: "owner_id", width: 38 },
+    { header: "Owner", key: "owner", width: 30 },
     { header: "Notas", key: "notas", width: 50 },
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.projects.milestones);
