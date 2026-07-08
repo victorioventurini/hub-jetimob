@@ -35,6 +35,8 @@ export interface ExportPayload {
     milestones: MilestoneRow[];
   };
   overview: OverviewRow[];
+  readme: string[];
+  metodologia: string[];
 }
 
 export interface KpiDefinitionRow {
@@ -104,6 +106,7 @@ export interface KeyResultRow {
   progresso_pct: number;
   status: string | null;
   responsavel: string | null;
+  kpi_vinculado: string | null;
   ultimo_checkin: string | null;
 }
 
@@ -133,6 +136,7 @@ export interface ProjectRow {
   inicio: string | null;
   entrega: string | null;
   krs_vinculados: number;
+  krs_titulos: string | null;
   criado_em: string | null;
 }
 
@@ -144,7 +148,7 @@ export interface MilestoneRow {
   status: string | null;
   inicio: string | null;
   entrega: string | null;
-  owner_id: string | null;
+  owner: string | null;
   notas: string | null;
   criado_em: string | null;
 }
@@ -289,7 +293,7 @@ async function fetchOkrs(
        team:teams!okr_team_objectives_team_id_fkey(id, name),
        key_results:okr_team_key_results(
          id, team_objective_id, title, baseline, current_value, target, direction,
-         unit, status, owner_user_id, last_checkin_at, cancelled_at, deleted_at,
+         unit, status, owner_user_id, metric_id, last_checkin_at, cancelled_at, deleted_at,
          owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name)
        )`,
     )
@@ -359,6 +363,7 @@ async function fetchOkrs(
         progresso_pct: pct(progresses[i] ?? 0),
         status: k.status ?? null,
         responsavel: k.owner?.display_name ?? null,
+        kpi_vinculado: k.metric_id ?? null, // preenchido com nome no collectAnalysisExport
         ultimo_checkin: k.last_checkin_at ?? null,
       });
       allKrIds.push(k.id);
@@ -404,6 +409,7 @@ async function fetchOkrs(
         progresso_pct: pct(progresses[i] ?? 0),
         status: k.status ?? null,
         responsavel: k.owner?.display_name ?? null,
+        kpi_vinculado: null,
         ultimo_checkin: null,
       });
       allKrIds.push(k.id);
@@ -460,14 +466,18 @@ async function fetchOkrs(
 async function fetchProjects(
   supabase: SupabaseClient,
   buId: string,
-): Promise<{ projects: ProjectRow[]; milestones: MilestoneRow[] }> {
+): Promise<{ projects: ProjectRow[]; milestones: MilestoneRow[]; projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }> }> {
   const { data, error } = await supabase
     .from("projects")
     .select(
       `id, name, description, status, start_date, due_date, owner_id, created_at,
        owner:profiles!projects_owner_id_fkey(id, display_name),
        project_teams(teams:teams!project_teams_team_id_fkey(id, name)),
-       project_krs(key_result_id, org_key_result_id),
+       project_krs(
+         key_result_id, org_key_result_id,
+         team_kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title),
+         org_kr:okr_org_key_results!project_krs_org_key_result_id_fkey(id, title)
+       ),
        project_milestones(id, name, status, start_date, due_date, owner_id, notes, created_at, deleted_at)`,
     )
     .eq("bu_id", buId)
@@ -477,6 +487,23 @@ async function fetchProjects(
 
   const projects: ProjectRow[] = [];
   const milestones: MilestoneRow[] = [];
+  const projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }> = [];
+
+  // resolver donos dos milestones
+  const ownerIds = new Set<string>();
+  for (const p of (data ?? []) as any[]) {
+    for (const m of (p.project_milestones ?? []) as any[]) {
+      if (m.owner_id) ownerIds.add(m.owner_id);
+    }
+  }
+  let ownerMap = new Map<string, { display_name: string | null }>();
+  if (ownerIds.size) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", Array.from(ownerIds));
+    ownerMap = new Map((profs ?? []).map((p: any) => [p.id, { display_name: p.display_name }]));
+  }
 
   for (const p of (data ?? []) as any[]) {
     const ms = ((p.project_milestones ?? []) as any[]).filter((m) => !m.deleted_at);
@@ -499,6 +526,14 @@ async function fetchProjects(
       .map((pt) => pt.teams?.name)
       .filter(Boolean)
       .join(", ");
+    const krLinks = (p.project_krs ?? []) as any[];
+    const krTitles = krLinks
+      .map((pk) => pk.team_kr?.title ?? pk.org_kr?.title)
+      .filter(Boolean) as string[];
+    for (const pk of krLinks) {
+      if (pk.key_result_id) projectKrLinks.push({ project_id: p.id, kr_id: pk.key_result_id, kind: "team" });
+      if (pk.org_key_result_id) projectKrLinks.push({ project_id: p.id, kr_id: pk.org_key_result_id, kind: "org" });
+    }
     projects.push({
       id: p.id,
       nome: p.name,
@@ -510,7 +545,8 @@ async function fetchProjects(
       times: teams || null,
       inicio: p.start_date ?? null,
       entrega: p.due_date ?? null,
-      krs_vinculados: ((p.project_krs ?? []) as any[]).length,
+      krs_vinculados: krLinks.length,
+      krs_titulos: krTitles.length ? krTitles.join(" • ") : null,
       criado_em: p.created_at ?? null,
     });
     for (const m of ms) {
@@ -522,14 +558,14 @@ async function fetchProjects(
         status: m.status ?? null,
         inicio: m.start_date ?? null,
         entrega: m.due_date ?? null,
-        owner_id: m.owner_id ?? null,
+        owner: nameFrom(ownerMap, m.owner_id),
         notas: m.notes ?? null,
         criado_em: m.created_at ?? null,
       });
     }
   }
 
-  return { projects, milestones };
+  return { projects, milestones, projectKrLinks };
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -608,15 +644,92 @@ export async function collectAnalysisExport(params: {
     fetchProjects(params.supabase, params.bu.id),
   ]);
 
+  // enrichment: resolver nome do KPI vinculado em cada KR (o service armazena o metric_id em kpi_vinculado)
+  const kpiNameById = new Map(definitions.map((k) => [k.id, k.nome]));
+  const enrichedKrs = okrs.keyResults.map((kr) => ({
+    ...kr,
+    kpi_vinculado: kr.kpi_vinculado ? kpiNameById.get(kr.kpi_vinculado) ?? null : null,
+  }));
+
   const base: Omit<ExportPayload, "overview"> = {
     bu: params.bu,
     period: params.period,
     generatedAt: new Date().toISOString(),
     generatedBy: params.generatedBy,
     kpis: { definitions, inputs },
-    okrs,
+    okrs: { ...okrs, keyResults: enrichedKrs },
     projects: { projects: projects.projects, milestones: projects.milestones },
+    readme: buildReadme(params.bu.name, params.period),
+    metodologia: buildMetodologia(),
   };
 
   return { ...base, overview: buildOverview(base) };
 }
+
+// ────────────────────────────────────────────────────────────────
+// Contexto textual (para o Claude entender o dataset)
+// ────────────────────────────────────────────────────────────────
+
+function buildReadme(buName: string, period: ExportPeriod): string[] {
+  return [
+    `Exportação de performance — ${buName}`,
+    `Período: ${period.label} (${period.start} → ${period.end})`,
+    ``,
+    `O QUE ESTE ARQUIVO CONTÉM`,
+    `Uma planilha com os dados operacionais da Business Unit no período. Cada aba é uma tabela relacional simples; os IDs (UUID) permitem cruzar as abas entre si. As duas primeiras abas ("README" e "Metodologia") são texto — leia-as antes de interpretar os números.`,
+    ``,
+    `COMO AS ABAS SE CONECTAM`,
+    `• "KPIs — Inputs" refere-se a "KPIs — Definições" pela coluna KPI (ID).`,
+    `• "OKRs — KRs" refere-se a "OKRs — Objetivos" pela coluna Objetivo (ID) e, quando o KR é alimentado por um KPI, a coluna "KPI vinculado" mostra o nome do KPI (ver "KPIs — Definições" para meta/frequência).`,
+    `• "OKRs — Check-ins" refere-se a "OKRs — KRs" pela coluna KR (ID). Cada check-in é uma atualização semanal do valor atual do KR feita pelo responsável.`,
+    `• "Projetos" declara em "KRs vinculados (títulos)" quais Key Results o projeto pretende mover. "Projetos — Milestones" é filho de Projetos pelo campo Projeto (ID).`,
+    ``,
+    `COMO INTERPRETAR OS STATUS`,
+    `RAG dos inputs de KPI: green = dentro/acima da meta do período; yellow = em atenção; red = abaixo. O corte é feito pelas gates definidas no KPI.`,
+    `Status de KR: green (>=70% de progresso), yellow (40–70%), red (<40%). O campo "Progresso (%)" é calculado por (atual − baseline) / (meta − baseline) e NÃO é limitado a 100% — valores acima indicam superação da meta. Valores negativos indicam regressão em relação ao baseline.`,
+    `Direção do KR: "up" = maior é melhor; "down" = menor é melhor (ex.: churn, custo). O cálculo de progresso já considera a direção.`,
+    `Saúde do projeto: on_track (todos os milestones em dia), at_risk (algum milestone com prazo em menos de 7 dias), off_track (algum milestone com prazo vencido).`,
+    ``,
+    `AVISOS IMPORTANTES`,
+    `• Objetivos e KRs com status "cancelled" ou soft-deleted NÃO estão nesta exportação.`,
+    `• Um valor de "Progresso (%)" muito alto (ex.: 500%) geralmente indica meta subdimensionada, não erro nos dados.`,
+    `• A aba "Overview" já traz agregados; use-a como bússola antes de mergulhar nas outras.`,
+    `• "OKRs — Ciclos" mostra os trimestres/semestres do ano; a coluna Ciclo em "Objetivos" liga o objetivo ao ciclo correspondente.`,
+    ``,
+    `PROMPT SUGERIDO PARA A ANÁLISE`,
+    `Cole exatamente:`,
+    ``,
+    `"Analise o desempenho da Business Unit ${buName} no período ${period.label} com base neste arquivo. Antes de responder:`,
+    `1) Leia as abas 'README' e 'Metodologia'.`,
+    `2) Comece por 'Overview' para ter o panorama.`,
+    `3) Em KPIs: aponte os 3 indicadores com pior tendência (série de inputs mensais decrescente ou RAG vermelho recorrente) e os 3 melhores.`,
+    `4) Em OKRs: liste os objetivos com progresso médio abaixo de 50% e aponte quais KRs deles estão parados (sem check-in há mais de 21 dias). Destaque também KRs cujo progresso supera 150% — provável meta subdimensionada.`,
+    `5) Em Projetos: liste projetos off_track e projetos at_risk com seus milestones em atraso. Cruze com 'KRs vinculados (títulos)' para dizer quais OKRs esses projetos afetam.`,
+    `6) Termine com 3 recomendações acionáveis para o próximo ciclo, priorizadas por impacto x esforço."`,
+  ];
+}
+
+function buildMetodologia(): string[] {
+  return [
+    `Metodologia — como este dataset foi construído`,
+    ``,
+    `FRAMEWORK OKR`,
+    `Objetivo (O) → Key Results (KRs) → Check-ins semanais → Iniciativas/Projetos que movem os KRs.`,
+    `Existem dois níveis: Organizacional (BU inteira, campo Ano) e Time (por trimestre, campo Ciclo). Objetivos de time podem estar vinculados a um objetivo organizacional (herança).`,
+    `Cada KR tem: baseline (ponto de partida), meta (target), atual (current_value), unidade e direção (up/down). O progresso é sempre calculado pela fórmula canônica; NÃO há teto de 100%.`,
+    `Check-ins registram valor anterior, valor atual, confiança (low/medium/high), comentários e bloqueios.`,
+    ``,
+    `FRAMEWORK KPI`,
+    `KPI é uma métrica operacional recorrente, independente do ciclo OKR. Cada KPI tem: unidade, direção, frequência (weekly/monthly/quarterly), tipo (kpi/north_star/guardrail) e escopo (bu/area/team).`,
+    `Meta anual (target_value) é a referência para o ano; RAG de cada input é calculado contra a meta do período. "primary_kpi" é um KPI que também alimenta automaticamente um KR — quando existe, a coluna "KPI vinculado" na aba de KRs indica o nome.`,
+    `Inputs (aba "KPIs — Inputs") são as medições em cada janela (mensal/semanal). Origin pode ser manual, integração ou consolidado.`,
+    ``,
+    `PROJETOS`,
+    `Um projeto tem status (planned/active/paused/done/cancelled), owner, times participantes e uma lista de milestones ordenados. O "Progresso (%)" é a fração de milestones concluídos. A "Saúde" olha para os milestones em aberto: se algum já venceu, off_track; se algum vence em <7 dias, at_risk; caso contrário, on_track.`,
+    `Um projeto pode declarar KRs que pretende mover (coluna "KRs vinculados (títulos)"); essa é a ponte formal entre execução (projeto) e estratégia (OKR).`,
+    ``,
+    `RESPEITO ÀS REGRAS DE DADOS`,
+    `Todas as tabelas são filtradas pela BU ativa (bu_id) e excluem registros soft-deleted. Objetivos/KRs cancelados também são omitidos.`,
+  ];
+}
+

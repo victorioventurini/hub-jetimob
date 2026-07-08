@@ -41,10 +41,31 @@ function addSheet(
   };
 }
 
+function addTextSheet(wb: ExcelJS.Workbook, name: string, lines: string[]) {
+  const ws = wb.addWorksheet(name);
+  ws.getColumn(1).width = 120;
+  lines.forEach((line, i) => {
+    const row = ws.getRow(i + 1);
+    row.getCell(1).value = line;
+    row.getCell(1).alignment = { wrapText: true, vertical: "top" };
+    if (line && !line.startsWith(" ") && line === line.toUpperCase() && line.length < 60) {
+      row.getCell(1).font = { bold: true, color: { argb: "FF1F2937" } };
+    } else if (i === 0) {
+      row.getCell(1).font = { bold: true, size: 14 };
+    }
+  });
+}
+
 export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Hub da Jet";
   wb.created = new Date();
+
+  // 0. README (texto)
+  addTextSheet(wb, "README", payload.readme);
+
+  // 0.1 Metodologia (texto)
+  addTextSheet(wb, "Metodologia", payload.metodologia);
 
   // 1. Overview
   addSheet(wb, "Overview", [
@@ -124,6 +145,7 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Progresso (%)", key: "progresso_pct" },
     { header: "Status", key: "status" },
     { header: "Responsável", key: "responsavel" },
+    { header: "KPI vinculado", key: "kpi_vinculado", width: 30 },
     { header: "Último check-in", key: "ultimo_checkin", width: 22 },
   ], payload.okrs.keyResults);
 
@@ -155,6 +177,7 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Início", key: "inicio", width: 14 },
     { header: "Entrega", key: "entrega", width: 14 },
     { header: "KRs vinculados", key: "krs_vinculados" },
+    { header: "KRs vinculados (títulos)", key: "krs_titulos", width: 60 },
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.projects.projects);
 
@@ -167,7 +190,7 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Status", key: "status" },
     { header: "Início", key: "inicio", width: 14 },
     { header: "Entrega", key: "entrega", width: 14 },
-    { header: "Owner (ID)", key: "owner_id", width: 38 },
+    { header: "Owner", key: "owner", width: 30 },
     { header: "Notas", key: "notas", width: 50 },
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.projects.milestones);
