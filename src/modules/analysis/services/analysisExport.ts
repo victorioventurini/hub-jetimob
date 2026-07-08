@@ -201,10 +201,9 @@ async function fetchKpis(
   if (error) throw error;
 
   const kpiRows = (metrics ?? []) as any[];
-  const kpiById = new Map<string, string>();
+  const kpiById = new Map<string, KpiDefinitionRow>();
   const definitions: KpiDefinitionRow[] = kpiRows.map((k) => {
-    kpiById.set(k.id, k.name);
-    return {
+    const row: KpiDefinitionRow = {
       id: k.id,
       nome: k.name,
       descricao: k.description ?? null,
@@ -220,6 +219,8 @@ async function fetchKpis(
       status: k.status ?? null,
       criado_em: k.created_at ?? null,
     };
+    kpiById.set(k.id, row);
+    return row;
   });
 
   let inputs: KpiInputRow[] = [];
@@ -236,22 +237,33 @@ async function fetchKpis(
       )
       .gte("reference_date", period.start)
       .lte("reference_date", period.end)
+      .order("kpi_id", { ascending: true })
       .order("reference_date", { ascending: true });
     if (vErr) throw vErr;
-    inputs = (values ?? []).map((v: any) => ({
-      kpi_id: v.kpi_id,
-      kpi_nome: kpiById.get(v.kpi_id) ?? "",
-      data_referencia: v.reference_date ?? null,
-      periodo_inicio: v.period_start ?? null,
-      periodo_fim: v.period_end ?? null,
-      periodo_label: v.period_label ?? null,
-      valor: v.value ?? null,
-      rag: v.rag_status ?? null,
-      input_type: v.input_type ?? null,
-      origem: v.source ?? null,
-      observacao: v.notes ?? null,
-      criado_em: v.created_at ?? null,
-    }));
+    inputs = (values ?? []).map((v: any) => {
+      const def = kpiById.get(v.kpi_id);
+      return {
+        kpi_id: v.kpi_id,
+        kpi_nome: def?.nome ?? "",
+        area: def?.area ?? null,
+        time: def?.time ?? null,
+        responsavel: def?.responsavel ?? null,
+        unidade: def?.unidade ?? null,
+        direcao: def?.direcao ?? null,
+        frequencia: def?.frequencia ?? null,
+        meta_ano: def?.meta_ano ?? null,
+        data_referencia: v.reference_date ?? null,
+        periodo_inicio: v.period_start ?? null,
+        periodo_fim: v.period_end ?? null,
+        periodo_label: v.period_label ?? null,
+        valor: v.value ?? null,
+        rag: v.rag_status ?? null,
+        input_type: v.input_type ?? null,
+        origem: v.source ?? null,
+        observacao: v.notes ?? null,
+        criado_em: v.created_at ?? null,
+      };
+    });
   }
 
   return { definitions, inputs };
