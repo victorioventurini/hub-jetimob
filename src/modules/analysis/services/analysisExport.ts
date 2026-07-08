@@ -104,6 +104,7 @@ export interface KeyResultRow {
   progresso_pct: number;
   status: string | null;
   responsavel: string | null;
+  kpi_vinculado: string | null;
   ultimo_checkin: string | null;
 }
 
