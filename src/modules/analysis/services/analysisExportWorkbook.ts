@@ -16,7 +16,7 @@ function addSheet(
   wb: ExcelJS.Workbook,
   name: string,
   columns: Column[],
-  rows: ReadonlyArray<Record<string, unknown>>,
+  rows: ReadonlyArray<Record<string, unknown> | object>,
 ) {
   const ws = wb.addWorksheet(name, {
     views: [{ state: "frozen", ySplit: 1 }],
