@@ -71,6 +71,14 @@ export const analysisRoutes = (
       }
     />
     <Route
+      path="/analysis/export"
+      element={
+        <AnalysisRoute>
+          <AnalysisExportPage />
+        </AnalysisRoute>
+      }
+    />
+    <Route
       path="/analysis/:reportId"
       element={
         <AnalysisRoute>
