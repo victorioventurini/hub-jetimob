@@ -188,7 +188,7 @@ export function useSendAnalysisMessage() {
         thread_id: input.threadId,
         bu_id: buId,
         role: "assistant",
-        parts: { content: assistantContent, tool_trace: toolTrace },
+        parts: { content: assistantContent, tool_trace: toolTrace } as never,
         model: payload.model_used,
         tokens_output: payload.tokens_total ?? null,
       });
