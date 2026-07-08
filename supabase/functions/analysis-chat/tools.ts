@@ -160,7 +160,7 @@ async function listCyclesAndTeams(ctx: ToolContext): Promise<Json> {
   const { svc, buId } = ctx;
   const [cyclesRes, teamsRes, areasRes] = await Promise.all([
     svc.from("cycles")
-      .select("id, name, year, quarter, start_date, end_date, status")
+      .select("id, name, type, start_date, end_date, status")
       .eq("bu_id", buId)
       .order("start_date", { ascending: false })
       .limit(20),
@@ -176,9 +176,32 @@ async function listCyclesAndTeams(ctx: ToolContext): Promise<Json> {
       .limit(100),
   ]);
   return {
-    cycles: cyclesRes.data ?? [],
+    cycles: (cyclesRes.data ?? []).map(enrichCycle),
     teams: teamsRes.data ?? [],
     areas: areasRes.data ?? [],
+  };
+}
+
+function enrichCycle(cycle: Record<string, unknown>): Record<string, unknown> {
+  const name = String(cycle.name ?? "");
+  const startDate = String(cycle.start_date ?? "");
+  const startYear = /^\d{4}-\d{2}-\d{2}$/.test(startDate)
+    ? Number(startDate.slice(0, 4))
+    : null;
+  const startMonth = /^\d{4}-\d{2}-\d{2}$/.test(startDate)
+    ? Number(startDate.slice(5, 7))
+    : null;
+  const namedQuarter = name.match(/(?:^|\D)Q([1-4])(?:\D|$)/i)?.[1];
+  const quarter = namedQuarter
+    ? Number(namedQuarter)
+    : cycle.type === "quarter" && startMonth
+      ? Math.ceil(startMonth / 3)
+      : null;
+
+  return {
+    ...cycle,
+    year: startYear,
+    quarter,
   };
 }
 
