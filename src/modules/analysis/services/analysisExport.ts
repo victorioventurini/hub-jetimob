@@ -700,7 +700,47 @@ async function fetchProjects(
     }
   }
 
-  return { projects, milestones, projectKrLinks };
+  // ── evolução mensal derivada do histórico de milestones ──
+  // Para cada mês entre period.start e min(period.end, hoje), calcula:
+  //   total = milestones criados até o fim do mês
+  //   concluídos = milestones done/completed cujo updated_at ≤ fim do mês (aproximação da data de conclusão)
+  // Observação: não persistimos completed_at no milestone; usamos updated_at como melhor proxy.
+  const evolution: ProjectEvolutionRow[] = [];
+  const startDate = new Date(period.start + "T00:00:00Z");
+  const endCap = new Date(Math.min(new Date(period.end + "T00:00:00Z").getTime(), Date.now()));
+  const months: Array<{ key: string; end: Date }> = [];
+  const cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1));
+  while (cursor <= endCap) {
+    const monthEnd = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0, 23, 59, 59));
+    const key = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`;
+    months.push({ key, end: monthEnd > endCap ? endCap : monthEnd });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  for (const p of (data ?? []) as any[]) {
+    const ms = ((p.project_milestones ?? []) as any[]).filter((m) => !m.deleted_at);
+    if (ms.length === 0) continue;
+    for (const { key, end } of months) {
+      const endMs = end.getTime();
+      const total = ms.filter((m) => new Date(m.created_at).getTime() <= endMs).length;
+      const doneCount = ms.filter(
+        (m) =>
+          (m.status === "done" || m.status === "completed") &&
+          new Date(m.updated_at ?? m.created_at).getTime() <= endMs,
+      ).length;
+      if (total === 0) continue;
+      evolution.push({
+        project_id: p.id,
+        projeto: p.name,
+        mes: key,
+        milestones_totais: total,
+        milestones_concluidos: doneCount,
+        progresso_pct: pct((doneCount / total) * 100),
+        status_projeto: p.status ?? null,
+      });
+    }
+  }
+
+  return { projects, milestones, evolution, projectKrLinks };
 }
 
 // ────────────────────────────────────────────────────────────────
