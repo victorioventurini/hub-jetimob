@@ -123,6 +123,8 @@ export interface KeyResultRow {
   objetivo_id: string;
   objetivo: string;
   nivel: "organizacional" | "time";
+  time: string | null;
+  ciclo: string | null;
   titulo: string;
   unidade: string | null;
   baseline: number | null;
@@ -134,6 +136,8 @@ export interface KeyResultRow {
   responsavel: string | null;
   kpi_vinculado: string | null;
   ultimo_checkin: string | null;
+  iniciativas_total: number;
+  iniciativas_concluidas: number;
 }
 
 export interface CheckinRow {
