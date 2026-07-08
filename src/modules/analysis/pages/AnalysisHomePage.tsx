@@ -109,6 +109,9 @@ export default function AnalysisHomePage() {
               <Button variant="outline" asChild>
                 <Link to="/analysis/templates">Templates</Link>
               </Button>
+              <Button variant="outline" asChild>
+                <Link to="/analysis/export">Exportar planilha</Link>
+              </Button>
             </div>
           }
         />

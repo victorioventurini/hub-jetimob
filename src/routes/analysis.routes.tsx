@@ -22,6 +22,9 @@ const AnalysisTemplatesPage = lazyWithRetry(
 const AnalysisChatPage = lazyWithRetry(
   () => import("@/modules/analysis/pages/AnalysisChatPage")
 );
+const AnalysisExportPage = lazyWithRetry(
+  () => import("@/modules/analysis/pages/AnalysisExportPage")
+);
 
 function AnalysisRoute({ children }: { children: React.ReactNode }) {
   return (
@@ -64,6 +67,14 @@ export const analysisRoutes = (
       element={
         <AnalysisRoute>
           <AnalysisChatPage />
+        </AnalysisRoute>
+      }
+    />
+    <Route
+      path="/analysis/export"
+      element={
+        <AnalysisRoute>
+          <AnalysisExportPage />
         </AnalysisRoute>
       }
     />
