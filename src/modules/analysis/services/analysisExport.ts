@@ -29,6 +29,7 @@ export interface ExportPayload {
     objectives: ObjectiveRow[];
     keyResults: KeyResultRow[];
     checkins: CheckinRow[];
+    initiatives: InitiativeRow[];
   };
   projects: {
     projects: ProjectRow[];
@@ -37,6 +38,24 @@ export interface ExportPayload {
   overview: OverviewRow[];
   readme: string[];
   metodologia: string[];
+}
+
+export interface InitiativeRow {
+  id: string;
+  kr_id: string;
+  kr_titulo: string;
+  objetivo: string;
+  time: string | null;
+  nome: string;
+  descricao: string | null;
+  status: string | null;
+  prioridade: string | null;
+  progresso_pct: number | null;
+  responsavel: string | null;
+  inicio: string | null;
+  entrega: string | null;
+  notas: string | null;
+  criado_em: string | null;
 }
 
 export interface KpiDefinitionRow {
