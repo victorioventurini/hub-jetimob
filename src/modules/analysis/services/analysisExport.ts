@@ -59,6 +59,13 @@ export interface KpiDefinitionRow {
 export interface KpiInputRow {
   kpi_id: string;
   kpi_nome: string;
+  area: string | null;
+  time: string | null;
+  responsavel: string | null;
+  unidade: string | null;
+  direcao: string | null;
+  frequencia: string | null;
+  meta_ano: number | null;
   data_referencia: string | null;
   periodo_inicio: string | null;
   periodo_fim: string | null;
