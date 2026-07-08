@@ -447,6 +447,8 @@ async function fetchOkrs(
         objetivo_id: o.id,
         objetivo: o.title,
         nivel: "organizacional",
+        time: null,
+        ciclo: null,
         titulo: k.title,
         unidade: k.unit ?? null,
         baseline: k.baseline ?? null,
@@ -458,6 +460,8 @@ async function fetchOkrs(
         responsavel: k.owner?.display_name ?? null,
         kpi_vinculado: null,
         ultimo_checkin: null,
+        iniciativas_total: 0,
+        iniciativas_concluidas: 0,
       });
       allKrIds.push(k.id);
     });
