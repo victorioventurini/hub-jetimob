@@ -1,52 +1,83 @@
-## Diagnóstico
+## Objetivo
 
-O botão envia, mas o `INSERT` em `analysis_threads` falha silenciosamente antes mesmo de chamar a edge function (0 threads no banco, 0 logs em `analysis-chat`). Duas causas confirmadas na migration `20260612141215_…`:
+Adicionar uma página `/analysis/export` no módulo Análise Estratégica que gera um arquivo Excel (`.xlsx`) multi-abas com todos os dados de performance da BU ativa (Jetimob quando selecionada) para o ano corrente (2026 YTD: Q1 + Q2), pronto para upload no Claude.
 
-1. **GRANTs ausentes** — as tabelas `analysis_threads` e `analysis_messages` não têm nenhum `GRANT` para `authenticated`/`service_role`. Sem GRANT, PostgREST retorna erro de permissão mesmo com RLS válida.
-2. **RLS comparando `auth.uid()` com `owner_profile_id`** — viola a convenção do projeto (`auth.uid()` ≠ `profiles.id`). O código insere `realProfileId` (= `profiles.id`), mas a policy exige `owner_profile_id = auth.uid()` → sempre falso → 42501.
+## UX
 
-O padrão canônico do projeto é usar a função `my_profile_id()` (mapeia `auth.uid()` → `profiles.id`).
+Nova rota `/analysis/export` (protegida por `ModuleRoute moduleSlug="analysis"`, admin-only), acessível também via botão na `AnalysisHomePage`.
 
-## Correção (nova migration)
+Layout:
+- Header: "Exportar Performance da BU"
+- Cards de configuração (read-only nesta v1, mostrando o que será exportado):
+  - BU: `currentBu.name` (badge)
+  - Período: "2026 YTD — Q1 + Q2" (badge)
+  - Abas incluídas: Overview, KPIs, OKRs, Projetos
+- Botão principal `Gerar planilha (.xlsx)` com loading state
+- Ao finalizar: preview do sumário (nº de KPIs, OKRs, projetos exportados) + download automático
+- Toast de sucesso/erro
 
-```sql
--- 1. GRANTs (obrigatórios)
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.analysis_threads TO authenticated;
-GRANT ALL ON public.analysis_threads TO service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.analysis_messages TO authenticated;
-GRANT ALL ON public.analysis_messages TO service_role;
+## Estrutura das abas
 
--- 2. Recriar policies usando my_profile_id()
-DROP POLICY "Users manage own analysis threads" ON public.analysis_threads;
-CREATE POLICY "Users manage own analysis threads"
-  ON public.analysis_threads FOR ALL TO authenticated
-  USING (owner_profile_id = public.my_profile_id())
-  WITH CHECK (owner_profile_id = public.my_profile_id());
+**1. Overview** — 1 linha por seção
+- BU, período, data de geração, gerado por
+- Totais: # KPIs, # KPIs on-track/at-risk/off-track, # OKRs, % progresso médio OKRs, # projetos, # projetos por saúde
 
-DROP POLICY "Users read messages of own threads"    ON public.analysis_messages;
-DROP POLICY "Users insert messages on own threads"  ON public.analysis_messages;
-DROP POLICY "Users delete messages on own threads"  ON public.analysis_messages;
+**2. KPIs — Definições** (1 linha por KPI)
+- id, nome, descrição, área, time, responsável, unidade, frequência, direção (higher/lower better), tipo de input, meta anual, gates (base/target/stretch), primary_kpi (bool), created_at
 
-CREATE POLICY "Users read messages of own threads"
-  ON public.analysis_messages FOR SELECT TO authenticated
-  USING (EXISTS (SELECT 1 FROM analysis_threads t
-                 WHERE t.id = thread_id AND t.owner_profile_id = public.my_profile_id()));
+**3. KPIs — Inputs** (1 linha por input mês/semana)
+- kpi_id, kpi_nome, período (date), valor real, meta do período, gate atingido, confidence, observação, autor, created_at
 
-CREATE POLICY "Users insert messages on own threads"
-  ON public.analysis_messages FOR INSERT TO authenticated
-  WITH CHECK (EXISTS (SELECT 1 FROM analysis_threads t
-                      WHERE t.id = thread_id AND t.owner_profile_id = public.my_profile_id()));
+**4. OKRs — Objetivos** (1 linha por objetivo)
+- id, ciclo, nome, descrição, owner, área, time, status, progresso %, created_at
 
-CREATE POLICY "Users delete messages on own threads"
-  ON public.analysis_messages FOR DELETE TO authenticated
-  USING (EXISTS (SELECT 1 FROM analysis_threads t
-                 WHERE t.id = thread_id AND t.owner_profile_id = public.my_profile_id()));
-```
+**5. OKRs — Key Results** (1 linha por KR)
+- kr_id, objetivo, nome, unidade, baseline, meta, atual, progresso % (via `calculateProgress`), status, primary_kpi_id (se houver)
 
-## Validação
+**6. OKRs — Check-ins** (1 linha por check-in)
+- kr_id, kr_nome, data, valor, progresso, confidence, comentário, autor
 
-1. Abrir `/analysis/chat`, digitar mensagem e enviar.
-2. Confirmar linha em `analysis_threads` e duas em `analysis_messages` (user + assistant).
-3. Conferir `edge_function_logs analysis-chat` para ver a invocação.
+**7. Projetos — Projetos** (1 linha por projeto)
+- id, nome, descrição, status, saúde, prioridade, owner, área, time, data início/fim, % progresso, created_at
 
-Escopo restrito ao banco — nenhuma mudança em frontend ou edge function.
+**8. Projetos — Milestones** (1 linha por milestone)
+- project_id, project_nome, milestone, status, due_date, completed_at, owner
+
+## Implementação técnica
+
+**Dependência nova**
+- `bun add exceljs` (gera XLSX no browser, sem servidor)
+
+**Arquivos novos**
+- `src/modules/analysis/pages/AnalysisExportPage.tsx` — página + botão
+- `src/modules/analysis/hooks/useAnalysisExport.ts` — orquestra fetches, respeitando `currentBuId` (regra Core: BU Isolation) e filtro `.is("deleted_at", null)`
+- `src/modules/analysis/services/analysisExport.ts` — queries por seção (uma função por aba) usando o cliente BU-scoped; SEM `select("*")` (regra Core)
+- `src/modules/analysis/services/analysisExportWorkbook.ts` — monta o `ExcelJS.Workbook`, aplica cabeçalhos com bold/freeze, autoWidth, formatação de datas/percentuais, e dispara o download via Blob
+
+**Rota**
+- Registrar em `src/routes/analysis.routes.tsx`: `<Route path="/analysis/export" element={<AnalysisRoute requiresBuAdmin><AnalysisExportPage/></AnalysisRoute>} />`
+
+**Fontes de dados (tabelas já existentes)**
+- KPIs: `kpi_definitions`, `kpi_inputs` (filtrar por `bu_id`, `date` entre 2026-01-01 e hoje)
+- OKRs: `cycles` (tipo `quarter`, ano 2026), `okr_objectives`, `okr_key_results`, `okr_check_ins`, joins por `cycle_id in (...)`
+- Projetos: `projects`, `project_milestones` (filtro `bu_id`, `deleted_at is null`, atividade em 2026)
+- Nomes/áreas/times: joins com `profiles`, `areas`, `teams`
+
+**Regras respeitadas**
+- BU Isolation via `currentBuId` sincrono (Core)
+- Soft-deletes: `deleted_at is null` (e `cancelled_at is null` onde aplicável, exceto `okr_initiatives`/`project_milestones` que usam só `deleted_at`)
+- Colunas explícitas (sem `select("*")`)
+- Progresso de KR via `calculateProgress` (Core: OKR Progress Canon)
+- Query keys via `src/lib/queryKeys/*.ts`
+- Nenhuma mudança em Edge Functions / backend
+
+**Nome do arquivo**
+`jetimob-performance-2026-YTD-YYYYMMDD.xlsx` (slug do nome da BU)
+
+## Fora do escopo desta v1
+
+- Filtros customizados de período/BU na UI (fixo em BU ativa + 2026 YTD conforme confirmado)
+- Agendamento/e-mail
+- Exportar iniciativas, addendums, rituais, decisões, scorecards
+
+Confirme para implementar.
