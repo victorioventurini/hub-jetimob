@@ -644,15 +644,92 @@ export async function collectAnalysisExport(params: {
     fetchProjects(params.supabase, params.bu.id),
   ]);
 
+  // enrichment: resolver nome do KPI vinculado em cada KR (o service armazena o metric_id em kpi_vinculado)
+  const kpiNameById = new Map(definitions.map((k) => [k.id, k.nome]));
+  const enrichedKrs = okrs.keyResults.map((kr) => ({
+    ...kr,
+    kpi_vinculado: kr.kpi_vinculado ? kpiNameById.get(kr.kpi_vinculado) ?? null : null,
+  }));
+
   const base: Omit<ExportPayload, "overview"> = {
     bu: params.bu,
     period: params.period,
     generatedAt: new Date().toISOString(),
     generatedBy: params.generatedBy,
     kpis: { definitions, inputs },
-    okrs,
+    okrs: { ...okrs, keyResults: enrichedKrs },
     projects: { projects: projects.projects, milestones: projects.milestones },
+    readme: buildReadme(params.bu.name, params.period),
+    metodologia: buildMetodologia(),
   };
 
   return { ...base, overview: buildOverview(base) };
 }
+
+// ────────────────────────────────────────────────────────────────
+// Contexto textual (para o Claude entender o dataset)
+// ────────────────────────────────────────────────────────────────
+
+function buildReadme(buName: string, period: ExportPeriod): string[] {
+  return [
+    `Exportação de performance — ${buName}`,
+    `Período: ${period.label} (${period.start} → ${period.end})`,
+    ``,
+    `O QUE ESTE ARQUIVO CONTÉM`,
+    `Uma planilha com os dados operacionais da Business Unit no período. Cada aba é uma tabela relacional simples; os IDs (UUID) permitem cruzar as abas entre si. As duas primeiras abas ("README" e "Metodologia") são texto — leia-as antes de interpretar os números.`,
+    ``,
+    `COMO AS ABAS SE CONECTAM`,
+    `• "KPIs — Inputs" refere-se a "KPIs — Definições" pela coluna KPI (ID).`,
+    `• "OKRs — KRs" refere-se a "OKRs — Objetivos" pela coluna Objetivo (ID) e, quando o KR é alimentado por um KPI, a coluna "KPI vinculado" mostra o nome do KPI (ver "KPIs — Definições" para meta/frequência).`,
+    `• "OKRs — Check-ins" refere-se a "OKRs — KRs" pela coluna KR (ID). Cada check-in é uma atualização semanal do valor atual do KR feita pelo responsável.`,
+    `• "Projetos" declara em "KRs vinculados (títulos)" quais Key Results o projeto pretende mover. "Projetos — Milestones" é filho de Projetos pelo campo Projeto (ID).`,
+    ``,
+    `COMO INTERPRETAR OS STATUS`,
+    `RAG dos inputs de KPI: green = dentro/acima da meta do período; yellow = em atenção; red = abaixo. O corte é feito pelas gates definidas no KPI.`,
+    `Status de KR: green (>=70% de progresso), yellow (40–70%), red (<40%). O campo "Progresso (%)" é calculado por (atual − baseline) / (meta − baseline) e NÃO é limitado a 100% — valores acima indicam superação da meta. Valores negativos indicam regressão em relação ao baseline.`,
+    `Direção do KR: "up" = maior é melhor; "down" = menor é melhor (ex.: churn, custo). O cálculo de progresso já considera a direção.`,
+    `Saúde do projeto: on_track (todos os milestones em dia), at_risk (algum milestone com prazo em menos de 7 dias), off_track (algum milestone com prazo vencido).`,
+    ``,
+    `AVISOS IMPORTANTES`,
+    `• Objetivos e KRs com status "cancelled" ou soft-deleted NÃO estão nesta exportação.`,
+    `• Um valor de "Progresso (%)" muito alto (ex.: 500%) geralmente indica meta subdimensionada, não erro nos dados.`,
+    `• A aba "Overview" já traz agregados; use-a como bússola antes de mergulhar nas outras.`,
+    `• "OKRs — Ciclos" mostra os trimestres/semestres do ano; a coluna Ciclo em "Objetivos" liga o objetivo ao ciclo correspondente.`,
+    ``,
+    `PROMPT SUGERIDO PARA A ANÁLISE`,
+    `Cole exatamente:`,
+    ``,
+    `"Analise o desempenho da Business Unit ${buName} no período ${period.label} com base neste arquivo. Antes de responder:`,
+    `1) Leia as abas 'README' e 'Metodologia'.`,
+    `2) Comece por 'Overview' para ter o panorama.`,
+    `3) Em KPIs: aponte os 3 indicadores com pior tendência (série de inputs mensais decrescente ou RAG vermelho recorrente) e os 3 melhores.`,
+    `4) Em OKRs: liste os objetivos com progresso médio abaixo de 50% e aponte quais KRs deles estão parados (sem check-in há mais de 21 dias). Destaque também KRs cujo progresso supera 150% — provável meta subdimensionada.`,
+    `5) Em Projetos: liste projetos off_track e projetos at_risk com seus milestones em atraso. Cruze com 'KRs vinculados (títulos)' para dizer quais OKRs esses projetos afetam.`,
+    `6) Termine com 3 recomendações acionáveis para o próximo ciclo, priorizadas por impacto x esforço."`,
+  ];
+}
+
+function buildMetodologia(): string[] {
+  return [
+    `Metodologia — como este dataset foi construído`,
+    ``,
+    `FRAMEWORK OKR`,
+    `Objetivo (O) → Key Results (KRs) → Check-ins semanais → Iniciativas/Projetos que movem os KRs.`,
+    `Existem dois níveis: Organizacional (BU inteira, campo Ano) e Time (por trimestre, campo Ciclo). Objetivos de time podem estar vinculados a um objetivo organizacional (herança).`,
+    `Cada KR tem: baseline (ponto de partida), meta (target), atual (current_value), unidade e direção (up/down). O progresso é sempre calculado pela fórmula canônica; NÃO há teto de 100%.`,
+    `Check-ins registram valor anterior, valor atual, confiança (low/medium/high), comentários e bloqueios.`,
+    ``,
+    `FRAMEWORK KPI`,
+    `KPI é uma métrica operacional recorrente, independente do ciclo OKR. Cada KPI tem: unidade, direção, frequência (weekly/monthly/quarterly), tipo (kpi/north_star/guardrail) e escopo (bu/area/team).`,
+    `Meta anual (target_value) é a referência para o ano; RAG de cada input é calculado contra a meta do período. "primary_kpi" é um KPI que também alimenta automaticamente um KR — quando existe, a coluna "KPI vinculado" na aba de KRs indica o nome.`,
+    `Inputs (aba "KPIs — Inputs") são as medições em cada janela (mensal/semanal). Origin pode ser manual, integração ou consolidado.`,
+    ``,
+    `PROJETOS`,
+    `Um projeto tem status (planned/active/paused/done/cancelled), owner, times participantes e uma lista de milestones ordenados. O "Progresso (%)" é a fração de milestones concluídos. A "Saúde" olha para os milestones em aberto: se algum já venceu, off_track; se algum vence em <7 dias, at_risk; caso contrário, on_track.`,
+    `Um projeto pode declarar KRs que pretende mover (coluna "KRs vinculados (títulos)"); essa é a ponte formal entre execução (projeto) e estratégia (OKR).`,
+    ``,
+    `RESPEITO ÀS REGRAS DE DADOS`,
+    `Todas as tabelas são filtradas pela BU ativa (bu_id) e excluem registros soft-deleted. Objetivos/KRs cancelados também são omitidos.`,
+  ];
+}
+
