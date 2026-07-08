@@ -16,7 +16,7 @@ function addSheet(
   wb: ExcelJS.Workbook,
   name: string,
   columns: Column[],
-  rows: ReadonlyArray<Record<string, unknown> | object>,
+  rows: ReadonlyArray<unknown>,
 ) {
   const ws = wb.addWorksheet(name, {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -34,7 +34,7 @@ function addSheet(
     fgColor: { argb: "FF1F2937" },
   };
   headerRow.alignment = { vertical: "middle", horizontal: "left" };
-  rows.forEach((r) => ws.addRow(r));
+  (rows as unknown[]).forEach((r) => ws.addRow(r as never));
   ws.autoFilter = {
     from: { row: 1, column: 1 },
     to: { row: 1, column: columns.length },
