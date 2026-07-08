@@ -194,15 +194,7 @@ export interface ProjectEvolutionRow {
   status_projeto: string | null;
 }
 
-  id: string;
-  nome: string;
-  status: string | null;
-  inicio: string | null;
-  entrega: string | null;
-  owner: string | null;
-  notas: string | null;
-  criado_em: string | null;
-}
+
 
 export interface OverviewRow {
   metrica: string;
