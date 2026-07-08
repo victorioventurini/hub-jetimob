@@ -184,6 +184,26 @@ export interface MilestoneRow {
   criado_em: string | null;
 }
 
+export interface ProjectEvolutionRow {
+  project_id: string;
+  projeto: string;
+  mes: string; // YYYY-MM
+  milestones_totais: number;
+  milestones_concluidos: number;
+  progresso_pct: number;
+  status_projeto: string | null;
+}
+
+  id: string;
+  nome: string;
+  status: string | null;
+  inicio: string | null;
+  entrega: string | null;
+  owner: string | null;
+  notas: string | null;
+  criado_em: string | null;
+}
+
 export interface OverviewRow {
   metrica: string;
   valor: string | number;
