@@ -32,6 +32,9 @@ function calculateProgress(baseline, current, target, direction) {
 }
 ```
 
+**KR-cap (`direction='down'` com `baseline ≤ target`)**: interpretada como limite/teto ("manter ≤ target"). Progresso = 100 enquanto `current ≤ target`; ao ultrapassar, cai suavemente via `target/current × 100` (ou binário 0 quando `baseline === target`). SSOT: `src/modules/okrs/utils/progressCalculation.ts` e `supabase/functions/_shared/okr-progress.ts`.
+
+
 ## RAG (semáforo)
 
 🟢 ≥70% do esperado · 🟡 40-70% · 🔴 <40% · ⚪ sem progresso.
