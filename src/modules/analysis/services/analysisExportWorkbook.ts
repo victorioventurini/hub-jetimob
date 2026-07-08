@@ -41,6 +41,21 @@ function addSheet(
   };
 }
 
+function addTextSheet(wb: ExcelJS.Workbook, name: string, lines: string[]) {
+  const ws = wb.addWorksheet(name);
+  ws.getColumn(1).width = 120;
+  lines.forEach((line, i) => {
+    const row = ws.getRow(i + 1);
+    row.getCell(1).value = line;
+    row.getCell(1).alignment = { wrapText: true, vertical: "top" };
+    if (line && !line.startsWith(" ") && line === line.toUpperCase() && line.length < 60) {
+      row.getCell(1).font = { bold: true, color: { argb: "FF1F2937" } };
+    } else if (i === 0) {
+      row.getCell(1).font = { bold: true, size: 14 };
+    }
+  });
+}
+
 export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Hub da Jet";
