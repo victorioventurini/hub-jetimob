@@ -171,17 +171,26 @@ export function useSendAnalysisMessage() {
         throw new Error(msg || "Erro ao consultar o copiloto");
       }
 
-      const assistantContent: string = data?.content ?? "";
-      const toolTrace = data?.tool_trace ?? [];
+      const payload = (data?.data ?? data ?? {}) as {
+        content?: string;
+        tool_trace?: AnalysisMessage["tool_trace"];
+        model_used?: string;
+        tokens_total?: number | null;
+      };
+      const assistantContent = String(payload.content ?? "").trim();
+      if (!assistantContent) {
+        throw new Error("EMPTY_AI_RESPONSE");
+      }
+      const toolTrace = payload.tool_trace ?? [];
 
       // 4. Save assistant message
       const { error: aErr } = await supabase.from("analysis_messages").insert({
         thread_id: input.threadId,
         bu_id: buId,
         role: "assistant",
-        parts: { content: assistantContent, tool_trace: toolTrace },
-        model: data?.model_used,
-        tokens_output: data?.tokens_total ?? null,
+        parts: { content: assistantContent, tool_trace: toolTrace } as never,
+        model: payload.model_used,
+        tokens_output: payload.tokens_total ?? null,
       });
       if (aErr) throw aErr;
 
@@ -209,6 +218,7 @@ export function useSendAnalysisMessage() {
         RATE_LIMIT: "Muitas requisições. Tente novamente em alguns segundos.",
         NO_CREDITS: "Sem créditos de IA. Adicione créditos no workspace.",
         BU_REQUIRED: "Selecione uma BU antes de conversar.",
+        EMPTY_AI_RESPONSE: "A IA retornou uma resposta vazia. Tente enviar novamente.",
       };
       toast.error(map[err.message] ?? err.message ?? "Erro no copiloto");
     },
