@@ -248,7 +248,7 @@ export default function AnalysisChatPage() {
                 </div>
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   Somente leitura • Dados isolados por BU • Modelo:
-                  {" "}<span className="font-mono">gemini-2.5-pro</span>
+                  {" "}<span className="font-mono">gemini-2.5-flash</span>
                 </p>
               </div>
             </div>
