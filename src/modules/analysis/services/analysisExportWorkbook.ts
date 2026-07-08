@@ -46,6 +46,12 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
   wb.creator = "Hub da Jet";
   wb.created = new Date();
 
+  // 0. README (texto)
+  addTextSheet(wb, "README", payload.readme);
+
+  // 0.1 Metodologia (texto)
+  addTextSheet(wb, "Metodologia", payload.metodologia);
+
   // 1. Overview
   addSheet(wb, "Overview", [
     { header: "Métrica", key: "metrica", width: 42 },
