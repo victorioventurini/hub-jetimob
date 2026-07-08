@@ -397,6 +397,8 @@ async function fetchOkrs(
         objetivo_id: o.id,
         objetivo: o.title,
         nivel: "time",
+        time: o.team?.name ?? null,
+        ciclo: cycleNameById.get(o.cycle_id) ?? null,
         titulo: k.title,
         unidade: k.unit ?? null,
         baseline: k.baseline ?? null,
@@ -406,8 +408,10 @@ async function fetchOkrs(
         progresso_pct: pct(progresses[i] ?? 0),
         status: k.status ?? null,
         responsavel: k.owner?.display_name ?? null,
-        kpi_vinculado: k.metric_id ?? null, // preenchido com nome no collectAnalysisExport
+        kpi_vinculado: k.metric_id ?? null,
         ultimo_checkin: k.last_checkin_at ?? null,
+        iniciativas_total: 0,
+        iniciativas_concluidas: 0,
       });
       allKrIds.push(k.id);
     });
