@@ -134,6 +134,7 @@ export interface ProjectRow {
   inicio: string | null;
   entrega: string | null;
   krs_vinculados: number;
+  krs_titulos: string | null;
   criado_em: string | null;
 }
 
@@ -145,7 +146,7 @@ export interface MilestoneRow {
   status: string | null;
   inicio: string | null;
   entrega: string | null;
-  owner_id: string | null;
+  owner: string | null;
   notas: string | null;
   criado_em: string | null;
 }
