@@ -91,10 +91,17 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.kpis.definitions);
 
-  // 3. KPIs — Inputs
+  // 3. KPIs — Inputs (denormalizado: cada linha carrega o contexto do KPI)
   addSheet(wb, "KPIs — Inputs", [
     { header: "KPI (ID)", key: "kpi_id", width: 38 },
     { header: "KPI", key: "kpi_nome", width: 40 },
+    { header: "Área", key: "area" },
+    { header: "Time", key: "time" },
+    { header: "Responsável", key: "responsavel", width: 26 },
+    { header: "Unidade", key: "unidade" },
+    { header: "Direção", key: "direcao" },
+    { header: "Frequência", key: "frequencia" },
+    { header: "Meta anual", key: "meta_ano" },
     { header: "Data ref.", key: "data_referencia", width: 14 },
     { header: "Período início", key: "periodo_inicio", width: 14 },
     { header: "Período fim", key: "periodo_fim", width: 14 },
