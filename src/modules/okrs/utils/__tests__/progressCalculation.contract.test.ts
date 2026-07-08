@@ -59,4 +59,20 @@ describe("progressCalculation — contract", () => {
     // baseline 0, current=-50, target=100 → piso 0%.
     expect(calculateProgress(0, -50, 100, "up")).toBe(0);
   });
+
+  describe("direction='down' com baseline ≤ target (KR-cap)", () => {
+    it("current abaixo do teto → 100% (caso MRR churn onboarding)", () => {
+      expect(calculateProgress(0, 6389.23, 6700, "down")).toBe(100);
+    });
+    it("current igual ao teto → 100%", () => {
+      expect(calculateProgress(0, 6700, 6700, "down")).toBe(100);
+    });
+    it("current acima do teto → penalidade suave (target/current)", () => {
+      expect(calculateProgress(0, 7370, 6700, "down")).toBeCloseTo(90.909, 2);
+    });
+    it("redução clássica (baseline > target) preserva fórmula linear", () => {
+      expect(calculateProgress(10000, 6389.23, 6700, "down")).toBeCloseTo(109.42, 1);
+    });
+  });
 });
+
