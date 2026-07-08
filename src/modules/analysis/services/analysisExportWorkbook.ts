@@ -143,6 +143,8 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Objetivo (ID)", key: "objetivo_id", width: 38 },
     { header: "Objetivo", key: "objetivo", width: 50 },
     { header: "Nível", key: "nivel" },
+    { header: "Time", key: "time", width: 24 },
+    { header: "Ciclo", key: "ciclo", width: 18 },
     { header: "Título", key: "titulo", width: 60 },
     { header: "Unidade", key: "unidade" },
     { header: "Baseline", key: "baseline" },
@@ -153,6 +155,8 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Status", key: "status" },
     { header: "Responsável", key: "responsavel" },
     { header: "KPI vinculado", key: "kpi_vinculado", width: 30 },
+    { header: "Iniciativas (total)", key: "iniciativas_total" },
+    { header: "Iniciativas (concluídas)", key: "iniciativas_concluidas" },
     { header: "Último check-in", key: "ultimo_checkin", width: 22 },
   ], payload.okrs.keyResults);
 
@@ -170,6 +174,25 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Autor", key: "autor" },
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.okrs.checkins);
+
+  // 7.1 OKRs — Iniciativas (o "como" — projetos leves que movem um KR)
+  addSheet(wb, "OKRs — Iniciativas", [
+    { header: "ID", key: "id", width: 38 },
+    { header: "KR (ID)", key: "kr_id", width: 38 },
+    { header: "KR", key: "kr_titulo", width: 50 },
+    { header: "Objetivo", key: "objetivo", width: 50 },
+    { header: "Time", key: "time", width: 24 },
+    { header: "Nome", key: "nome", width: 40 },
+    { header: "Descrição", key: "descricao", width: 60 },
+    { header: "Status", key: "status" },
+    { header: "Prioridade", key: "prioridade" },
+    { header: "Progresso (%)", key: "progresso_pct" },
+    { header: "Responsável", key: "responsavel", width: 26 },
+    { header: "Início", key: "inicio", width: 14 },
+    { header: "Entrega prevista", key: "entrega", width: 16 },
+    { header: "Notas", key: "notas", width: 50 },
+    { header: "Criado em", key: "criado_em", width: 22 },
+  ], payload.okrs.initiatives);
 
   // 8. Projetos
   addSheet(wb, "Projetos", [
