@@ -445,8 +445,17 @@ export function TeamKrFormDialog({
                       Meta definida pela KPI primária
                     </p>
                   )}
+                  {direction === 'down' &&
+                    !hasPrimaryKpi &&
+                    target !== '' &&
+                    (parseFloat(baseline) || 0) <= (parseFloat(target) || 0) && (
+                      <p className="text-xs text-muted-foreground">
+                        KR interpretada como limite (cap): progresso será 100% enquanto o valor atual estiver ≤ meta.
+                      </p>
+                    )}
                 </div>
               </div>
+
 
               <div className="grid grid-cols-2 gap-4">
                 <UnitSelect value={unit} onChange={setUnit} disabled={mutation.isPending || hasPrimaryKpi} showLabel={true} showCustomOption={true} />
