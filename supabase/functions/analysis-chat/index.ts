@@ -40,7 +40,10 @@ FORMATO:
 - Termine com **próximos passos** quando a pergunta admitir ação.`;
 
 const MAX_STEPS = 10;
-const DEFAULT_MODEL = "google/gemini-2.5-pro";
+// gemini-2.5-pro está sofrendo rate-limit crônico no Gateway; usamos flash como
+// default (tool-calling nativo, alta disponibilidade) e deixamos o pro na chain
+// de fallback só se o usuário pedir explicitamente.
+const DEFAULT_MODEL = "google/gemini-2.5-flash";
 
 interface ChatRequest {
   bu_id: string;
