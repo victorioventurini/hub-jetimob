@@ -29,6 +29,7 @@ export interface ExportPayload {
     objectives: ObjectiveRow[];
     keyResults: KeyResultRow[];
     checkins: CheckinRow[];
+    initiatives: InitiativeRow[];
   };
   projects: {
     projects: ProjectRow[];
@@ -37,6 +38,24 @@ export interface ExportPayload {
   overview: OverviewRow[];
   readme: string[];
   metodologia: string[];
+}
+
+export interface InitiativeRow {
+  id: string;
+  kr_id: string;
+  kr_titulo: string;
+  objetivo: string;
+  time: string | null;
+  nome: string;
+  descricao: string | null;
+  status: string | null;
+  prioridade: string | null;
+  progresso_pct: number | null;
+  responsavel: string | null;
+  inicio: string | null;
+  entrega: string | null;
+  notas: string | null;
+  criado_em: string | null;
 }
 
 export interface KpiDefinitionRow {
@@ -104,6 +123,8 @@ export interface KeyResultRow {
   objetivo_id: string;
   objetivo: string;
   nivel: "organizacional" | "time";
+  time: string | null;
+  ciclo: string | null;
   titulo: string;
   unidade: string | null;
   baseline: number | null;
@@ -115,6 +136,8 @@ export interface KeyResultRow {
   responsavel: string | null;
   kpi_vinculado: string | null;
   ultimo_checkin: string | null;
+  iniciativas_total: number;
+  iniciativas_concluidas: number;
 }
 
 export interface CheckinRow {
@@ -282,6 +305,7 @@ async function fetchOkrs(
   objectives: ObjectiveRow[];
   keyResults: KeyResultRow[];
   checkins: CheckinRow[];
+  initiatives: InitiativeRow[];
 }> {
   const yearStart = `${period.year}-01-01`;
   const yearEnd = `${period.year}-12-31`;
@@ -373,6 +397,8 @@ async function fetchOkrs(
         objetivo_id: o.id,
         objetivo: o.title,
         nivel: "time",
+        time: o.team?.name ?? null,
+        ciclo: cycleNameById.get(o.cycle_id) ?? null,
         titulo: k.title,
         unidade: k.unit ?? null,
         baseline: k.baseline ?? null,
@@ -382,8 +408,10 @@ async function fetchOkrs(
         progresso_pct: pct(progresses[i] ?? 0),
         status: k.status ?? null,
         responsavel: k.owner?.display_name ?? null,
-        kpi_vinculado: k.metric_id ?? null, // preenchido com nome no collectAnalysisExport
+        kpi_vinculado: k.metric_id ?? null,
         ultimo_checkin: k.last_checkin_at ?? null,
+        iniciativas_total: 0,
+        iniciativas_concluidas: 0,
       });
       allKrIds.push(k.id);
     });
@@ -419,6 +447,8 @@ async function fetchOkrs(
         objetivo_id: o.id,
         objetivo: o.title,
         nivel: "organizacional",
+        time: null,
+        ciclo: null,
         titulo: k.title,
         unidade: k.unit ?? null,
         baseline: k.baseline ?? null,
@@ -430,6 +460,8 @@ async function fetchOkrs(
         responsavel: k.owner?.display_name ?? null,
         kpi_vinculado: null,
         ultimo_checkin: null,
+        iniciativas_total: 0,
+        iniciativas_concluidas: 0,
       });
       allKrIds.push(k.id);
     });
@@ -475,7 +507,72 @@ async function fetchOkrs(
     }));
   }
 
-  return { cycles: cycleRows, objectives, keyResults, checkins };
+  // ── initiatives (só existem para team KRs) ──
+  const teamKrIds = keyResults.filter((k) => k.nivel === "time").map((k) => k.id);
+  let initiatives: InitiativeRow[] = [];
+  if (teamKrIds.length > 0) {
+    const { data: inis, error: iErr } = await supabase
+      .from("okr_initiatives")
+      .select(
+        "id, kr_id, name, description, status, priority, progress, owner_user_id, start_date, expected_end_date, notes, created_at",
+      )
+      .in("kr_id", teamKrIds)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true });
+    if (iErr) throw iErr;
+
+    const iniOwnerIds = Array.from(
+      new Set(((inis ?? []) as any[]).map((i) => i.owner_user_id).filter(Boolean)),
+    );
+    let iniOwnerMap = new Map<string, { display_name: string | null }>();
+    if (iniOwnerIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", iniOwnerIds);
+      iniOwnerMap = new Map((profs ?? []).map((p: any) => [p.id, { display_name: p.display_name }]));
+    }
+
+    const krIndex = new Map(keyResults.map((k) => [k.id, k]));
+    initiatives = ((inis ?? []) as any[]).map((i) => {
+      const kr = krIndex.get(i.kr_id);
+      return {
+        id: i.id,
+        kr_id: i.kr_id,
+        kr_titulo: kr?.titulo ?? "",
+        objetivo: kr?.objetivo ?? "",
+        time: kr?.time ?? null,
+        nome: i.name,
+        descricao: i.description ?? null,
+        status: i.status ?? null,
+        prioridade: i.priority ?? null,
+        progresso_pct: i.progress ?? null,
+        responsavel: nameFrom(iniOwnerMap, i.owner_user_id),
+        inicio: i.start_date ?? null,
+        entrega: i.expected_end_date ?? null,
+        notas: i.notes ?? null,
+        criado_em: i.created_at ?? null,
+      } satisfies InitiativeRow;
+    });
+
+    // enriquecer KRs com contagem de iniciativas
+    const countByKr = new Map<string, { total: number; done: number }>();
+    for (const i of initiatives) {
+      const c = countByKr.get(i.kr_id) ?? { total: 0, done: 0 };
+      c.total += 1;
+      if (i.status === "completed") c.done += 1;
+      countByKr.set(i.kr_id, c);
+    }
+    for (const kr of keyResults) {
+      const c = countByKr.get(kr.id);
+      if (c) {
+        kr.iniciativas_total = c.total;
+        kr.iniciativas_concluidas = c.done;
+      }
+    }
+  }
+
+  return { cycles: cycleRows, objectives, keyResults, checkins, initiatives };
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -699,9 +796,10 @@ function buildReadme(buName: string, period: ExportPeriod): string[] {
     ``,
     `COMO AS ABAS SE CONECTAM`,
     `• "KPIs — Inputs" refere-se a "KPIs — Definições" pela coluna KPI (ID).`,
-    `• "OKRs — KRs" refere-se a "OKRs — Objetivos" pela coluna Objetivo (ID) e, quando o KR é alimentado por um KPI, a coluna "KPI vinculado" mostra o nome do KPI (ver "KPIs — Definições" para meta/frequência).`,
-    `• "OKRs — Check-ins" refere-se a "OKRs — KRs" pela coluna KR (ID). Cada check-in é uma atualização semanal do valor atual do KR feita pelo responsável.`,
-    `• "Projetos" declara em "KRs vinculados (títulos)" quais Key Results o projeto pretende mover. "Projetos — Milestones" é filho de Projetos pelo campo Projeto (ID).`,
+    `• "OKRs — Objetivos" traz o nível (organizacional/time), o Time responsável (quando de time) e o Ciclo. "OKRs — KRs" herda esses campos para permitir agrupar KRs por time ou pela organização toda sem cruzar tabelas.`,
+    `• "OKRs — Check-ins" refere-se a "OKRs — KRs" pela coluna KR (ID). Cada check-in é uma atualização semanal do valor atual do KR feita pelo responsável — juntos formam a evolução histórica de cada KR no período.`,
+    `• "OKRs — Iniciativas" é o "como" de cada KR de time (projetos leves/tarefas que o time executa para mover o KR). Cada iniciativa aponta para um KR (kr_id) e traz status, prioridade, progresso, responsável e prazos. Nas linhas de "OKRs — KRs" há as colunas "Iniciativas (total)" e "Iniciativas (concluídas)" pré-agregadas.`,
+    `• "Projetos" declara em "KRs vinculados (títulos)" quais Key Results o projeto pretende mover. "Projetos — Milestones" é filho de Projetos pelo campo Projeto (ID). Projetos ≠ Iniciativas: projetos são iniciativas grandes/multi-time gerenciadas no módulo de projetos; iniciativas de OKR são leves e vivem sob um KR.`,
     ``,
     `COMO INTERPRETAR OS STATUS`,
     `RAG dos inputs de KPI: green = dentro/acima da meta do período; yellow = em atenção; red = abaixo. O corte é feito pelas gates definidas no KPI.`,
