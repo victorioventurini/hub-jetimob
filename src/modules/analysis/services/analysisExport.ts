@@ -595,7 +595,13 @@ async function fetchOkrs(
 async function fetchProjects(
   supabase: SupabaseClient,
   buId: string,
-): Promise<{ projects: ProjectRow[]; milestones: MilestoneRow[]; projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }> }> {
+  period: ExportPeriod,
+): Promise<{
+  projects: ProjectRow[];
+  milestones: MilestoneRow[];
+  evolution: ProjectEvolutionRow[];
+  projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }>;
+}> {
   const { data, error } = await supabase
     .from("projects")
     .select(
@@ -607,7 +613,7 @@ async function fetchProjects(
          team_kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title),
          org_kr:okr_org_key_results!project_krs_org_key_result_id_fkey(id, title)
        ),
-       project_milestones(id, name, status, start_date, due_date, owner_id, notes, created_at, deleted_at)`,
+       project_milestones(id, name, status, start_date, due_date, owner_id, notes, created_at, updated_at, deleted_at)`,
     )
     .eq("bu_id", buId)
     .is("deleted_at", null)
