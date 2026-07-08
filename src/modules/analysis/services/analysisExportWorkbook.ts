@@ -177,6 +177,7 @@ export async function buildAnalysisWorkbook(payload: ExportPayload): Promise<Blo
     { header: "Início", key: "inicio", width: 14 },
     { header: "Entrega", key: "entrega", width: 14 },
     { header: "KRs vinculados", key: "krs_vinculados" },
+    { header: "KRs vinculados (títulos)", key: "krs_titulos", width: 60 },
     { header: "Criado em", key: "criado_em", width: 22 },
   ], payload.projects.projects);
 
