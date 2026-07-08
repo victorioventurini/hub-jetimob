@@ -96,7 +96,7 @@ export function useCreateAnalysisThread() {
           bu_id: currentBu.id,
           owner_profile_id: realProfileId,
           title: title?.trim() || "Nova conversa",
-          model: "google/gemini-2.5-pro",
+          model: "google/gemini-2.5-flash",
         })
         .select("id")
         .single();
