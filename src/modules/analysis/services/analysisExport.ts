@@ -291,7 +291,7 @@ async function fetchOkrs(
        team:teams!okr_team_objectives_team_id_fkey(id, name),
        key_results:okr_team_key_results(
          id, team_objective_id, title, baseline, current_value, target, direction,
-         unit, status, owner_user_id, last_checkin_at, cancelled_at, deleted_at,
+         unit, status, owner_user_id, metric_id, last_checkin_at, cancelled_at, deleted_at,
          owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name)
        )`,
     )
