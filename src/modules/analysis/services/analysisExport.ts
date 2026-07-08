@@ -34,6 +34,7 @@ export interface ExportPayload {
   projects: {
     projects: ProjectRow[];
     milestones: MilestoneRow[];
+    evolution: ProjectEvolutionRow[];
   };
   overview: OverviewRow[];
   readme: string[];
@@ -182,6 +183,18 @@ export interface MilestoneRow {
   notas: string | null;
   criado_em: string | null;
 }
+
+export interface ProjectEvolutionRow {
+  project_id: string;
+  projeto: string;
+  mes: string; // YYYY-MM
+  milestones_totais: number;
+  milestones_concluidos: number;
+  progresso_pct: number;
+  status_projeto: string | null;
+}
+
+
 
 export interface OverviewRow {
   metrica: string;
@@ -582,7 +595,13 @@ async function fetchOkrs(
 async function fetchProjects(
   supabase: SupabaseClient,
   buId: string,
-): Promise<{ projects: ProjectRow[]; milestones: MilestoneRow[]; projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }> }> {
+  period: ExportPeriod,
+): Promise<{
+  projects: ProjectRow[];
+  milestones: MilestoneRow[];
+  evolution: ProjectEvolutionRow[];
+  projectKrLinks: Array<{ project_id: string; kr_id: string; kind: "team" | "org" }>;
+}> {
   const { data, error } = await supabase
     .from("projects")
     .select(
@@ -594,7 +613,7 @@ async function fetchProjects(
          team_kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title),
          org_kr:okr_org_key_results!project_krs_org_key_result_id_fkey(id, title)
        ),
-       project_milestones(id, name, status, start_date, due_date, owner_id, notes, created_at, deleted_at)`,
+       project_milestones(id, name, status, start_date, due_date, owner_id, notes, created_at, updated_at, deleted_at)`,
     )
     .eq("bu_id", buId)
     .is("deleted_at", null)
@@ -681,7 +700,47 @@ async function fetchProjects(
     }
   }
 
-  return { projects, milestones, projectKrLinks };
+  // ── evolução mensal derivada do histórico de milestones ──
+  // Para cada mês entre period.start e min(period.end, hoje), calcula:
+  //   total = milestones criados até o fim do mês
+  //   concluídos = milestones done/completed cujo updated_at ≤ fim do mês (aproximação da data de conclusão)
+  // Observação: não persistimos completed_at no milestone; usamos updated_at como melhor proxy.
+  const evolution: ProjectEvolutionRow[] = [];
+  const startDate = new Date(period.start + "T00:00:00Z");
+  const endCap = new Date(Math.min(new Date(period.end + "T00:00:00Z").getTime(), Date.now()));
+  const months: Array<{ key: string; end: Date }> = [];
+  const cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1));
+  while (cursor <= endCap) {
+    const monthEnd = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0, 23, 59, 59));
+    const key = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`;
+    months.push({ key, end: monthEnd > endCap ? endCap : monthEnd });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  for (const p of (data ?? []) as any[]) {
+    const ms = ((p.project_milestones ?? []) as any[]).filter((m) => !m.deleted_at);
+    if (ms.length === 0) continue;
+    for (const { key, end } of months) {
+      const endMs = end.getTime();
+      const total = ms.filter((m) => new Date(m.created_at).getTime() <= endMs).length;
+      const doneCount = ms.filter(
+        (m) =>
+          (m.status === "done" || m.status === "completed") &&
+          new Date(m.updated_at ?? m.created_at).getTime() <= endMs,
+      ).length;
+      if (total === 0) continue;
+      evolution.push({
+        project_id: p.id,
+        projeto: p.name,
+        mes: key,
+        milestones_totais: total,
+        milestones_concluidos: doneCount,
+        progresso_pct: pct((doneCount / total) * 100),
+        status_projeto: p.status ?? null,
+      });
+    }
+  }
+
+  return { projects, milestones, evolution, projectKrLinks };
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -757,7 +816,7 @@ export async function collectAnalysisExport(params: {
   const [{ definitions, inputs }, okrs, projects] = await Promise.all([
     fetchKpis(params.supabase, params.bu.id, params.period),
     fetchOkrs(params.supabase, params.bu.id, params.period),
-    fetchProjects(params.supabase, params.bu.id),
+    fetchProjects(params.supabase, params.bu.id, params.period),
   ]);
 
   // enrichment: resolver nome do KPI vinculado em cada KR (o service armazena o metric_id em kpi_vinculado)
@@ -774,7 +833,11 @@ export async function collectAnalysisExport(params: {
     generatedBy: params.generatedBy,
     kpis: { definitions, inputs },
     okrs: { ...okrs, keyResults: enrichedKrs },
-    projects: { projects: projects.projects, milestones: projects.milestones },
+    projects: {
+      projects: projects.projects,
+      milestones: projects.milestones,
+      evolution: projects.evolution,
+    },
     readme: buildReadme(params.bu.name, params.period),
     metodologia: buildMetodologia(),
   };
@@ -800,6 +863,7 @@ function buildReadme(buName: string, period: ExportPeriod): string[] {
     `• "OKRs — Check-ins" refere-se a "OKRs — KRs" pela coluna KR (ID). Cada check-in é uma atualização semanal do valor atual do KR feita pelo responsável — juntos formam a evolução histórica de cada KR no período.`,
     `• "OKRs — Iniciativas" é o "como" de cada KR de time (projetos leves/tarefas que o time executa para mover o KR). Cada iniciativa aponta para um KR (kr_id) e traz status, prioridade, progresso, responsável e prazos. Nas linhas de "OKRs — KRs" há as colunas "Iniciativas (total)" e "Iniciativas (concluídas)" pré-agregadas.`,
     `• "Projetos" declara em "KRs vinculados (títulos)" quais Key Results o projeto pretende mover. "Projetos — Milestones" é filho de Projetos pelo campo Projeto (ID). Projetos ≠ Iniciativas: projetos são iniciativas grandes/multi-time gerenciadas no módulo de projetos; iniciativas de OKR são leves e vivem sob um KR.`,
+    `• "Projetos — Evolução" é a série temporal de progresso de cada projeto (uma linha por mês por projeto). Progresso do mês = milestones concluídos até o fim daquele mês / milestones existentes até o fim daquele mês. Como não persistimos data de conclusão do milestone, usamos updated_at como aproximação — para milestones concluídos há muito tempo isso é preciso; para milestones editados após concluir, a data reflete a última edição. Trate a curva como direcional, não contábil.`,
     ``,
     `COMO INTERPRETAR OS STATUS`,
     `RAG dos inputs de KPI: green = dentro/acima da meta do período; yellow = em atenção; red = abaixo. O corte é feito pelas gates definidas no KPI.`,
