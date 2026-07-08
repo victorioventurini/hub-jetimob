@@ -35,6 +35,8 @@ export interface ExportPayload {
     milestones: MilestoneRow[];
   };
   overview: OverviewRow[];
+  readme: string[];
+  metodologia: string[];
 }
 
 export interface KpiDefinitionRow {
