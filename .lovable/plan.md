@@ -1,83 +1,66 @@
-## Objetivo
+## Diagnóstico
 
-Adicionar uma página `/analysis/export` no módulo Análise Estratégica que gera um arquivo Excel (`.xlsx`) multi-abas com todos os dados de performance da BU ativa (Jetimob quando selecionada) para o ano corrente (2026 YTD: Q1 + Q2), pronto para upload no Claude.
+KR em questão no banco:
+- `direction = down`, `unit = R$`
+- `baseline = 0`, `target = 6.700`, `current = 6.389,23`
 
-## UX
+Fórmula canônica atual (`_shared/okr-progress.ts` e `progressCalculation.ts`), branch `down`:
 
-Nova rota `/analysis/export` (protegida por `ModuleRoute moduleSlug="analysis"`, admin-only), acessível também via botão na `AnalysisHomePage`.
+```
+progress = (baseline − current) / (baseline − target) × 100
+        = (0 − 6389,23) / (0 − 6700) × 100 ≈ 95,36%  → arredonda p/ 95%
+```
 
-Layout:
-- Header: "Exportar Performance da BU"
-- Cards de configuração (read-only nesta v1, mostrando o que será exportado):
-  - BU: `currentBu.name` (badge)
-  - Período: "2026 YTD — Q1 + Q2" (badge)
-  - Abas incluídas: Overview, KPIs, OKRs, Projetos
-- Botão principal `Gerar planilha (.xlsx)` com loading state
-- Ao finalizar: preview do sumário (nº de KPIs, OKRs, projetos exportados) + download automático
-- Toast de sucesso/erro
+O número "bate" por coincidência aritmética, mas a semântica está invertida. Para uma KR de **redução real**, `baseline` precisa ser **maior** que `target` (parte-se de um valor alto e reduz-se até o teto). Quando `baseline ≤ target` (caso típico de KR-cap: "limitar a ≤ X"), a fórmula linear não faz sentido — o correto seria: se `current ≤ target`, a meta está sendo cumprida (100%); se ultrapassar, começa a cair.
 
-## Estrutura das abas
+Hoje o KR mostra 95% mesmo estando **abaixo** do teto (deveria ser ≥ 100%). Isso induz o time a agir como se estivesse perto de perder a meta, quando na verdade já está dentro.
 
-**1. Overview** — 1 linha por seção
-- BU, período, data de geração, gerado por
-- Totais: # KPIs, # KPIs on-track/at-risk/off-track, # OKRs, % progresso médio OKRs, # projetos, # projetos por saúde
+## Escopo do ajuste
 
-**2. KPIs — Definições** (1 linha por KPI)
-- id, nome, descrição, área, time, responsável, unidade, frequência, direção (higher/lower better), tipo de input, meta anual, gates (base/target/stretch), primary_kpi (bool), created_at
+1. **Cálculo (SSOT duplo)** — tratar `direction = down` com `baseline ≤ target` como KR-cap:
+   - `src/modules/okrs/utils/progressCalculation.ts` → função `calculateDirectionalProgress`
+   - `supabase/functions/_shared/okr-progress.ts` → função `calcDirectionalProgress`
 
-**3. KPIs — Inputs** (1 linha por input mês/semana)
-- kpi_id, kpi_nome, período (date), valor real, meta do período, gate atingido, confidence, observação, autor, created_at
+   Regra nova (aplicada só quando `direction === 'down'` e `baseline ≤ target`):
+   - `current ≤ target` → `100`
+   - `current > target` → `Math.max(0, (target / current) × 100)` (penalidade suave em função do estouro; converge a 0 conforme `current → ∞` e vale ~91% quando estoura 10%).
 
-**4. OKRs — Objetivos** (1 linha por objetivo)
-- id, ciclo, nome, descrição, owner, área, time, status, progresso %, created_at
+   Comportamento das KRs de redução legítimas (`baseline > target`) permanece idêntico.
 
-**5. OKRs — Key Results** (1 linha por KR)
-- kr_id, objetivo, nome, unidade, baseline, meta, atual, progresso % (via `calculateProgress`), status, primary_kpi_id (se houver)
+2. **Testes** — cobrir o caso em `supabase/functions/_shared/__tests__/okr-progress.contract.test.ts` e no teste espelho do frontend (se existir). Cenários:
+   - `down, baseline=0, target=6700, current=6389.23` → 100
+   - `down, baseline=0, target=6700, current=6700` → 100
+   - `down, baseline=0, target=6700, current=7370` (10% estouro) → ~91
+   - `down, baseline=10000, target=6700, current=6389.23` (redução clássica) → mantém fórmula antiga (~109% sem clamp)
 
-**6. OKRs — Check-ins** (1 linha por check-in)
-- kr_id, kr_nome, data, valor, progresso, confidence, comentário, autor
+3. **Validação no wizard de KR** (defensiva, mas leve) — em `src/modules/okrs/**` no passo de KR com `direction = down`:
+   - Se `baseline ≤ target`, exibir hint informativo: "KR interpretada como limite (cap). Progresso será 100% enquanto o valor estiver ≤ meta."
+   - Não bloquear salvamento (não quebrar KRs legadas nem casos legítimos de cap).
 
-**7. Projetos — Projetos** (1 linha por projeto)
-- id, nome, descrição, status, saúde, prioridade, owner, área, time, data início/fim, % progresso, created_at
+4. **Documentação** — adicionar nota em `docs/canonical/modules/okrs.md` (ou no doc de progress canon já referenciado no cabeçalho do SSOT) descrevendo o modo cap e a regra `baseline ≤ target ⇒ cap`.
 
-**8. Projetos — Milestones** (1 linha por milestone)
-- project_id, project_nome, milestone, status, due_date, completed_at, owner
+## Fora de escopo
 
-## Implementação técnica
+- Nenhuma migration no banco. `baseline`, `target`, `current_value` permanecem como estão.
+- Nada relacionado a KPI primário / effective_current_value.
+- Nada no cálculo de `up` ou `maintain`.
 
-**Dependência nova**
-- `bun add exceljs` (gera XLSX no browser, sem servidor)
+## Detalhes técnicos
 
-**Arquivos novos**
-- `src/modules/analysis/pages/AnalysisExportPage.tsx` — página + botão
-- `src/modules/analysis/hooks/useAnalysisExport.ts` — orquestra fetches, respeitando `currentBuId` (regra Core: BU Isolation) e filtro `.is("deleted_at", null)`
-- `src/modules/analysis/services/analysisExport.ts` — queries por seção (uma função por aba) usando o cliente BU-scoped; SEM `select("*")` (regra Core)
-- `src/modules/analysis/services/analysisExportWorkbook.ts` — monta o `ExcelJS.Workbook`, aplica cabeçalhos com bold/freeze, autoWidth, formatação de datas/percentuais, e dispara o download via Blob
+Trecho `down` proposto (idêntico nos dois arquivos, mudando só sintaxe TS):
 
-**Rota**
-- Registrar em `src/routes/analysis.routes.tsx`: `<Route path="/analysis/export" element={<AnalysisRoute requiresBuAdmin><AnalysisExportPage/></AnalysisRoute>} />`
+```ts
+// direction === "down"
+if (baseline <= target) {
+  // KR-cap: "manter/limitar a ≤ target"
+  if (current <= target) return 100;
+  return Math.max(0, (target / current) * 100);
+}
+if (baseline === target) return current <= target ? 100 : 0; // já coberto acima, mantido por clareza
+return Math.max(0, ((baseline - current) / (baseline - target)) * 100);
+```
 
-**Fontes de dados (tabelas já existentes)**
-- KPIs: `kpi_definitions`, `kpi_inputs` (filtrar por `bu_id`, `date` entre 2026-01-01 e hoje)
-- OKRs: `cycles` (tipo `quarter`, ano 2026), `okr_objectives`, `okr_key_results`, `okr_check_ins`, joins por `cycle_id in (...)`
-- Projetos: `projects`, `project_milestones` (filtro `bu_id`, `deleted_at is null`, atividade em 2026)
-- Nomes/áreas/times: joins com `profiles`, `areas`, `teams`
+## Verificação
 
-**Regras respeitadas**
-- BU Isolation via `currentBuId` sincrono (Core)
-- Soft-deletes: `deleted_at is null` (e `cancelled_at is null` onde aplicável, exceto `okr_initiatives`/`project_milestones` que usam só `deleted_at`)
-- Colunas explícitas (sem `select("*")`)
-- Progresso de KR via `calculateProgress` (Core: OKR Progress Canon)
-- Query keys via `src/lib/queryKeys/*.ts`
-- Nenhuma mudança em Edge Functions / backend
-
-**Nome do arquivo**
-`jetimob-performance-2026-YTD-YYYYMMDD.xlsx` (slug do nome da BU)
-
-## Fora do escopo desta v1
-
-- Filtros customizados de período/BU na UI (fixo em BU ativa + 2026 YTD conforme confirmado)
-- Agendamento/e-mail
-- Exportar iniciativas, addendums, rituais, decisões, scorecards
-
-Confirme para implementar.
+- `bunx vitest run supabase/functions/_shared/__tests__/okr-progress.contract.test.ts`
+- Recarregar a página da KR no preview e confirmar que passa a exibir 100% (com R$ 6.389,23 / R$ 6.700).
