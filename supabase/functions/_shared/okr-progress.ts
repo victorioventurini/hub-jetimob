@@ -40,9 +40,11 @@ function calcDirectionalProgress(
   // Fórmula linear clássica só faz sentido quando há redução real (baseline > target).
   if (baseline <= target) {
     if (current <= target) return 100;
+    if (baseline === target) return 0; // sem range → binário (contrato histórico)
     return Math.max(0, (target / current) * 100);
   }
   return Math.max(0, ((baseline - current) / (baseline - target)) * 100);
+
 
 }
 
