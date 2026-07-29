@@ -252,14 +252,17 @@ async function runMaintenance(supabase: EdgeSupabaseClient): Promise<Maintenance
   // Auto-transition cycle statuses
   try {
     const { data: cycleData, error: cycleErr } = await supabase.rpc("auto_transition_cycle_statuses");
-    if (!cycleErr && cycleData) {
+    if (cycleErr) {
+      console.error("[cron-dispatcher] auto_transition_cycle_statuses FAILED:", cycleErr.message ?? cycleErr);
+    } else if (cycleData) {
       result.cycles_activated = cycleData.activated || 0;
       result.cycles_closed = cycleData.closed || 0;
       console.log(`[cron-dispatcher] Cycle transitions: ${result.cycles_activated} activated, ${result.cycles_closed} closed`);
     }
-  } catch {
-    console.log("[cron-dispatcher] auto_transition_cycle_statuses RPC not available");
+  } catch (e) {
+    console.error("[cron-dispatcher] auto_transition_cycle_statuses threw:", e instanceof Error ? e.message : String(e));
   }
+
 
   return result;
 }
