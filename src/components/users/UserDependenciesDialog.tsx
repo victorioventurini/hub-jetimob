@@ -195,8 +195,18 @@ export function UserDependenciesDialog({
            teamObjectivesAssigned && teamKrsAssigned && orgObjectivesAssigned && orgKrsAssigned && routingRulesAssigned;
   }, [deps.mandatory, transfers]);
 
+  /** Build leadership transfer items, skipping "leave vacant" and unset selects */
+  const leadershipItems = (type: LeadershipDependencyType, items: DependencyItem[]) =>
+    items
+      .filter((i) => {
+        const v = transfers[type][i.id];
+        return !!v && v !== NONE_VALUE;
+      })
+      .map((i) => ({ id: i.id, newOwnerId: transfers[type][i.id] }));
+
   const handleConfirm = async () => {
     if (!profileId) return;
+
 
     const config: TransferConfig = {
       profileId,
