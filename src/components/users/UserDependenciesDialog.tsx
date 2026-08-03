@@ -96,16 +96,7 @@ export function UserDependenciesDialog({
   const { profiles, isLoading: profilesLoading } = useAssetProfiles();
 
   // State for transfers - maps item ID to new owner ID
-  const [transfers, setTransfers] = useState<TransferState>({
-    kpis: {},
-    initiatives: {},
-    tickets: {},
-    teamObjectives: {},
-    teamKrs: {},
-    orgObjectives: {},
-    orgKrs: {},
-    routingRules: {},
-  });
+  const [transfers, setTransfers] = useState<TransferState>(EMPTY_TRANSFERS);
 
   // Bulk transfer state
   const [bulkOwner, setBulkOwner] = useState<string>("");
@@ -124,7 +115,7 @@ export function UserDependenciesDialog({
       .toUpperCase()
       .slice(0, 2);
 
-  const handleTransferChange = (type: MandatoryDependencyType, itemId: string, newOwnerId: string) => {
+  const handleTransferChange = (type: DependencyType, itemId: string, newOwnerId: string) => {
     setTransfers((prev) => ({
       ...prev,
       [type]: {
@@ -138,6 +129,7 @@ export function UserDependenciesDialog({
     if (!bulkOwner) return;
 
     const newTransfers: TransferState = {
+      ...EMPTY_TRANSFERS,
       kpis: {},
       initiatives: {},
       tickets: {},
@@ -146,6 +138,9 @@ export function UserDependenciesDialog({
       orgObjectives: {},
       orgKrs: {},
       routingRules: {},
+      teamLeaderships: {},
+      areaLeaderships: {},
+      areaCoLeaderships: {},
     };
 
     deps.mandatory.kpis.forEach((k) => {
@@ -172,9 +167,19 @@ export function UserDependenciesDialog({
     deps.mandatory.routingRules.forEach((r) => {
       newTransfers.routingRules[r.id] = bulkOwner;
     });
+    deps.optional.teams.forEach((t) => {
+      newTransfers.teamLeaderships[t.id] = bulkOwner;
+    });
+    deps.optional.areaLeaderships.forEach((a) => {
+      newTransfers.areaLeaderships[a.id] = bulkOwner;
+    });
+    deps.optional.areaCoLeaderships.forEach((a) => {
+      newTransfers.areaCoLeaderships[a.id] = bulkOwner;
+    });
 
     setTransfers(newTransfers);
   };
+
 
   // Check if all mandatory dependencies have been assigned
   const allMandatoryAssigned = useMemo(() => {
