@@ -186,6 +186,15 @@ export function useTransferDependencies() {
         if (updateError) throw updateError;
       }
 
+      // 1.85 Transfer Asset Recommendations
+      for (const item of transfers.assetRecommendations ?? []) {
+        const { error } = await client
+          .from("asset_recommendations")
+          .update({ owner_user_id: item.newOwnerId, updated_at: now })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+
       // ============================================================
       // 1.9 LEADERSHIP TRANSFERS (optional) - new leader per item
       // ============================================================
