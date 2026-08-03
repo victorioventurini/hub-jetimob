@@ -57,16 +57,32 @@ type MandatoryDependencyType =
   | "orgKrs"
   | "routingRules";
 
-interface TransferState {
-  kpis: Record<string, string>;
-  initiatives: Record<string, string>;
-  tickets: Record<string, string>;
-  teamObjectives: Record<string, string>;
-  teamKrs: Record<string, string>;
-  orgObjectives: Record<string, string>;
-  orgKrs: Record<string, string>;
-  routingRules: Record<string, string>;
-}
+type LeadershipDependencyType =
+  | "teamLeaderships"
+  | "areaLeaderships"
+  | "areaCoLeaderships";
+
+type DependencyType = MandatoryDependencyType | LeadershipDependencyType;
+
+/** Sentinel used in the select to explicitly leave the leadership vacant */
+const NONE_VALUE = "__none__";
+
+type TransferState = Record<DependencyType, Record<string, string>>;
+
+const EMPTY_TRANSFERS: TransferState = {
+  kpis: {},
+  initiatives: {},
+  tickets: {},
+  teamObjectives: {},
+  teamKrs: {},
+  orgObjectives: {},
+  orgKrs: {},
+  routingRules: {},
+  teamLeaderships: {},
+  areaLeaderships: {},
+  areaCoLeaderships: {},
+};
+
 
 export function UserDependenciesDialog({
   open,
