@@ -225,6 +225,9 @@ export function UserDependenciesDialog({
         routingRules: deps.mandatory.routingRules
           .filter((r) => transfers.routingRules[r.id])
           .map((r) => ({ id: r.id, newOwnerId: transfers.routingRules[r.id] })),
+        teamLeaderships: leadershipItems("teamLeaderships", deps.optional.teams),
+        areaLeaderships: leadershipItems("areaLeaderships", deps.optional.areaLeaderships),
+        areaCoLeaderships: leadershipItems("areaCoLeaderships", deps.optional.areaCoLeaderships),
       },
       autoClear: {
         teamLeaderships: deps.optional.teams.map((t) => t.id),
@@ -242,9 +245,11 @@ export function UserDependenciesDialog({
     title: string,
     icon: React.ReactNode,
     items: DependencyItem[],
-    type: MandatoryDependencyType
+    type: DependencyType,
+    options?: { allowNone?: boolean; placeholder?: string; noneLabel?: string }
   ) => {
     if (items.length === 0) return null;
+    const allowNone = options?.allowNone ?? false;
 
     return (
       <div className="space-y-3">
@@ -268,10 +273,17 @@ export function UserDependenciesDialog({
                 value={transfers[type][item.id] || ""}
                 onValueChange={(v) => handleTransferChange(type, item.id, v)}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Novo responsável" />
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder={options?.placeholder ?? "Novo responsável"} />
                 </SelectTrigger>
                 <SelectContent>
+                  {allowNone && (
+                    <SelectItem value={NONE_VALUE}>
+                      <span className="text-muted-foreground">
+                        {options?.noneLabel ?? "Remover liderança (deixar vago)"}
+                      </span>
+                    </SelectItem>
+                  )}
                   {availableProfiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <div className="flex items-center gap-2">
@@ -293,6 +305,7 @@ export function UserDependenciesDialog({
       </div>
     );
   };
+
 
   const renderOptionalBadges = (title: string, icon: React.ReactNode, items: DependencyItem[]) => {
     if (items.length === 0) return null;
