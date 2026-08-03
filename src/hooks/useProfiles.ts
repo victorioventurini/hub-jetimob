@@ -20,6 +20,12 @@ export interface TransferConfig {
     orgObjectives: TransferItem[];
     orgKrs: TransferItem[];
     routingRules: TransferItem[];
+    /** Optional: new leader per team ID */
+    teamLeaderships?: TransferItem[];
+    /** Optional: new leader per area ID */
+    areaLeaderships?: TransferItem[];
+    /** Optional: new co-leader per area ID */
+    areaCoLeaderships?: TransferItem[];
   };
   /** Items to auto-clear (SET NULL) - don't need newOwnerId */
   autoClear?: {
@@ -30,6 +36,7 @@ export interface TransferConfig {
     kpiContributions: string[];      // kpi_data_contributors IDs
   };
 }
+
 
 /**
  * POST-BU hook: Only executes mutations when BU is selected.
@@ -178,8 +185,38 @@ export function useTransferDependencies() {
       }
 
       // ============================================================
-      // 2. OPTIONAL AUTO-CLEAR - SET NULL or remove from arrays
+      // 1.9 LEADERSHIP TRANSFERS (optional) - new leader per item
       // ============================================================
+      for (const item of transfers.teamLeaderships ?? []) {
+        const { error } = await client
+          .from("teams")
+          .update({ leader_user_id: item.newOwnerId, updated_at: now })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+
+      for (const item of transfers.areaLeaderships ?? []) {
+        const { error } = await client
+          .from("areas")
+          .update({ leader_user_id: item.newOwnerId, updated_at: now })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+
+      for (const item of transfers.areaCoLeaderships ?? []) {
+        const { error } = await client
+          .from("areas")
+          .update({ co_leader_user_id: item.newOwnerId, updated_at: now })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+
+      // ============================================================
+      // 2. OPTIONAL AUTO-CLEAR - SET NULL or remove from arrays
+      //    (residual: only items not transferred above still match)
+      // ============================================================
+
+
 
       // 2.1 Clear team leader (SET NULL)
       const { error: teamsError } = await client

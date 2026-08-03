@@ -57,16 +57,32 @@ type MandatoryDependencyType =
   | "orgKrs"
   | "routingRules";
 
-interface TransferState {
-  kpis: Record<string, string>;
-  initiatives: Record<string, string>;
-  tickets: Record<string, string>;
-  teamObjectives: Record<string, string>;
-  teamKrs: Record<string, string>;
-  orgObjectives: Record<string, string>;
-  orgKrs: Record<string, string>;
-  routingRules: Record<string, string>;
-}
+type LeadershipDependencyType =
+  | "teamLeaderships"
+  | "areaLeaderships"
+  | "areaCoLeaderships";
+
+type DependencyType = MandatoryDependencyType | LeadershipDependencyType;
+
+/** Sentinel used in the select to explicitly leave the leadership vacant */
+const NONE_VALUE = "__none__";
+
+type TransferState = Record<DependencyType, Record<string, string>>;
+
+const EMPTY_TRANSFERS: TransferState = {
+  kpis: {},
+  initiatives: {},
+  tickets: {},
+  teamObjectives: {},
+  teamKrs: {},
+  orgObjectives: {},
+  orgKrs: {},
+  routingRules: {},
+  teamLeaderships: {},
+  areaLeaderships: {},
+  areaCoLeaderships: {},
+};
+
 
 export function UserDependenciesDialog({
   open,
@@ -80,16 +96,7 @@ export function UserDependenciesDialog({
   const { profiles, isLoading: profilesLoading } = useAssetProfiles();
 
   // State for transfers - maps item ID to new owner ID
-  const [transfers, setTransfers] = useState<TransferState>({
-    kpis: {},
-    initiatives: {},
-    tickets: {},
-    teamObjectives: {},
-    teamKrs: {},
-    orgObjectives: {},
-    orgKrs: {},
-    routingRules: {},
-  });
+  const [transfers, setTransfers] = useState<TransferState>(EMPTY_TRANSFERS);
 
   // Bulk transfer state
   const [bulkOwner, setBulkOwner] = useState<string>("");
@@ -108,7 +115,7 @@ export function UserDependenciesDialog({
       .toUpperCase()
       .slice(0, 2);
 
-  const handleTransferChange = (type: MandatoryDependencyType, itemId: string, newOwnerId: string) => {
+  const handleTransferChange = (type: DependencyType, itemId: string, newOwnerId: string) => {
     setTransfers((prev) => ({
       ...prev,
       [type]: {
@@ -122,6 +129,7 @@ export function UserDependenciesDialog({
     if (!bulkOwner) return;
 
     const newTransfers: TransferState = {
+      ...EMPTY_TRANSFERS,
       kpis: {},
       initiatives: {},
       tickets: {},
@@ -130,6 +138,9 @@ export function UserDependenciesDialog({
       orgObjectives: {},
       orgKrs: {},
       routingRules: {},
+      teamLeaderships: {},
+      areaLeaderships: {},
+      areaCoLeaderships: {},
     };
 
     deps.mandatory.kpis.forEach((k) => {
@@ -156,9 +167,19 @@ export function UserDependenciesDialog({
     deps.mandatory.routingRules.forEach((r) => {
       newTransfers.routingRules[r.id] = bulkOwner;
     });
+    deps.optional.teams.forEach((t) => {
+      newTransfers.teamLeaderships[t.id] = bulkOwner;
+    });
+    deps.optional.areaLeaderships.forEach((a) => {
+      newTransfers.areaLeaderships[a.id] = bulkOwner;
+    });
+    deps.optional.areaCoLeaderships.forEach((a) => {
+      newTransfers.areaCoLeaderships[a.id] = bulkOwner;
+    });
 
     setTransfers(newTransfers);
   };
+
 
   // Check if all mandatory dependencies have been assigned
   const allMandatoryAssigned = useMemo(() => {
@@ -174,8 +195,27 @@ export function UserDependenciesDialog({
            teamObjectivesAssigned && teamKrsAssigned && orgObjectivesAssigned && orgKrsAssigned && routingRulesAssigned;
   }, [deps.mandatory, transfers]);
 
+  const hasLeaderships =
+    deps.optional.teams.length > 0 ||
+    deps.optional.areaLeaderships.length > 0 ||
+    deps.optional.areaCoLeaderships.length > 0;
+
+  const otherOptionalCount =
+    deps.optional.krCoResponsible.length + deps.optional.kpiContributions.length;
+
+  /** Build leadership transfer items, skipping "leave vacant" and unset selects */
+
+  const leadershipItems = (type: LeadershipDependencyType, items: DependencyItem[]) =>
+    items
+      .filter((i) => {
+        const v = transfers[type][i.id];
+        return !!v && v !== NONE_VALUE;
+      })
+      .map((i) => ({ id: i.id, newOwnerId: transfers[type][i.id] }));
+
   const handleConfirm = async () => {
     if (!profileId) return;
+
 
     const config: TransferConfig = {
       profileId,
@@ -204,6 +244,9 @@ export function UserDependenciesDialog({
         routingRules: deps.mandatory.routingRules
           .filter((r) => transfers.routingRules[r.id])
           .map((r) => ({ id: r.id, newOwnerId: transfers.routingRules[r.id] })),
+        teamLeaderships: leadershipItems("teamLeaderships", deps.optional.teams),
+        areaLeaderships: leadershipItems("areaLeaderships", deps.optional.areaLeaderships),
+        areaCoLeaderships: leadershipItems("areaCoLeaderships", deps.optional.areaCoLeaderships),
       },
       autoClear: {
         teamLeaderships: deps.optional.teams.map((t) => t.id),
@@ -221,9 +264,11 @@ export function UserDependenciesDialog({
     title: string,
     icon: React.ReactNode,
     items: DependencyItem[],
-    type: MandatoryDependencyType
+    type: DependencyType,
+    options?: { allowNone?: boolean; placeholder?: string; noneLabel?: string }
   ) => {
     if (items.length === 0) return null;
+    const allowNone = options?.allowNone ?? false;
 
     return (
       <div className="space-y-3">
@@ -247,10 +292,17 @@ export function UserDependenciesDialog({
                 value={transfers[type][item.id] || ""}
                 onValueChange={(v) => handleTransferChange(type, item.id, v)}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Novo responsável" />
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder={options?.placeholder ?? "Novo responsável"} />
                 </SelectTrigger>
                 <SelectContent>
+                  {allowNone && (
+                    <SelectItem value={NONE_VALUE}>
+                      <span className="text-muted-foreground">
+                        {options?.noneLabel ?? "Remover liderança (deixar vago)"}
+                      </span>
+                    </SelectItem>
+                  )}
                   {availableProfiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <div className="flex items-center gap-2">
@@ -272,6 +324,7 @@ export function UserDependenciesDialog({
       </div>
     );
   };
+
 
   const renderOptionalBadges = (title: string, icon: React.ReactNode, items: DependencyItem[]) => {
     if (items.length === 0) return null;
@@ -418,34 +471,57 @@ export function UserDependenciesDialog({
                 </>
               )}
 
-              {/* Optional Dependencies */}
-              {deps.totalOptional > 0 && (
+              {/* Leadership transfers (optional) */}
+              {hasLeaderships && (
                 <>
                   {deps.hasMandatoryDependencies && <Separator />}
                   <Alert className="border-warning/50 bg-warning/10">
                     <Info className="h-4 w-4 text-warning" />
                     <AlertDescription className="text-warning-foreground">
-                      <strong>{deps.totalOptional}</strong> itens serão atualizados automaticamente
+                      Lideranças podem ser transferidas para outra pessoa. Se nada for
+                      selecionado, a liderança será removida e ficará vaga.
+                    </AlertDescription>
+                  </Alert>
+                  <div className="space-y-6">
+                    {renderDependencySection(
+                      "Times (liderança)",
+                      <Users className="h-4 w-4 text-muted-foreground" />,
+                      deps.optional.teams,
+                      "teamLeaderships",
+                      { allowNone: true, placeholder: "Novo líder" }
+                    )}
+                    {renderDependencySection(
+                      "Áreas (liderança)",
+                      <Building2 className="h-4 w-4 text-muted-foreground" />,
+                      deps.optional.areaLeaderships,
+                      "areaLeaderships",
+                      { allowNone: true, placeholder: "Novo líder" }
+                    )}
+                    {renderDependencySection(
+                      "Áreas (co-liderança)",
+                      <Building2 className="h-4 w-4 text-muted-foreground" />,
+                      deps.optional.areaCoLeaderships,
+                      "areaCoLeaderships",
+                      { allowNone: true, placeholder: "Novo co-líder", noneLabel: "Remover co-liderança (deixar vago)" }
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Optional Dependencies (auto-cleared) */}
+              {otherOptionalCount > 0 && (
+                <>
+                  {(deps.hasMandatoryDependencies || hasLeaderships) && <Separator />}
+                  <Alert className="border-warning/50 bg-warning/10">
+                    <Info className="h-4 w-4 text-warning" />
+                    <AlertDescription className="text-warning-foreground">
+                      <strong>{otherOptionalCount}</strong> itens serão atualizados automaticamente
                       (vínculos removidos).
                     </AlertDescription>
                   </Alert>
                   <div className="space-y-4">
                     {renderOptionalBadges(
-                      "Times (liderança será removida)",
-                      <Users className="h-4 w-4 text-muted-foreground" />,
-                      deps.optional.teams
-                    )}
-                    {renderOptionalBadges(
-                      "Áreas (liderança será removida)",
-                      <Building2 className="h-4 w-4 text-muted-foreground" />,
-                      deps.optional.areaLeaderships
-                    )}
-                    {renderOptionalBadges(
-                      "Áreas (co-liderança será removida)",
-                      <Building2 className="h-4 w-4 text-muted-foreground" />,
-                      deps.optional.areaCoLeaderships
-                    )}
-                    {renderOptionalBadges(
+
                       "Co-responsabilidades em KRs (serão removidas)",
                       <Handshake className="h-4 w-4 text-muted-foreground" />,
                       deps.optional.krCoResponsible
