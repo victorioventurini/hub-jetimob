@@ -462,34 +462,57 @@ export function UserDependenciesDialog({
                 </>
               )}
 
-              {/* Optional Dependencies */}
-              {deps.totalOptional > 0 && (
+              {/* Leadership transfers (optional) */}
+              {hasLeaderships && (
                 <>
                   {deps.hasMandatoryDependencies && <Separator />}
                   <Alert className="border-warning/50 bg-warning/10">
                     <Info className="h-4 w-4 text-warning" />
                     <AlertDescription className="text-warning-foreground">
-                      <strong>{deps.totalOptional}</strong> itens serão atualizados automaticamente
+                      Lideranças podem ser transferidas para outra pessoa. Se nada for
+                      selecionado, a liderança será removida e ficará vaga.
+                    </AlertDescription>
+                  </Alert>
+                  <div className="space-y-6">
+                    {renderDependencySection(
+                      "Times (liderança)",
+                      <Users className="h-4 w-4 text-muted-foreground" />,
+                      deps.optional.teams,
+                      "teamLeaderships",
+                      { allowNone: true, placeholder: "Novo líder" }
+                    )}
+                    {renderDependencySection(
+                      "Áreas (liderança)",
+                      <Building2 className="h-4 w-4 text-muted-foreground" />,
+                      deps.optional.areaLeaderships,
+                      "areaLeaderships",
+                      { allowNone: true, placeholder: "Novo líder" }
+                    )}
+                    {renderDependencySection(
+                      "Áreas (co-liderança)",
+                      <Building2 className="h-4 w-4 text-muted-foreground" />,
+                      deps.optional.areaCoLeaderships,
+                      "areaCoLeaderships",
+                      { allowNone: true, placeholder: "Novo co-líder", noneLabel: "Remover co-liderança (deixar vago)" }
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Optional Dependencies (auto-cleared) */}
+              {otherOptionalCount > 0 && (
+                <>
+                  {(deps.hasMandatoryDependencies || hasLeaderships) && <Separator />}
+                  <Alert className="border-warning/50 bg-warning/10">
+                    <Info className="h-4 w-4 text-warning" />
+                    <AlertDescription className="text-warning-foreground">
+                      <strong>{otherOptionalCount}</strong> itens serão atualizados automaticamente
                       (vínculos removidos).
                     </AlertDescription>
                   </Alert>
                   <div className="space-y-4">
                     {renderOptionalBadges(
-                      "Times (liderança será removida)",
-                      <Users className="h-4 w-4 text-muted-foreground" />,
-                      deps.optional.teams
-                    )}
-                    {renderOptionalBadges(
-                      "Áreas (liderança será removida)",
-                      <Building2 className="h-4 w-4 text-muted-foreground" />,
-                      deps.optional.areaLeaderships
-                    )}
-                    {renderOptionalBadges(
-                      "Áreas (co-liderança será removida)",
-                      <Building2 className="h-4 w-4 text-muted-foreground" />,
-                      deps.optional.areaCoLeaderships
-                    )}
-                    {renderOptionalBadges(
+
                       "Co-responsabilidades em KRs (serão removidas)",
                       <Handshake className="h-4 w-4 text-muted-foreground" />,
                       deps.optional.krCoResponsible
