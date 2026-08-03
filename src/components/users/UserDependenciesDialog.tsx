@@ -195,7 +195,16 @@ export function UserDependenciesDialog({
            teamObjectivesAssigned && teamKrsAssigned && orgObjectivesAssigned && orgKrsAssigned && routingRulesAssigned;
   }, [deps.mandatory, transfers]);
 
+  const hasLeaderships =
+    deps.optional.teams.length > 0 ||
+    deps.optional.areaLeaderships.length > 0 ||
+    deps.optional.areaCoLeaderships.length > 0;
+
+  const otherOptionalCount =
+    deps.optional.krCoResponsible.length + deps.optional.kpiContributions.length;
+
   /** Build leadership transfer items, skipping "leave vacant" and unset selects */
+
   const leadershipItems = (type: LeadershipDependencyType, items: DependencyItem[]) =>
     items
       .filter((i) => {
