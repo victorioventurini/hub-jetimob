@@ -20,6 +20,12 @@ export interface TransferConfig {
     orgObjectives: TransferItem[];
     orgKrs: TransferItem[];
     routingRules: TransferItem[];
+    /** Optional: new leader per team ID */
+    teamLeaderships?: TransferItem[];
+    /** Optional: new leader per area ID */
+    areaLeaderships?: TransferItem[];
+    /** Optional: new co-leader per area ID */
+    areaCoLeaderships?: TransferItem[];
   };
   /** Items to auto-clear (SET NULL) - don't need newOwnerId */
   autoClear?: {
@@ -30,6 +36,7 @@ export interface TransferConfig {
     kpiContributions: string[];      // kpi_data_contributors IDs
   };
 }
+
 
 /**
  * POST-BU hook: Only executes mutations when BU is selected.
