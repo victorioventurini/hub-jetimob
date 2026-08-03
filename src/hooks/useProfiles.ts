@@ -20,6 +20,8 @@ export interface TransferConfig {
     orgObjectives: TransferItem[];
     orgKrs: TransferItem[];
     routingRules: TransferItem[];
+    /** Optional: new owner per asset recommendation ID */
+    assetRecommendations?: TransferItem[];
     /** Optional: new leader per team ID */
     teamLeaderships?: TransferItem[];
     /** Optional: new leader per area ID */
@@ -182,6 +184,15 @@ export function useTransferDependencies() {
           .update({ assignee_user_ids: newAssignees, updated_at: now })
           .eq("id", item.id);
         if (updateError) throw updateError;
+      }
+
+      // 1.85 Transfer Asset Recommendations
+      for (const item of transfers.assetRecommendations ?? []) {
+        const { error } = await client
+          .from("asset_recommendations")
+          .update({ owner_user_id: item.newOwnerId, updated_at: now })
+          .eq("id", item.id);
+        if (error) throw error;
       }
 
       // ============================================================
