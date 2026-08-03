@@ -20,6 +20,8 @@ export interface TransferConfig {
     orgObjectives: TransferItem[];
     orgKrs: TransferItem[];
     routingRules: TransferItem[];
+    /** Optional: new owner per asset recommendation ID */
+    assetRecommendations?: TransferItem[];
     /** Optional: new leader per team ID */
     teamLeaderships?: TransferItem[];
     /** Optional: new leader per area ID */
