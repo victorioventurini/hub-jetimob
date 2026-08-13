@@ -471,12 +471,57 @@ export function MbrTeamOkrsDetailStep({
                       </div>
                     )}
                     {nextSteps.crossDependencies.length > 0 && (
-                      <div className="pl-5">
-                        <Badge variant="outline" className="text-[10px]">
-                          {nextSteps.crossDependencies.length} dependência{nextSteps.crossDependencies.length > 1 ? 's' : ''} cross-team
-                        </Badge>
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5 text-status-amber shrink-0" />
+                          <p className="text-xs font-semibold">
+                            Dependências cross-team ({nextSteps.crossDependencies.length})
+                          </p>
+                        </div>
+                        {nextSteps.crossDependencies.map((dep, i) => (
+                          <p key={i} className="text-xs text-muted-foreground pl-5">
+                            • {dep}
+                          </p>
+                        ))}
                       </div>
                     )}
+
+                    {/* KPIs do time (snapshots congelados no Pré-MBR) */}
+                    {kpiSnapshots.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Gauge className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-semibold">
+                            KPIs do time no Pré-MBR ({kpiSnapshots.length})
+                          </p>
+                        </div>
+                        {kpiSnapshots.map((k) => (
+                          <div key={k.kpiId} className="pl-5 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-xs font-medium">{k.name}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {k.currentValue ?? '—'}
+                                {k.unit ? ` ${k.unit}` : ''}
+                                {k.target != null
+                                  ? ` · meta ${k.target}${k.unit ? ` ${k.unit}` : ''}`
+                                  : ''}
+                              </span>
+                              <OkrStatusBadge
+                                status={toRagStatus(k.ragStatus)}
+                                type="kr"
+                                className="shrink-0 text-[10px]"
+                              />
+                            </div>
+                            {k.impactAssessment?.trim() && (
+                              <p className="text-xs text-muted-foreground">
+                                {k.impactAssessment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
 
                     {/* KPI: justificativas */}
                     {justifEntries.length > 0 && (
