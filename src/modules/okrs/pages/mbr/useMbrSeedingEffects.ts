@@ -153,6 +153,8 @@ export function useSeedTeamOkrSnapshots(args: {
     if (seeded.current) return;
     if (!cycleId) return;
     if (!hasFetched || isLoading) return;
+    if (!preSubmittedTeamsReady) return;
+
 
 
     // Migration guard: drafts antigos precisam ser re-seeded.
