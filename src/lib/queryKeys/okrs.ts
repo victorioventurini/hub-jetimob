@@ -560,7 +560,14 @@ export const mbrKeys = {
     referenceMonth: string,
     scopesKey: string,
   ) => ['mbr', 'monthly-kpis-by-scope', buId, referenceMonth, scopesKey] as const,
+  /**
+   * Detalhes (título / objetivo / time dono) de KRs contribuídos citados nos
+   * `krFinalStates` do Pré-MBR — usado no detalhe de times sem OKRs próprias.
+   */
+  contributedKrDetails: (buId: string | null, krIdsKey: string) =>
+    ['mbr', 'contributed-kr-details', buId, krIdsKey] as const,
 } as const;
+
 
 /** Pre-Weekly wizard keys */
 export const preWeeklyKeys = {
