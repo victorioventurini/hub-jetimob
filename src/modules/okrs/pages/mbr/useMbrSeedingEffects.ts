@@ -318,6 +318,8 @@ export function useSeedTeamOkrSnapshots(args: {
     isLoading,
     draftTeamOkrSnapshots,
     preSubmittedTeams,
+    preSubmittedTeamsReady,
+
     updateDraft,
   ]);
 }
