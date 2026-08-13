@@ -606,14 +606,18 @@ export default function MbrPage() {
               updateDraft({ teamOkrSnapshots })
             }
             currentTeamIndex={draft.data.currentTeamIndex}
-            onCurrentTeamIndexChange={(currentTeamIndex: number) => {
+            onCurrentTeamIndexChange={(currentTeamIndex: number, teamIdArg?: string) => {
               updateDraft({ currentTeamIndex });
-              const teamId = draft.data.teamOkrSnapshots[currentTeamIndex]?.teamId;
+              // O índice é relativo à lista navegável (filtrada) da etapa —
+              // usar o teamId informado evita divergência com o array completo.
+              const teamId =
+                teamIdArg ?? draft.data.teamOkrSnapshots[currentTeamIndex]?.teamId;
               const url = new URL(window.location.href);
               if (teamId) url.searchParams.set('substep', `team:${teamId}`);
               else url.searchParams.delete('substep');
               window.history.replaceState(window.history.state, '', url.toString());
             }}
+
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })
