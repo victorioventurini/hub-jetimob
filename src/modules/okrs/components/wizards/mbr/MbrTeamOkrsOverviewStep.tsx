@@ -23,9 +23,12 @@ export interface MbrTeamOkrsOverviewStepProps {
   teamOkrSnapshots: MbrTeamOkrSnapshot[];
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** Times que submeteram Pré-MBR no mês de referência (para sinalização). */
+  preSubmittedTeamIds?: string[];
   onContinue: () => void;
   onBack: () => void;
 }
+
 
 // ============================================================
 // HELPERS
