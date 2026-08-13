@@ -548,7 +548,7 @@ export default function KpiEvolutionPage() {
           // Cards Grid
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {kpis.map(kpi => (
-              <KpiEvolutionCard key={kpi.id} kpi={kpi} onSelect={handleKpiSelect} />
+              <KpiEvolutionCard key={kpi.id} kpi={kpi} onSelect={handleKpiSelect} windowMonths={trendWindowState.value} />
             ))}
           </div>
         ) : viewModeState.value === 'table' ? (
