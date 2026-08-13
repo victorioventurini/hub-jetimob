@@ -55,6 +55,18 @@ export const KR_LINK_STATUS_LABELS: Record<KpiKrLinkStatus, string> = {
   none: 'Sem vínculo com KRs',
 };
 
+// === Trend Filter (orientado à meta) ===
+export type KpiTrendFilter = 'growth' | 'stable' | 'decline';
+
+/** Banda de estabilidade (±%) da variação orientada à meta. */
+export const KPI_TREND_STABLE_BAND_PCT = 2;
+
+export const TREND_FILTER_LABELS: Record<KpiTrendFilter, string> = {
+  growth: 'Crescimento',
+  stable: 'Estabilidade',
+  decline: 'Queda',
+};
+
 export interface KpiMetric {
   id: string;
   name: string;
