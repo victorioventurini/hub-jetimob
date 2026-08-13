@@ -1,8 +1,8 @@
 import { TeamSelect, AreaSelect, BuUserSelect } from "@/components/selects";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KpiCategory, KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, getScopeLabels, INDICATOR_TYPE_LABELS, RAG_STATUS_CONFIG, KR_LINK_STATUS_LABELS } from "../types";
+import { KpiCategory, KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, getScopeLabels, INDICATOR_TYPE_LABELS, RAG_STATUS_CONFIG, KR_LINK_STATUS_LABELS, KpiTrendFilter, TREND_FILTER_LABELS } from "../types";
 import { useBu } from "@/contexts/BuContext";
-import { Link2 } from "lucide-react";
+import { Link2, TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 
 /**
  * v2.89.0 - Filtros do Dashboard de Indicadores
@@ -25,6 +25,12 @@ export const NEEDS_UPDATE_LABELS: Record<KpiNeedsUpdateFilter, string> = {
   pending: 'Consolidação pendente',
 };
 
+const TREND_ICONS: Record<KpiTrendFilter, JSX.Element> = {
+  growth: <TrendingUp className="h-3.5 w-3.5 text-success" />,
+  stable: <Minus className="h-3.5 w-3.5 text-muted-foreground" />,
+  decline: <TrendingDown className="h-3.5 w-3.5 text-destructive" />,
+};
+
 interface KpiDashboardFiltersProps {
   /** @deprecated v2.82.0 - Use areaId */
   category: KpiCategory | "all";
@@ -34,6 +40,8 @@ interface KpiDashboardFiltersProps {
   indicatorType?: KpiIndicatorType | "all";
   ragStatus?: KpiRagStatus | "all";
   krLinkStatus?: KpiKrLinkStatus | "all";
+  /** Tendência orientada à meta (melhora/piora) */
+  trend?: KpiTrendFilter | "all";
   ownerId?: string | "all";
   /** v3.x — filtro "Atualização" */
   needsUpdate?: KpiNeedsUpdateFilter;
@@ -45,6 +53,7 @@ interface KpiDashboardFiltersProps {
   onIndicatorTypeChange?: (type: KpiIndicatorType | "all") => void;
   onRagStatusChange?: (status: KpiRagStatus | "all") => void;
   onKrLinkStatusChange?: (status: KpiKrLinkStatus | "all") => void;
+  onTrendChange?: (trend: KpiTrendFilter | "all") => void;
   onOwnerChange?: (ownerId: string | "all") => void;
   onNeedsUpdateChange?: (value: KpiNeedsUpdateFilter) => void;
 }
@@ -56,6 +65,7 @@ export function KpiDashboardFilters({
   indicatorType = "all",
   ragStatus = "all",
   krLinkStatus = "all",
+  trend = "all",
   ownerId = "all",
   needsUpdate = "all",
   onTeamChange,
@@ -64,6 +74,7 @@ export function KpiDashboardFilters({
   onIndicatorTypeChange,
   onRagStatusChange,
   onKrLinkStatusChange,
+  onTrendChange,
   onOwnerChange,
   onNeedsUpdateChange,
 }: KpiDashboardFiltersProps) {
@@ -107,6 +118,43 @@ export function KpiDashboardFilters({
               <SelectItem key={status} value={status}>
                 <span className={RAG_STATUS_CONFIG[status].color}>
                   {RAG_STATUS_CONFIG[status].label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Tendência (orientada à meta) */}
+      {onTrendChange && (
+        <Select
+          value={trend}
+          onValueChange={(value) => onTrendChange(value as KpiTrendFilter | "all")}
+        >
+          <SelectTrigger className="w-full sm:w-[190px]" title="Evolução em relação à meta (melhora/piora), com estabilidade em ±2%">
+            <SelectValue placeholder="Tendência">
+              {trend === "all" ? (
+                "Todas as tendências"
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  {TREND_ICONS[trend]}
+                  {TREND_FILTER_LABELS[trend]}
+                </span>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <span className="flex items-center gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                Todas as tendências
+              </span>
+            </SelectItem>
+            {(Object.keys(TREND_FILTER_LABELS) as KpiTrendFilter[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                <span className="flex items-center gap-1.5">
+                  {TREND_ICONS[key]}
+                  {TREND_FILTER_LABELS[key]}
                 </span>
               </SelectItem>
             ))}
