@@ -157,12 +157,13 @@ export default function MbrPage() {
   });
 
   // ── MBR-PRE submissions (mês de referência do draft) ──
-  const { data: mbrPre } = useMbrPreSubmissions({
+  const { data: mbrPre, isFetched: hasFetchedMbrPre } = useMbrPreSubmissions({
     referenceMonth: draft.data.referenceMonth,
   });
   const mbrPreByTeam = mbrPre?.byTeam ?? {};
   const mbrPreAddendumsByTeam = mbrPre?.addendumsByTeam ?? {};
   const mbrPreSubmittedCount = mbrPre?.submittedCount ?? 0;
+
 
   // Derivações memoizadas das submissões Pré-MBR
   const {
