@@ -5,6 +5,8 @@ import { KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, Kp
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
+import { getKpiValueCreateErrorCopy } from "../utils/kpiValueErrors";
+
 import {
   valueFrequencyToLegacy,
   isKpiUpdateOverdue,
