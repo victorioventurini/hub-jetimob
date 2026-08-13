@@ -10,8 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
-import type { KpiIndicatorType, KpiScope, KpiRagStatus, KpiDirection, KpiFrequencyValue } from "../types";
-import { calculateRagStatus } from "../types";
+import type { KpiIndicatorType, KpiScope, KpiRagStatus, KpiDirection, KpiFrequencyValue, KpiTrendFilter, KpiTrendWindow } from "../types";
+import { calculateRagStatus, KPI_TREND_WINDOW_DEFAULT } from "../types";
+import { classifyKpiTrendSeries, type KpiTrendPoint, type KpiTrendResult } from "../utils/trendClassification";
 
 export interface KpiEvolutionItem {
   id: string;
@@ -32,6 +33,12 @@ export interface KpiEvolutionItem {
   rag_status: KpiRagStatus;
   last_updated_at: string | null;
   total_values: number;
+  /** v3.x — Série de consolidados da janela de tendência (asc por data). */
+  consolidated_series: KpiTrendPoint[];
+  /** v3.x — Tendência orientada à meta calculada sobre `consolidated_series`. */
+  trend_class: KpiTrendFilter | null;
+  /** v3.x — Metadados do cálculo (pontos, janela, inclinação orientada). */
+  trend_meta: KpiTrendResult | null;
   // Relations
   area?: {
     id: string;
@@ -84,6 +91,8 @@ export interface UseKpiEvolutionListOptions {
   teamId?: string;
   ragStatus?: KpiRagStatus;
   search?: string;
+  /** Janela (meses) dos consolidados usados na tendência. Default: 6. */
+  trendWindowMonths?: KpiTrendWindow;
 }
 
 export interface UseKpiEvolutionListResult {
@@ -97,9 +106,10 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
   const supabase = useOptionalBuScopedSupabase();
   const { buId } = useOptionalBuClient();
   const { indicatorType, areaId, scope, teamId, ragStatus, search } = options;
+  const trendWindowMonths = options.trendWindowMonths ?? KPI_TREND_WINDOW_DEFAULT;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.kpis.evolutionList(buId ?? null, { indicatorType, areaId, scope, teamId, ragStatus, search }),
+    queryKey: queryKeys.kpis.evolutionList(buId ?? null, { indicatorType, areaId, scope, teamId, ragStatus, search, trendWindowMonths }),
     enabled: !!supabase && !!buId,
     queryFn: async (): Promise<{ kpis: KpiEvolutionItem[]; aggregates: KpiEvolutionAggregates }> => {
       if (!supabase) {
@@ -158,25 +168,36 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
       // Fetch latest values for each KPI
       const kpiIds = kpisData.map(k => k.id);
       
-      // Get value counts and latest 2 values for each KPI
+      // Get value counts, latest 2 values e série consolidada da janela
       const { data: valuesData } = await supabase
         .from('kpi_values')
-        .select('kpi_id, value, reference_date, created_at')
+        .select('kpi_id, value, reference_date, created_at, input_type')
         .in('kpi_id', kpiIds)
         .order('reference_date', { ascending: false });
+
+      // v3.x — Cutoff da janela de tendência (apenas consolidados).
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - trendWindowMonths);
+      const cutoffIso = cutoff.toISOString().slice(0, 10);
 
       // Group values by kpi_id
       const valuesByKpi: Record<string, Array<{ value: number; reference_date: string; created_at: string }>> = {};
       const countsByKpi: Record<string, number> = {};
+      const consolidatedByKpi: Record<string, KpiTrendPoint[]> = {};
       
       (valuesData || []).forEach(v => {
         if (!valuesByKpi[v.kpi_id]) {
           valuesByKpi[v.kpi_id] = [];
           countsByKpi[v.kpi_id] = 0;
+          consolidatedByKpi[v.kpi_id] = [];
         }
         countsByKpi[v.kpi_id]++;
         if (valuesByKpi[v.kpi_id].length < 2) {
           valuesByKpi[v.kpi_id].push(v);
+        }
+        const inputType = (v as { input_type?: string | null }).input_type ?? 'consolidated';
+        if (inputType !== 'partial' && v.reference_date >= cutoffIso) {
+          consolidatedByKpi[v.kpi_id].push({ value: v.value, reference_date: v.reference_date });
         }
       });
 
@@ -197,6 +218,12 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
 
         const rag = calculateRagStatus(currentValue, kpi.target_value, kpi.direction as KpiDirection);
 
+        // v3.x — Tendência sobre consolidados da janela (asc por data)
+        const consolidatedSeries = (consolidatedByKpi[kpi.id] || [])
+          .slice()
+          .sort((a, b) => a.reference_date.localeCompare(b.reference_date));
+        const trendMeta = classifyKpiTrendSeries(consolidatedSeries, kpi.direction as KpiDirection);
+
         return {
           id: kpi.id,
           name: kpi.name,
@@ -215,6 +242,9 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           rag_status: rag,
           last_updated_at: values[0]?.created_at || null,
           total_values: countsByKpi[kpi.id] || 0,
+          consolidated_series: consolidatedSeries,
+          trend_class: trendMeta?.trend ?? null,
+          trend_meta: trendMeta,
           area: (kpi as any).area ?? null,
           owner: kpi.owner,
           team: (kpi as any).team ?? null,
