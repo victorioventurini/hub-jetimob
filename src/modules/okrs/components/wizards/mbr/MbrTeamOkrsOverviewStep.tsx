@@ -192,10 +192,46 @@ export function MbrTeamOkrsOverviewStep({
                         />
                       </>
                     ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Sem OKRs próprias no ciclo — contribui via KRs de outro time.
-                      </p>
+                      (() => {
+                        const sub = mbrPreByTeam[team.teamId];
+                        const contributedKrs = (sub?.krFinalStates ?? []).filter(
+                          (f) => f?.krId && f.isContributed,
+                        ).length;
+                        const kpiCount = sub?.kpiSnapshots?.length ?? 0;
+                        const deps = sub?.nextSteps?.crossDependencies?.filter((d) => d?.trim()).length ?? 0;
+                        const needsDecision = !!sub?.highlights?.needsDecision?.trim();
+                        return (
+                          <div className="space-y-1.5">
+                            <p className="text-xs text-muted-foreground">
+                              Sem OKRs próprias no ciclo — contribui via KRs de outro time.
+                            </p>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {contributedKrs > 0 && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {contributedKrs} KR{contributedKrs > 1 ? 's' : ''} contribuído{contributedKrs > 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                              {kpiCount > 0 && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {kpiCount} KPI{kpiCount > 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                              {deps > 0 && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {deps} dependência{deps > 1 ? 's' : ''} cross-team
+                                </Badge>
+                              )}
+                              {needsDecision && (
+                                <Badge variant="outline" className="text-[10px] text-status-amber">
+                                  Precisa de decisão
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()
                     )}
+
 
                     {teamAtRisk > 0 && (
                       <p className="text-xs text-status-orange">
