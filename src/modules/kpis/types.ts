@@ -67,6 +67,19 @@ export const TREND_FILTER_LABELS: Record<KpiTrendFilter, string> = {
   decline: 'Queda',
 };
 
+/** Janela (em meses) dos consolidados usados no cálculo da tendência. */
+export type KpiTrendWindow = 3 | 6 | 12;
+
+export const KPI_TREND_WINDOWS: KpiTrendWindow[] = [3, 6, 12];
+
+export const KPI_TREND_WINDOW_DEFAULT: KpiTrendWindow = 6;
+
+export const TREND_WINDOW_LABELS: Record<KpiTrendWindow, string> = {
+  3: 'Últimos 3 meses',
+  6: 'Últimos 6 meses',
+  12: 'Últimos 12 meses',
+};
+
 export interface KpiMetric {
   id: string;
   name: string;

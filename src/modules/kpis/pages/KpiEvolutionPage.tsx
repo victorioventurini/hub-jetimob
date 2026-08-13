@@ -62,8 +62,10 @@ import {
   type KpiRagStatus,
   type KpiKrLinkStatus,
   type KpiTrendFilter,
+  type KpiTrendWindow,
+  KPI_TREND_WINDOW_DEFAULT,
+  TREND_WINDOW_LABELS,
 } from "../types";
-import { classifyKpiTrend } from "../utils/trendClassification";
 import { useBu } from "@/contexts/BuContext";
 import { useAreas } from "@/modules/areas/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
@@ -81,20 +83,44 @@ function formatValue(value: number | null, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFrequency }: { 
+/** v3.x — Título explicativo do badge de tendência (base do cálculo). */
+function trendMetaTitle(kpi: KpiEvolutionItem, windowMonths: number): string {
+  const meta = kpi.trend_meta;
+  if (!meta) {
+    return `Sem consolidados suficientes nos últimos ${windowMonths} meses para calcular tendência`;
+  }
+  const fmt = (iso: string) => format(parseISO(iso), "MMM/yy", { locale: ptBR });
+  const sign = meta.orientedPct >= 0 ? "+" : "-";
+  return `${meta.points} consolidados (${fmt(meta.firstDate)}–${fmt(meta.lastDate)}) · inclinação orientada à meta ${sign}${Math.abs(meta.orientedPct).toFixed(1)}%`;
+}
+
+function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFrequency, windowMonths }: { 
   kpiId: string; 
   unit: string; 
   direction: 'up' | 'down'; 
   targetValue: number | null;
   consolidationFrequency?: import("../types").KpiFrequencyValue | null;
+  /** v3.x — Recorta o gráfico à janela selecionada (meses). */
+  windowMonths?: number;
 }) {
   const { data, isLoading } = useKpiWithHistory(kpiId);
+
+  const values = useMemo(() => {
+    const all = data?.values ?? [];
+    if (!windowMonths) return all;
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - windowMonths);
+    const cutoffIso = cutoff.toISOString().slice(0, 10);
+    const sliced = all.filter((v) => v.reference_date >= cutoffIso);
+    // Fallback: se a janela deixar menos de 2 pontos, mostra o histórico completo.
+    return sliced.length >= 2 ? sliced : all;
+  }, [data?.values, windowMonths]);
   
   if (isLoading) {
     return <Skeleton className="h-24 w-full" />;
   }
   
-  if (!data?.values?.length || data.values.length < 2) {
+  if (values.length < 2) {
     return (
       <div className="flex items-center justify-center h-24 text-muted-foreground text-xs">
         Dados insuficientes
@@ -104,7 +130,7 @@ function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFreque
 
   return (
     <KpiEvolutionChart
-      values={data.values}
+      values={values}
       targetValue={targetValue}
       unit={unit}
       direction={direction}
@@ -117,10 +143,12 @@ function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFreque
 
 function KpiEvolutionCard({ 
   kpi, 
-  onSelect 
+  onSelect,
+  windowMonths,
 }: { 
   kpi: KpiEvolutionItem; 
   onSelect: (kpi: KpiEvolutionItem) => void;
+  windowMonths: number;
 }) {
   const ragConfig = RAG_STATUS_CONFIG[kpi.rag_status];
   const TrendIcon = kpi.trend === 'up' ? TrendingUp : kpi.trend === 'down' ? TrendingDown : Minus;
@@ -157,7 +185,7 @@ function KpiEvolutionCard({
               {formatValue(kpi.current_value, kpi.unit)}
             </div>
             {kpi.variation !== null && (
-              <div className={cn("flex items-center justify-end gap-0.5 text-xs", trendColor)}>
+              <div className={cn("flex items-center justify-end gap-0.5 text-xs", trendColor)} title={trendMetaTitle(kpi, windowMonths)}>
                 <TrendIcon className="h-3 w-3" />
                 <span>{Math.abs(kpi.variation).toFixed(1)}%</span>
               </div>
@@ -172,6 +200,7 @@ function KpiEvolutionCard({
           direction={kpi.direction}
           targetValue={kpi.target_value}
           consolidationFrequency={kpi.consolidation_frequency ?? null}
+          windowMonths={windowMonths}
         />
 
         <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
@@ -287,6 +316,14 @@ export default function KpiEvolutionPage() {
     parse: (v) => v as KpiTrendFilter | 'all',
   });
 
+  // v3.x — Janela (meses) dos consolidados usados no cálculo da tendência
+  const trendWindowState = useUrlState<KpiTrendWindow>({
+    key: 'trendWindow',
+    defaultValue: KPI_TREND_WINDOW_DEFAULT,
+    parse: (v) => (Number(v) === 3 || Number(v) === 12 ? (Number(v) as KpiTrendWindow) : KPI_TREND_WINDOW_DEFAULT),
+    serialize: (v) => String(v),
+  });
+
   const [selectedKpi, setSelectedKpi] = useState<KpiHistoryDialogData | null>(null);
 
   // Fetch areas for filter
@@ -303,17 +340,14 @@ export default function KpiEvolutionPage() {
     teamId: teamState.value === 'all' ? undefined : teamState.value,
     ragStatus: ragStatusState.value === 'all' ? undefined : ragStatusState.value,
     search: searchState.value || undefined,
+    trendWindowMonths: trendWindowState.value,
   });
   
   // v2.90.0: Apply KR link filter client-side
   const kpis = useMemo(() => {
     const byTrend = trendState.value === 'all'
       ? rawKpis
-      : rawKpis.filter(
-          (kpi) =>
-            classifyKpiTrend(kpi.current_value, kpi.previous_value, kpi.direction) ===
-            trendState.value,
-        );
+      : rawKpis.filter((kpi) => kpi.trend_class === trendState.value);
 
     if (krLinkStatusState.value === 'all' || !krLinks) return byTrend;
 
@@ -445,6 +479,7 @@ export default function KpiEvolutionPage() {
             ragStatus={ragStatusState.value}
             krLinkStatus={krLinkStatusState.value}
             trend={trendState.value}
+            trendWindow={trendWindowState.value}
             onCategoryChange={() => {}}
             onTeamChange={teamState.set}
             onAreaChange={areaState.set}
@@ -453,8 +488,14 @@ export default function KpiEvolutionPage() {
             onRagStatusChange={ragStatusState.set}
             onKrLinkStatusChange={krLinkStatusState.set}
             onTrendChange={trendState.set}
+            onTrendWindowChange={trendWindowState.set}
           />
         </ListPageFilters>
+
+        {/* v3.x — Transparência do cálculo de tendência */}
+        <p className="text-xs text-muted-foreground -mt-3">
+          Tendência calculada apenas com valores consolidados · {TREND_WINDOW_LABELS[trendWindowState.value]} · estabilidade em ±2%
+        </p>
 
         {/* Linha 2: Contador + Toggle de visualização */}
         <ViewOptionsBar
@@ -512,7 +553,7 @@ export default function KpiEvolutionPage() {
           // Cards Grid
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {kpis.map(kpi => (
-              <KpiEvolutionCard key={kpi.id} kpi={kpi} onSelect={handleKpiSelect} />
+              <KpiEvolutionCard key={kpi.id} kpi={kpi} onSelect={handleKpiSelect} windowMonths={trendWindowState.value} />
             ))}
           </div>
         ) : viewModeState.value === 'table' ? (
@@ -566,7 +607,7 @@ export default function KpiEvolutionPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         {kpi.variation !== null ? (
-                          <div className={cn("flex items-center justify-end gap-1", trendColor)}>
+                          <div className={cn("flex items-center justify-end gap-1", trendColor)} title={trendMetaTitle(kpi, trendWindowState.value)}>
                             <TrendIcon className="h-3.5 w-3.5" />
                             <span>{Math.abs(kpi.variation).toFixed(1)}%</span>
                           </div>

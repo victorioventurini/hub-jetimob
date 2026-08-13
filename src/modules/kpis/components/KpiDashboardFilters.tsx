@@ -1,6 +1,6 @@
 import { TeamSelect, AreaSelect, BuUserSelect } from "@/components/selects";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KpiCategory, KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, getScopeLabels, INDICATOR_TYPE_LABELS, RAG_STATUS_CONFIG, KR_LINK_STATUS_LABELS, KpiTrendFilter, TREND_FILTER_LABELS } from "../types";
+import { KpiCategory, KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, getScopeLabels, INDICATOR_TYPE_LABELS, RAG_STATUS_CONFIG, KR_LINK_STATUS_LABELS, KpiTrendFilter, TREND_FILTER_LABELS, KpiTrendWindow, KPI_TREND_WINDOWS, TREND_WINDOW_LABELS } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { Link2, TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 
@@ -42,6 +42,8 @@ interface KpiDashboardFiltersProps {
   krLinkStatus?: KpiKrLinkStatus | "all";
   /** Tendência orientada à meta (melhora/piora) */
   trend?: KpiTrendFilter | "all";
+  /** Janela (meses) dos consolidados usados no cálculo da tendência */
+  trendWindow?: KpiTrendWindow;
   ownerId?: string | "all";
   /** v3.x — filtro "Atualização" */
   needsUpdate?: KpiNeedsUpdateFilter;
@@ -54,6 +56,7 @@ interface KpiDashboardFiltersProps {
   onRagStatusChange?: (status: KpiRagStatus | "all") => void;
   onKrLinkStatusChange?: (status: KpiKrLinkStatus | "all") => void;
   onTrendChange?: (trend: KpiTrendFilter | "all") => void;
+  onTrendWindowChange?: (window: KpiTrendWindow) => void;
   onOwnerChange?: (ownerId: string | "all") => void;
   onNeedsUpdateChange?: (value: KpiNeedsUpdateFilter) => void;
 }
@@ -66,6 +69,7 @@ export function KpiDashboardFilters({
   ragStatus = "all",
   krLinkStatus = "all",
   trend = "all",
+  trendWindow = 6,
   ownerId = "all",
   needsUpdate = "all",
   onTeamChange,
@@ -75,6 +79,7 @@ export function KpiDashboardFilters({
   onRagStatusChange,
   onKrLinkStatusChange,
   onTrendChange,
+  onTrendWindowChange,
   onOwnerChange,
   onNeedsUpdateChange,
 }: KpiDashboardFiltersProps) {
@@ -131,7 +136,7 @@ export function KpiDashboardFilters({
           value={trend}
           onValueChange={(value) => onTrendChange(value as KpiTrendFilter | "all")}
         >
-          <SelectTrigger className="w-full sm:w-[190px]" title="Evolução em relação à meta (melhora/piora), com estabilidade em ±2%">
+          <SelectTrigger className="w-full sm:w-[190px]" title="Tendência dos consolidados da janela selecionada, orientada à meta (melhora/piora), com estabilidade em ±2%">
             <SelectValue placeholder="Tendência">
               {trend === "all" ? (
                 "Todas as tendências"
@@ -156,6 +161,28 @@ export function KpiDashboardFilters({
                   {TREND_ICONS[key]}
                   {TREND_FILTER_LABELS[key]}
                 </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Período dos consolidados usados na tendência */}
+      {onTrendWindowChange && (
+        <Select
+          value={String(trendWindow)}
+          onValueChange={(value) => onTrendWindowChange(Number(value) as KpiTrendWindow)}
+        >
+          <SelectTrigger
+            className="w-full sm:w-[170px]"
+            title="Janela de consolidados considerada no cálculo da tendência"
+          >
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            {KPI_TREND_WINDOWS.map((w) => (
+              <SelectItem key={w} value={String(w)}>
+                {TREND_WINDOW_LABELS[w]}
               </SelectItem>
             ))}
           </SelectContent>
