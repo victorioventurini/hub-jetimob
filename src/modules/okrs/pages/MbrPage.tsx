@@ -200,6 +200,19 @@ export default function MbrPage() {
     isFetched: hasFetchedTeamOkrs,
   } = useAllTeamObjectivesForMbr(quarterlyCycle?.id);
 
+  // Times da BU (para resolver nomes de times sem OKR própria).
+  const { data: allTeams = [] } = useTeams(true);
+
+  // Pauta de times = OKRs do ciclo ∪ times que submeteram Pré-MBR.
+  const preSubmittedTeams = useMemo(
+    () =>
+      Object.keys(mbrPreByTeam).map((teamId) => ({
+        teamId,
+        teamName: allTeams.find((t) => t.id === teamId)?.name ?? 'Time sem nome',
+      })),
+    [mbrPreByTeam, allTeams],
+  );
+
   useSeedTeamOkrSnapshots({
     cycleId: quarterlyCycle?.id,
     hasFetched: hasFetchedTeamOkrs,
@@ -207,7 +220,9 @@ export default function MbrPage() {
     allTeamObjectives,
     draftTeamOkrSnapshots: draft.data.teamOkrSnapshots,
     updateDraft,
+    preSubmittedTeams,
   });
+
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
   const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(
