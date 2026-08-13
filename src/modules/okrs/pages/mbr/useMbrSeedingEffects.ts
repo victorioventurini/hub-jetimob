@@ -90,6 +90,13 @@ export function useSeedTeamOkrSnapshots(args: {
   allTeamObjectives: any[] | undefined;
   draftTeamOkrSnapshots: MbrTeamOkrSnapshot[];
   updateDraft: (patch: Partial<MbrDraftData>) => void;
+  /**
+   * Times que submeteram Pré-MBR para o mês de referência do MBR.
+   * A pauta de times é a UNIÃO de (a) times com objetivos próprios no ciclo
+   * e (b) estes times — assim um time sem OKR própria (que contribui via KRs
+   * de outro time) não desaparece do MBR.
+   */
+  preSubmittedTeams?: Array<{ teamId: string; teamName: string }>;
 }) {
   const {
     cycleId,
@@ -98,6 +105,7 @@ export function useSeedTeamOkrSnapshots(args: {
     allTeamObjectives,
     draftTeamOkrSnapshots,
     updateDraft,
+    preSubmittedTeams = [],
   } = args;
   const seeded = useRef(false);
 
@@ -105,6 +113,7 @@ export function useSeedTeamOkrSnapshots(args: {
     if (seeded.current) return;
     if (!cycleId) return;
     if (!hasFetched || isLoading) return;
+
 
     // Migration guard: drafts antigos precisam ser re-seeded.
     const hasValidKeyResults =
