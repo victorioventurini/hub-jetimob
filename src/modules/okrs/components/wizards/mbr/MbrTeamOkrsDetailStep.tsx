@@ -76,11 +76,16 @@ export function MbrTeamOkrsDetailStep({
   onContinue,
   onBack,
 }: MbrTeamOkrsDetailStepProps) {
-  // Only teams with OKRs are navigable
+  // Navegáveis = times com OKRs próprias ∪ times que submeteram Pré-MBR
+  // (um time pode contribuir via KRs de outro time e não ter OKR própria).
   const teamsWithOkrs = useMemo(
-    () => teamOkrSnapshots.filter((team) => team.objectives.length > 0),
-    [teamOkrSnapshots]
+    () =>
+      teamOkrSnapshots.filter(
+        (team) => team.objectives.length > 0 || !!mbrPreByTeam[team.teamId],
+      ),
+    [teamOkrSnapshots, mbrPreByTeam]
   );
+
 
   const totalTeams = teamsWithOkrs.length;
   const reviewedCount = teamsWithOkrs.filter((team) => team.reviewed).length;
