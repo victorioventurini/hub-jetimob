@@ -57,8 +57,10 @@ export function MbrTeamOkrsOverviewStep({
   decisions,
   onDecisionsChange,
   preSubmittedTeamIds = [],
+  mbrPreByTeam = {},
   onContinue,
   onBack,
+
 }: MbrTeamOkrsOverviewStepProps) {
   const preSubmittedSet = useMemo(() => new Set(preSubmittedTeamIds), [preSubmittedTeamIds]);
 
