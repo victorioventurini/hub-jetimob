@@ -584,6 +584,8 @@ export default function MbrPage() {
             teamOkrSnapshots={draft.data.teamOkrSnapshots}
             decisions={draft.data.decisions}
             preSubmittedTeamIds={Object.keys(mbrPreByTeam)}
+            mbrPreByTeam={mbrPreByTeam}
+
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })
             }
