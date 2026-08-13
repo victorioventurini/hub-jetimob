@@ -492,6 +492,11 @@ export default function KpiEvolutionPage() {
           />
         </ListPageFilters>
 
+        {/* v3.x — Transparência do cálculo de tendência */}
+        <p className="text-xs text-muted-foreground -mt-3">
+          Tendência calculada apenas com valores consolidados · {TREND_WINDOW_LABELS[trendWindowState.value]} · estabilidade em ±2%
+        </p>
+
         {/* Linha 2: Contador + Toggle de visualização */}
         <ViewOptionsBar
           resultCount={kpis.length}
