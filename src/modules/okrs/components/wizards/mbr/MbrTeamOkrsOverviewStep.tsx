@@ -68,14 +68,17 @@ export function MbrTeamOkrsOverviewStep({
       0
     );
 
-    const avgProgress = teamOkrSnapshots.length > 0
+    // Média considera apenas times com OKRs próprias — times que entraram na
+    // pauta só pelo Pré-MBR não devem puxar a média para baixo.
+    const teamsWithObjectives = teamOkrSnapshots.filter((t) => t.objectives.length > 0);
+    const avgProgress = teamsWithObjectives.length > 0
       ? Math.round(
-          teamOkrSnapshots.reduce((sum, team) => {
-            const teamAvg = team.objectives.length > 0
-              ? team.objectives.reduce((objSum, obj) => objSum + obj.progress, 0) / team.objectives.length
-              : 0;
+          teamsWithObjectives.reduce((sum, team) => {
+            const teamAvg =
+              team.objectives.reduce((objSum, obj) => objSum + obj.progress, 0) /
+              team.objectives.length;
             return sum + teamAvg;
-          }, 0) / teamOkrSnapshots.length
+          }, 0) / teamsWithObjectives.length
         )
       : 0;
 
@@ -89,7 +92,8 @@ export function MbrTeamOkrsOverviewStep({
           icon={Users}
           title="OKRs dos Times"
           tooltip="mbr-team-okrs-overview"
-          description={`${teamOkrSnapshots.length} times com OKRs no ciclo`}
+          description={`${teamOkrSnapshots.length} times na pauta do ciclo`}
+
           variant="primary"
           badge={`${totalKrs} KRs`}
         />
