@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { getProgressBarStyle, TREND_COLORS } from '@/lib/colors';
-import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -25,9 +25,12 @@ export interface MbrTeamOkrsOverviewStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   /** Times que submeteram Pré-MBR no mês de referência (para sinalização). */
   preSubmittedTeamIds?: string[];
+  /** Submissões do Pré-MBR por time — resumo de times sem OKRs próprias. */
+  mbrPreByTeam?: Record<string, MbrPreTeamSubmission>;
   onContinue: () => void;
   onBack: () => void;
 }
+
 
 
 // ============================================================
