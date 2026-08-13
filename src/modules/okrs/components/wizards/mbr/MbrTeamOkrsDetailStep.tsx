@@ -637,17 +637,62 @@ export function MbrTeamOkrsDetailStep({
             if (currentTeam.objectives.length === 0) {
               return (
                 <Card className="border-dashed">
-                  <CardContent className="p-3 space-y-1">
+                  <CardContent className="p-3 space-y-2">
                     <p className="text-xs font-medium">Sem OKRs próprias no ciclo</p>
                     <p className="text-xs text-muted-foreground">
                       Este time entrou na pauta pelo Pré-MBR enviado. A contribuição
                       acontece via KRs de outros times — veja abaixo/acima os KPIs,
                       destaques e próximos passos informados pelo líder.
                     </p>
+                    {contributedKrStates.length > 0 && (
+                      <div className="pt-2 border-t space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Target className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-semibold">
+                            Contribuições em KRs de outros times ({contributedKrStates.length})
+                          </p>
+                        </div>
+                        {contributedKrStates.map((f) => {
+                          const detail = contributedKrDetails?.get(f.krId);
+                          const justif = (krJustifMap[f.krId] ?? '').trim();
+                          return (
+                            <div key={f.krId} className="pl-5 space-y-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-xs font-medium">
+                                  {detail?.krTitle ?? f.krTitle ?? '(KR removido)'}
+                                </p>
+                                {detail?.ownerTeamName && (
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    {detail.ownerTeamName}
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className="text-[10px]">
+                                  Pré-MBR: {f.state} · {f.finalProgress}%
+                                </Badge>
+                                {f.paceStatus && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {f.paceStatus}
+                                  </span>
+                                )}
+                              </div>
+                              {detail?.objectiveTitle && (
+                                <p className="text-xs text-muted-foreground">
+                                  Objetivo: {detail.objectiveTitle}
+                                </p>
+                              )}
+                              {justif && (
+                                <p className="text-xs text-muted-foreground">{justif}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
             }
+
             if (visibleObjectives.length === 0 && currentTeam.objectives.length > 0) {
 
               return (
