@@ -289,7 +289,6 @@ export function useSeedTeamOkrSnapshots(args: {
   ]);
 }
 
-}
 
 export function useSeedOrgOkrSnapshots(args: {
   isLoading: boolean;
