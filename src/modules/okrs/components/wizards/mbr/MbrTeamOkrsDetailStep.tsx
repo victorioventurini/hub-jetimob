@@ -24,6 +24,8 @@ import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
+import { useMbrContributedKrDetails } from '@/modules/okrs/hooks/useMbrContributedKrDetails';
+
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
 import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
