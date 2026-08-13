@@ -61,7 +61,9 @@ import {
   type KpiScope, 
   type KpiRagStatus,
   type KpiKrLinkStatus,
+  type KpiTrendFilter,
 } from "../types";
+import { classifyKpiTrend } from "../utils/trendClassification";
 import { useBu } from "@/contexts/BuContext";
 import { useAreas } from "@/modules/areas/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
@@ -279,6 +281,12 @@ export default function KpiEvolutionPage() {
     parse: (v) => v as KpiKrLinkStatus | 'all',
   });
 
+  const trendState = useUrlState<KpiTrendFilter | 'all'>({
+    key: 'trend',
+    defaultValue: 'all',
+    parse: (v) => v as KpiTrendFilter | 'all',
+  });
+
   const [selectedKpi, setSelectedKpi] = useState<KpiHistoryDialogData | null>(null);
 
   // Fetch areas for filter
@@ -299,9 +307,17 @@ export default function KpiEvolutionPage() {
   
   // v2.90.0: Apply KR link filter client-side
   const kpis = useMemo(() => {
-    if (krLinkStatusState.value === 'all' || !krLinks) return rawKpis;
-    
-    return rawKpis.filter((kpi) => {
+    const byTrend = trendState.value === 'all'
+      ? rawKpis
+      : rawKpis.filter(
+          (kpi) =>
+            classifyKpiTrend(kpi.current_value, kpi.previous_value, kpi.direction) ===
+            trendState.value,
+        );
+
+    if (krLinkStatusState.value === 'all' || !krLinks) return byTrend;
+
+    return byTrend.filter((kpi) => {
       switch (krLinkStatusState.value) {
         case 'primary':
           return krLinks.primaryKpiIds.has(kpi.id);
@@ -313,7 +329,7 @@ export default function KpiEvolutionPage() {
           return true;
       }
     });
-  }, [rawKpis, krLinkStatusState.value, krLinks]);
+  }, [rawKpis, krLinkStatusState.value, krLinks, trendState.value]);
 
   // Single KPI mode (when only one result from search)
   const singleKpiMode = kpis.length === 1 && searchState.value;
@@ -428,6 +444,7 @@ export default function KpiEvolutionPage() {
             indicatorType={indicatorTypeState.value}
             ragStatus={ragStatusState.value}
             krLinkStatus={krLinkStatusState.value}
+            trend={trendState.value}
             onCategoryChange={() => {}}
             onTeamChange={teamState.set}
             onAreaChange={areaState.set}
@@ -435,6 +452,7 @@ export default function KpiEvolutionPage() {
             onIndicatorTypeChange={indicatorTypeState.set}
             onRagStatusChange={ragStatusState.set}
             onKrLinkStatusChange={krLinkStatusState.set}
+            onTrendChange={trendState.set}
           />
         </ListPageFilters>
 
