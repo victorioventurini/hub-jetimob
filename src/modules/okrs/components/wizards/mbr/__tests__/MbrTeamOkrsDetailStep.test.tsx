@@ -14,6 +14,13 @@ vi.mock('@/modules/okrs/components/OkrStatusBadge', () => ({
 vi.mock('../../shared/LastCheckinBadge', () => ({
   LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
 }));
+vi.mock('@/modules/okrs/hooks/useMbrPreTeamProjects', () => ({
+  useMbrPreTeamProjects: () => ({ projects: [], isLoading: false }),
+}));
+vi.mock('@/modules/okrs/hooks/useMbrContributedKrDetails', () => ({
+  useMbrContributedKrDetails: () => ({ data: new Map(), isLoading: false }),
+}));
+
 
 // ── Fixtures ─────────────────────────────────────────────────
 function makeTeam(overrides: Partial<MbrTeamOkrSnapshot> & { teamId?: string; teamName?: string } = {}): MbrTeamOkrSnapshot {
