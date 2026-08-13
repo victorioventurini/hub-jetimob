@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
+import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb, Eye, EyeOff, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
@@ -24,6 +24,8 @@ import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
+import { useMbrContributedKrDetails } from '@/modules/okrs/hooks/useMbrContributedKrDetails';
+
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
 import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
@@ -130,6 +132,21 @@ export function MbrTeamOkrsDetailStep({
     for (const p of teamProjects) for (const ms of p.milestones) m.set(ms.id, ms.name);
     return m;
   }, [teamProjects]);
+
+  // Times sem OKRs próprias: única leitura de OKR são os KRs contribuídos
+  // declarados no Pré-MBR. Resolvemos títulos/donos por lookup BU-scoped.
+  const contributedKrStates = useMemo(() => {
+    if (!currentTeam || currentTeam.objectives.length > 0) return [];
+    const sub = mbrPreByTeam[currentTeam.teamId];
+    return (sub?.krFinalStates ?? []).filter((f) => f?.krId && f.isContributed);
+  }, [currentTeam, mbrPreByTeam]);
+
+  const contributedKrIds = useMemo(
+    () => contributedKrStates.map((f) => f.krId),
+    [contributedKrStates],
+  );
+  const { data: contributedKrDetails } = useMbrContributedKrDetails(contributedKrIds);
+
 
   const isFirstTeam = safeIndex === 0;
   const isLastTeam = safeIndex === totalTeams - 1;
@@ -471,12 +488,57 @@ export function MbrTeamOkrsDetailStep({
                       </div>
                     )}
                     {nextSteps.crossDependencies.length > 0 && (
-                      <div className="pl-5">
-                        <Badge variant="outline" className="text-[10px]">
-                          {nextSteps.crossDependencies.length} dependência{nextSteps.crossDependencies.length > 1 ? 's' : ''} cross-team
-                        </Badge>
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5 text-status-amber shrink-0" />
+                          <p className="text-xs font-semibold">
+                            Dependências cross-team ({nextSteps.crossDependencies.length})
+                          </p>
+                        </div>
+                        {nextSteps.crossDependencies.map((dep, i) => (
+                          <p key={i} className="text-xs text-muted-foreground pl-5">
+                            • {dep}
+                          </p>
+                        ))}
                       </div>
                     )}
+
+                    {/* KPIs do time (snapshots congelados no Pré-MBR) */}
+                    {kpiSnapshots.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Gauge className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-semibold">
+                            KPIs do time no Pré-MBR ({kpiSnapshots.length})
+                          </p>
+                        </div>
+                        {kpiSnapshots.map((k) => (
+                          <div key={k.kpiId} className="pl-5 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-xs font-medium">{k.name}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {k.currentValue ?? '—'}
+                                {k.unit ? ` ${k.unit}` : ''}
+                                {k.target != null
+                                  ? ` · meta ${k.target}${k.unit ? ` ${k.unit}` : ''}`
+                                  : ''}
+                              </span>
+                              <OkrStatusBadge
+                                status={toRagStatus(k.ragStatus)}
+                                type="kr"
+                                className="shrink-0 text-[10px]"
+                              />
+                            </div>
+                            {k.impactAssessment?.trim() && (
+                              <p className="text-xs text-muted-foreground">
+                                {k.impactAssessment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
 
                     {/* KPI: justificativas */}
                     {justifEntries.length > 0 && (
@@ -592,17 +654,62 @@ export function MbrTeamOkrsDetailStep({
             if (currentTeam.objectives.length === 0) {
               return (
                 <Card className="border-dashed">
-                  <CardContent className="p-3 space-y-1">
+                  <CardContent className="p-3 space-y-2">
                     <p className="text-xs font-medium">Sem OKRs próprias no ciclo</p>
                     <p className="text-xs text-muted-foreground">
                       Este time entrou na pauta pelo Pré-MBR enviado. A contribuição
                       acontece via KRs de outros times — veja abaixo/acima os KPIs,
                       destaques e próximos passos informados pelo líder.
                     </p>
+                    {contributedKrStates.length > 0 && (
+                      <div className="pt-2 border-t space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Target className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-semibold">
+                            Contribuições em KRs de outros times ({contributedKrStates.length})
+                          </p>
+                        </div>
+                        {contributedKrStates.map((f) => {
+                          const detail = contributedKrDetails?.get(f.krId);
+                          const justif = (krJustifMap[f.krId] ?? '').trim();
+                          return (
+                            <div key={f.krId} className="pl-5 space-y-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-xs font-medium">
+                                  {detail?.krTitle ?? f.krTitle ?? '(KR removido)'}
+                                </p>
+                                {detail?.ownerTeamName && (
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    {detail.ownerTeamName}
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className="text-[10px]">
+                                  Pré-MBR: {f.state} · {f.finalProgress}%
+                                </Badge>
+                                {f.paceStatus && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {f.paceStatus}
+                                  </span>
+                                )}
+                              </div>
+                              {detail?.objectiveTitle && (
+                                <p className="text-xs text-muted-foreground">
+                                  Objetivo: {detail.objectiveTitle}
+                                </p>
+                              )}
+                              {justif && (
+                                <p className="text-xs text-muted-foreground">{justif}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
             }
+
             if (visibleObjectives.length === 0 && currentTeam.objectives.length > 0) {
 
               return (
