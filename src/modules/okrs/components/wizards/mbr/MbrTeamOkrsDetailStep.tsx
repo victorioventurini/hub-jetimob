@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
+import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb, Eye, EyeOff, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
