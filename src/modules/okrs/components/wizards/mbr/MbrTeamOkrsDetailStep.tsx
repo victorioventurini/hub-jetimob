@@ -37,7 +37,7 @@ export interface MbrTeamOkrsDetailStepProps {
   teamOkrSnapshots: MbrTeamOkrSnapshot[];
   onTeamOkrSnapshotsChange: (snapshots: MbrTeamOkrSnapshot[]) => void;
   currentTeamIndex: number;
-  onCurrentTeamIndexChange: (index: number) => void;
+  onCurrentTeamIndexChange: (index: number, teamId?: string) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   /** Addendums from mbr-pre sessions, keyed by teamId */
@@ -163,17 +163,18 @@ export function MbrTeamOkrsDetailStep({
     if (isFirstTeam) {
       onBack();
     } else {
-      onCurrentTeamIndexChange(safeIndex - 1);
+      onCurrentTeamIndexChange(safeIndex - 1, teamsWithOkrs[safeIndex - 1]?.teamId);
     }
-  }, [isFirstTeam, safeIndex, onBack, onCurrentTeamIndexChange]);
+  }, [isFirstTeam, safeIndex, onBack, onCurrentTeamIndexChange, teamsWithOkrs]);
 
   const handleNext = useCallback(() => {
     if (isLastTeam) {
       if (allReviewed) onContinue();
     } else {
-      onCurrentTeamIndexChange(safeIndex + 1);
+      onCurrentTeamIndexChange(safeIndex + 1, teamsWithOkrs[safeIndex + 1]?.teamId);
     }
-  }, [isLastTeam, allReviewed, safeIndex, onContinue, onCurrentTeamIndexChange]);
+  }, [isLastTeam, allReviewed, safeIndex, onContinue, onCurrentTeamIndexChange, teamsWithOkrs]);
+
 
   // ── Empty state ────────────────────────────────────────────
   if (totalTeams === 0) {

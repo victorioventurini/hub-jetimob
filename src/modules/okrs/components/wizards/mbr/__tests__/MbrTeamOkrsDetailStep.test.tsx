@@ -14,6 +14,13 @@ vi.mock('@/modules/okrs/components/OkrStatusBadge', () => ({
 vi.mock('../../shared/LastCheckinBadge', () => ({
   LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
 }));
+vi.mock('@/modules/okrs/hooks/useMbrPreTeamProjects', () => ({
+  useMbrPreTeamProjects: () => ({ projects: [], isLoading: false }),
+}));
+vi.mock('@/modules/okrs/hooks/useMbrContributedKrDetails', () => ({
+  useMbrContributedKrDetails: () => ({ data: new Map(), isLoading: false }),
+}));
+
 
 // ── Fixtures ─────────────────────────────────────────────────
 function makeTeam(overrides: Partial<MbrTeamOkrSnapshot> & { teamId?: string; teamName?: string } = {}): MbrTeamOkrSnapshot {
@@ -104,7 +111,7 @@ describe('MbrTeamOkrsDetailStep', () => {
     const user = userEvent.setup();
     const props = renderStep({ currentTeamIndex: 0 });
     await user.click(screen.getByText('Próximo time'));
-    expect(props.onCurrentTeamIndexChange).toHaveBeenCalledWith(1);
+    expect(props.onCurrentTeamIndexChange).toHaveBeenCalledWith(1, 'team-2');
   });
 
   it('calls onBack() when clicking "Voltar" on first team', async () => {
@@ -119,7 +126,7 @@ describe('MbrTeamOkrsDetailStep', () => {
     const user = userEvent.setup();
     const props = renderStep({ currentTeamIndex: 1 });
     await user.click(screen.getByText('Time anterior'));
-    expect(props.onCurrentTeamIndexChange).toHaveBeenCalledWith(0);
+    expect(props.onCurrentTeamIndexChange).toHaveBeenCalledWith(0, 'team-1');
   });
 
   it('disables primary on last team when not all reviewed', () => {

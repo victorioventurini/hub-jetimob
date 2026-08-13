@@ -157,12 +157,13 @@ export default function MbrPage() {
   });
 
   // ── MBR-PRE submissions (mês de referência do draft) ──
-  const { data: mbrPre } = useMbrPreSubmissions({
+  const { data: mbrPre, isFetched: hasFetchedMbrPre } = useMbrPreSubmissions({
     referenceMonth: draft.data.referenceMonth,
   });
   const mbrPreByTeam = mbrPre?.byTeam ?? {};
   const mbrPreAddendumsByTeam = mbrPre?.addendumsByTeam ?? {};
   const mbrPreSubmittedCount = mbrPre?.submittedCount ?? 0;
+
 
   // Derivações memoizadas das submissões Pré-MBR
   const {
@@ -201,7 +202,7 @@ export default function MbrPage() {
   } = useAllTeamObjectivesForMbr(quarterlyCycle?.id);
 
   // Times da BU (para resolver nomes de times sem OKR própria).
-  const { data: allTeams = [] } = useTeams(true);
+  const { data: allTeams = [], isFetched: hasFetchedTeams } = useTeams(true);
 
   // Pauta de times = OKRs do ciclo ∪ times que submeteram Pré-MBR.
   const preSubmittedTeams = useMemo(
@@ -221,7 +222,9 @@ export default function MbrPage() {
     draftTeamOkrSnapshots: draft.data.teamOkrSnapshots,
     updateDraft,
     preSubmittedTeams,
+    preSubmittedTeamsReady: hasFetchedMbrPre && hasFetchedTeams,
   });
+
 
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
@@ -603,14 +606,18 @@ export default function MbrPage() {
               updateDraft({ teamOkrSnapshots })
             }
             currentTeamIndex={draft.data.currentTeamIndex}
-            onCurrentTeamIndexChange={(currentTeamIndex: number) => {
+            onCurrentTeamIndexChange={(currentTeamIndex: number, teamIdArg?: string) => {
               updateDraft({ currentTeamIndex });
-              const teamId = draft.data.teamOkrSnapshots[currentTeamIndex]?.teamId;
+              // O índice é relativo à lista navegável (filtrada) da etapa —
+              // usar o teamId informado evita divergência com o array completo.
+              const teamId =
+                teamIdArg ?? draft.data.teamOkrSnapshots[currentTeamIndex]?.teamId;
               const url = new URL(window.location.href);
               if (teamId) url.searchParams.set('substep', `team:${teamId}`);
               else url.searchParams.delete('substep');
               window.history.replaceState(window.history.state, '', url.toString());
             }}
+
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })

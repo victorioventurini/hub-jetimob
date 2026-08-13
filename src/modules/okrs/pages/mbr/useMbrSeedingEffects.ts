@@ -113,6 +113,12 @@ export function useSeedTeamOkrSnapshots(args: {
    * de outro time) não desaparece do MBR.
    */
   preSubmittedTeams?: Array<{ teamId: string; teamName: string }>;
+  /**
+   * `true` quando as submissões do Pré-MBR E a lista de times da BU já
+   * carregaram. Sem esse gate, o seeding roda antes de `preSubmittedTeams`
+   * existir e os times sem OKR própria ficam fora da pauta.
+   */
+  preSubmittedTeamsReady?: boolean;
 }) {
   const {
     cycleId,
@@ -122,13 +128,33 @@ export function useSeedTeamOkrSnapshots(args: {
     draftTeamOkrSnapshots,
     updateDraft,
     preSubmittedTeams = [],
+    preSubmittedTeamsReady = true,
   } = args;
   const seeded = useRef(false);
+
+  // Saneamento idempotente: independente do latch de seeding, garante que todo
+  // time com Pré-MBR submetido esteja na pauta (conserta drafts já criados).
+  useEffect(() => {
+    if (!preSubmittedTeamsReady) return;
+    if (draftTeamOkrSnapshots.length === 0) return;
+    const existing = new Set(draftTeamOkrSnapshots.map((t) => t.teamId));
+    const missing = preSubmittedTeams.filter((t) => t.teamId && !existing.has(t.teamId));
+    if (missing.length === 0) return;
+    updateDraft({
+      teamOkrSnapshots: [
+        ...draftTeamOkrSnapshots,
+        ...missing.map((t) => buildEmptyTeamSnapshot(t.teamId, t.teamName)),
+      ],
+    });
+  }, [draftTeamOkrSnapshots, preSubmittedTeams, preSubmittedTeamsReady, updateDraft]);
+
 
   useEffect(() => {
     if (seeded.current) return;
     if (!cycleId) return;
     if (!hasFetched || isLoading) return;
+    if (!preSubmittedTeamsReady) return;
+
 
 
     // Migration guard: drafts antigos precisam ser re-seeded.
@@ -166,21 +192,12 @@ export function useSeedTeamOkrSnapshots(args: {
       );
 
     if (hasValidKeyResults) {
-      // Saneamento (drafts já em andamento): garante que times com Pré-MBR
-      // submetido apareçam na pauta mesmo sem OKR própria no ciclo.
-      const existing = new Set(draftTeamOkrSnapshots.map((t) => t.teamId));
-      const missing = preSubmittedTeams.filter((t) => t.teamId && !existing.has(t.teamId));
-      if (missing.length > 0) {
-        updateDraft({
-          teamOkrSnapshots: [
-            ...draftTeamOkrSnapshots,
-            ...missing.map((t) => buildEmptyTeamSnapshot(t.teamId, t.teamName)),
-          ],
-        });
-      }
+      // Times faltantes são acrescentados pelo efeito de saneamento abaixo
+      // (idempotente, roda sempre que preSubmittedTeams mudar).
       seeded.current = true;
       return;
     }
+
 
 
     const objByTeam = new Map<string, { teamName: string; objectives: any[] }>();
@@ -301,6 +318,8 @@ export function useSeedTeamOkrSnapshots(args: {
     isLoading,
     draftTeamOkrSnapshots,
     preSubmittedTeams,
+    preSubmittedTeamsReady,
+
     updateDraft,
   ]);
 }
