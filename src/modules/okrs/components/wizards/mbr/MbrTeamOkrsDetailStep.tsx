@@ -131,6 +131,21 @@ export function MbrTeamOkrsDetailStep({
     return m;
   }, [teamProjects]);
 
+  // Times sem OKRs próprias: única leitura de OKR são os KRs contribuídos
+  // declarados no Pré-MBR. Resolvemos títulos/donos por lookup BU-scoped.
+  const contributedKrStates = useMemo(() => {
+    if (!currentTeam || currentTeam.objectives.length > 0) return [];
+    const sub = mbrPreByTeam[currentTeam.teamId];
+    return (sub?.krFinalStates ?? []).filter((f) => f?.krId && f.isContributed);
+  }, [currentTeam, mbrPreByTeam]);
+
+  const contributedKrIds = useMemo(
+    () => contributedKrStates.map((f) => f.krId),
+    [contributedKrStates],
+  );
+  const { data: contributedKrDetails } = useMbrContributedKrDetails(contributedKrIds);
+
+
   const isFirstTeam = safeIndex === 0;
   const isLastTeam = safeIndex === totalTeams - 1;
 
