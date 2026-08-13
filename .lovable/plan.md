@@ -27,13 +27,22 @@ Isso alinha as regras de acesso com a intenção do produto: quem é designado r
 
 Aplicar o template `kpis_operate_v2` na BU Jetimob para Luísa Zanini e Uriel Canfield, para que também tenham a permissão pela via normal (e vejam/editem valores de KPIs onde não são responsáveis).
 
-### 3. Mensagem de erro mais clara
+### 3. Mensagem de feedback de erro (ajuste de copy)
 
-No modal de registro de valor, quando a gravação for negada por acesso, exibir uma mensagem orientativa ("Você não tem permissão para registrar valores deste KPI — fale com o administrador da BU") em vez do texto técnico de política de segurança.
+Substituir os textos técnicos por mensagens claras e acionáveis, com título, causa e o que fazer:
+
+- **Falha ao criar valor** (hoje: "new row violates row-level security policy for table kpi_values")
+  - Título: "Sem permissão para registrar este KPI"
+  - Descrição: "Você não é responsável nem contribuidor deste indicador nesta BU. Peça ao administrador da BU para te incluir como contribuidor do KPI."
+- **Falha ao substituir valor existente** (hoje: "Apenas quem registrou o valor (ou um administrador da BU) pode alterá-lo.")
+  - Título: "Sem permissão para editar este valor"
+  - Descrição: "Este valor foi registrado por outra pessoa. Peça a quem registrou ou a um administrador da BU para atualizá-lo."
+- Manter o nome do KPI no título quando disponível e nunca exibir nome de tabela, código SQL ou texto de política de segurança ao usuário.
 
 ## Detalhes técnicos
 
 - Migração ajustando as políticas `kpi_values_insert_v2`, `kpi_values_update_v3` e `kpi_values_delete_v2`, adicionando uma função `security definer` auxiliar (ex.: `public.can_write_kpi_value(_profile_id uuid, _kpi_id uuid)`) que resolve: permissão por template **OU** `kpi_metrics.owner_user_id = _profile_id` **OU** contribuidor ativo em `kpi_data_contributors` (`deleted_at is null`), sempre com o filtro de BU corrente (`is_current_bu`) preservado.
 - `kpi_values_select_v3` fica inalterada (leitura já é liberada por `kpis.view:bu`).
 - Inserção de 2 registros em `bu_user_permission_templates_v2` (template `kpis_operate_v2`, BU Jetimob) para os dois perfis.
-- Ajuste de tradução de erro no fluxo de registro de valor de KPI (modal usado tanto em `/kpis` quanto no Pré-MBR), mapeando erros de política de acesso (código `42501` / "row-level security") para a mensagem amigável.
+- Copy de erro: adicionar entrada específica de KPI values em `src/lib/errorMessages.ts` (padrão `row-level security` + `kpi_values`) e usar esse humanizador nos handlers de erro dos diálogos de registro/edição de valor (`AddKpiValueDialog`, `EditKpiValueDialog` e o fluxo do Pré-MBR que consome `KpiValueEntryForm`), em vez de repassar `error.message` cru ao toast.
+
