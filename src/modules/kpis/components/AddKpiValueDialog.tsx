@@ -137,11 +137,13 @@ export function AddKpiValueDialog({
       setConflict(null);
       onOpenChange(false);
     } catch (err: unknown) {
+      const copy = getKpiValueUpdateErrorCopy(err, kpiName);
       toast({
-        title: 'Erro ao substituir valor',
-        description: (err as { message?: string } | null)?.message ?? 'Erro desconhecido',
+        title: copy.title,
+        description: copy.description,
         variant: 'destructive',
       });
+
     } finally {
       setIsSubmitting(false);
     }
