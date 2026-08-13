@@ -166,21 +166,12 @@ export function useSeedTeamOkrSnapshots(args: {
       );
 
     if (hasValidKeyResults) {
-      // Saneamento (drafts já em andamento): garante que times com Pré-MBR
-      // submetido apareçam na pauta mesmo sem OKR própria no ciclo.
-      const existing = new Set(draftTeamOkrSnapshots.map((t) => t.teamId));
-      const missing = preSubmittedTeams.filter((t) => t.teamId && !existing.has(t.teamId));
-      if (missing.length > 0) {
-        updateDraft({
-          teamOkrSnapshots: [
-            ...draftTeamOkrSnapshots,
-            ...missing.map((t) => buildEmptyTeamSnapshot(t.teamId, t.teamName)),
-          ],
-        });
-      }
+      // Times faltantes são acrescentados pelo efeito de saneamento abaixo
+      // (idempotente, roda sempre que preSubmittedTeams mudar).
       seeded.current = true;
       return;
     }
+
 
 
     const objByTeam = new Map<string, { teamName: string; objectives: any[] }>();
