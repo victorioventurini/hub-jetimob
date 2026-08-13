@@ -53,9 +53,12 @@ export function MbrTeamOkrsOverviewStep({
   teamOkrSnapshots,
   decisions,
   onDecisionsChange,
+  preSubmittedTeamIds = [],
   onContinue,
   onBack,
 }: MbrTeamOkrsOverviewStepProps) {
+  const preSubmittedSet = useMemo(() => new Set(preSubmittedTeamIds), [preSubmittedTeamIds]);
+
   const { sorted, totalAtRisk, avgProgress, totalKrs } = useMemo(() => {
     const sorted = [...teamOkrSnapshots].sort(
       (a, b) => (HEALTH_ORDER[a.healthStatus] ?? 2) - (HEALTH_ORDER[b.healthStatus] ?? 2)
