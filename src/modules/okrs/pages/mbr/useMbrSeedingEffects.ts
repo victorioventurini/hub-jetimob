@@ -265,6 +265,15 @@ export function useSeedTeamOkrSnapshots(args: {
       },
     );
 
+    // União: acrescenta times que submeteram Pré-MBR mas não têm OKR própria
+    // no ciclo (ex.: contribuem via KRs de outro time).
+    const seenTeams = new Set(snapshots.map((s) => s.teamId));
+    for (const t of preSubmittedTeams) {
+      if (!t.teamId || seenTeams.has(t.teamId)) continue;
+      seenTeams.add(t.teamId);
+      snapshots.push(buildEmptyTeamSnapshot(t.teamId, t.teamName));
+    }
+
     if (snapshots.length > 0) {
       updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
     }
@@ -274,9 +283,12 @@ export function useSeedTeamOkrSnapshots(args: {
     cycleId,
     hasFetched,
     isLoading,
-    draftTeamOkrSnapshots.length,
+    draftTeamOkrSnapshots,
+    preSubmittedTeams,
     updateDraft,
   ]);
+}
+
 }
 
 export function useSeedOrgOkrSnapshots(args: {
