@@ -200,6 +200,19 @@ export default function MbrPage() {
     isFetched: hasFetchedTeamOkrs,
   } = useAllTeamObjectivesForMbr(quarterlyCycle?.id);
 
+  // Times da BU (para resolver nomes de times sem OKR própria).
+  const { data: allTeams = [] } = useTeams(true);
+
+  // Pauta de times = OKRs do ciclo ∪ times que submeteram Pré-MBR.
+  const preSubmittedTeams = useMemo(
+    () =>
+      Object.keys(mbrPreByTeam).map((teamId) => ({
+        teamId,
+        teamName: allTeams.find((t) => t.id === teamId)?.name ?? 'Time sem nome',
+      })),
+    [mbrPreByTeam, allTeams],
+  );
+
   useSeedTeamOkrSnapshots({
     cycleId: quarterlyCycle?.id,
     hasFetched: hasFetchedTeamOkrs,
@@ -207,7 +220,9 @@ export default function MbrPage() {
     allTeamObjectives,
     draftTeamOkrSnapshots: draft.data.teamOkrSnapshots,
     updateDraft,
+    preSubmittedTeams,
   });
+
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
   const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(
@@ -392,7 +407,8 @@ export default function MbrPage() {
 
   // Hidratar pauta consolidada do MBR a partir dos Pré-MBR + curadoria IA.
   // Adiciona itens novos ao final preservando ordem definida pelo líder.
-  const { data: allTeams = [] } = useTeams(true);
+  // (allTeams já carregado acima, junto ao seeding de times)
+
   const teamNamesByIdMemo = useMemo(() => {
     const map: Record<string, string> = {};
     for (const t of allTeams) map[t.id] = t.name;
@@ -567,9 +583,11 @@ export default function MbrPage() {
           <MbrTeamOkrsOverviewStep
             teamOkrSnapshots={draft.data.teamOkrSnapshots}
             decisions={draft.data.decisions}
+            preSubmittedTeamIds={Object.keys(mbrPreByTeam)}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })
             }
+
             onContinue={goNext}
             onBack={goBack}
           />

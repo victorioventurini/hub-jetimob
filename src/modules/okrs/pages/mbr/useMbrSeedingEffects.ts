@@ -83,6 +83,22 @@ export function useSeedKpiSnapshots(args: {
 const VALID_RAG = new Set(['green', 'yellow', 'red', 'not_started']);
 const VALID_DIRECTIONS = new Set(['up', 'down', 'maintain']);
 
+/**
+ * Snapshot de time sem OKR própria no ciclo (entrou na pauta por ter
+ * submetido Pré-MBR). Health neutro — a análise vem do Pré-MBR.
+ */
+function buildEmptyTeamSnapshot(teamId: string, teamName: string): MbrTeamOkrSnapshot {
+  return {
+    teamId,
+    teamName: teamName || 'Time sem nome',
+    objectives: [],
+    healthScore: computeHealthScore([]),
+    healthStatus: computeHealthStatus(computeHealthScore([])),
+    reviewed: false,
+  };
+}
+
+
 export function useSeedTeamOkrSnapshots(args: {
   cycleId: string | undefined | null;
   hasFetched: boolean;
@@ -90,6 +106,13 @@ export function useSeedTeamOkrSnapshots(args: {
   allTeamObjectives: any[] | undefined;
   draftTeamOkrSnapshots: MbrTeamOkrSnapshot[];
   updateDraft: (patch: Partial<MbrDraftData>) => void;
+  /**
+   * Times que submeteram Pré-MBR para o mês de referência do MBR.
+   * A pauta de times é a UNIÃO de (a) times com objetivos próprios no ciclo
+   * e (b) estes times — assim um time sem OKR própria (que contribui via KRs
+   * de outro time) não desaparece do MBR.
+   */
+  preSubmittedTeams?: Array<{ teamId: string; teamName: string }>;
 }) {
   const {
     cycleId,
@@ -98,6 +121,7 @@ export function useSeedTeamOkrSnapshots(args: {
     allTeamObjectives,
     draftTeamOkrSnapshots,
     updateDraft,
+    preSubmittedTeams = [],
   } = args;
   const seeded = useRef(false);
 
@@ -105,6 +129,7 @@ export function useSeedTeamOkrSnapshots(args: {
     if (seeded.current) return;
     if (!cycleId) return;
     if (!hasFetched || isLoading) return;
+
 
     // Migration guard: drafts antigos precisam ser re-seeded.
     const hasValidKeyResults =
@@ -141,9 +166,22 @@ export function useSeedTeamOkrSnapshots(args: {
       );
 
     if (hasValidKeyResults) {
+      // Saneamento (drafts já em andamento): garante que times com Pré-MBR
+      // submetido apareçam na pauta mesmo sem OKR própria no ciclo.
+      const existing = new Set(draftTeamOkrSnapshots.map((t) => t.teamId));
+      const missing = preSubmittedTeams.filter((t) => t.teamId && !existing.has(t.teamId));
+      if (missing.length > 0) {
+        updateDraft({
+          teamOkrSnapshots: [
+            ...draftTeamOkrSnapshots,
+            ...missing.map((t) => buildEmptyTeamSnapshot(t.teamId, t.teamName)),
+          ],
+        });
+      }
       seeded.current = true;
       return;
     }
+
 
     const objByTeam = new Map<string, { teamName: string; objectives: any[] }>();
     for (const obj of allTeamObjectives || []) {
@@ -243,6 +281,15 @@ export function useSeedTeamOkrSnapshots(args: {
       },
     );
 
+    // União: acrescenta times que submeteram Pré-MBR mas não têm OKR própria
+    // no ciclo (ex.: contribuem via KRs de outro time).
+    const seenTeams = new Set(snapshots.map((s) => s.teamId));
+    for (const t of preSubmittedTeams) {
+      if (!t.teamId || seenTeams.has(t.teamId)) continue;
+      seenTeams.add(t.teamId);
+      snapshots.push(buildEmptyTeamSnapshot(t.teamId, t.teamName));
+    }
+
     if (snapshots.length > 0) {
       updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
     }
@@ -252,10 +299,12 @@ export function useSeedTeamOkrSnapshots(args: {
     cycleId,
     hasFetched,
     isLoading,
-    draftTeamOkrSnapshots.length,
+    draftTeamOkrSnapshots,
+    preSubmittedTeams,
     updateDraft,
   ]);
 }
+
 
 export function useSeedOrgOkrSnapshots(args: {
   isLoading: boolean;

@@ -23,9 +23,12 @@ export interface MbrTeamOkrsOverviewStepProps {
   teamOkrSnapshots: MbrTeamOkrSnapshot[];
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** Times que submeteram Pré-MBR no mês de referência (para sinalização). */
+  preSubmittedTeamIds?: string[];
   onContinue: () => void;
   onBack: () => void;
 }
+
 
 // ============================================================
 // HELPERS
@@ -50,9 +53,12 @@ export function MbrTeamOkrsOverviewStep({
   teamOkrSnapshots,
   decisions,
   onDecisionsChange,
+  preSubmittedTeamIds = [],
   onContinue,
   onBack,
 }: MbrTeamOkrsOverviewStepProps) {
+  const preSubmittedSet = useMemo(() => new Set(preSubmittedTeamIds), [preSubmittedTeamIds]);
+
   const { sorted, totalAtRisk, avgProgress, totalKrs } = useMemo(() => {
     const sorted = [...teamOkrSnapshots].sort(
       (a, b) => (HEALTH_ORDER[a.healthStatus] ?? 2) - (HEALTH_ORDER[b.healthStatus] ?? 2)
@@ -68,14 +74,17 @@ export function MbrTeamOkrsOverviewStep({
       0
     );
 
-    const avgProgress = teamOkrSnapshots.length > 0
+    // Média considera apenas times com OKRs próprias — times que entraram na
+    // pauta só pelo Pré-MBR não devem puxar a média para baixo.
+    const teamsWithObjectives = teamOkrSnapshots.filter((t) => t.objectives.length > 0);
+    const avgProgress = teamsWithObjectives.length > 0
       ? Math.round(
-          teamOkrSnapshots.reduce((sum, team) => {
-            const teamAvg = team.objectives.length > 0
-              ? team.objectives.reduce((objSum, obj) => objSum + obj.progress, 0) / team.objectives.length
-              : 0;
+          teamsWithObjectives.reduce((sum, team) => {
+            const teamAvg =
+              team.objectives.reduce((objSum, obj) => objSum + obj.progress, 0) /
+              team.objectives.length;
             return sum + teamAvg;
-          }, 0) / teamOkrSnapshots.length
+          }, 0) / teamsWithObjectives.length
         )
       : 0;
 
@@ -89,7 +98,8 @@ export function MbrTeamOkrsOverviewStep({
           icon={Users}
           title="OKRs dos Times"
           tooltip="mbr-team-okrs-overview"
-          description={`${teamOkrSnapshots.length} times com OKRs no ciclo`}
+          description={`${teamOkrSnapshots.length} times na pauta do ciclo`}
+
           variant="primary"
           badge={`${totalKrs} KRs`}
         />
@@ -139,9 +149,11 @@ export function MbrTeamOkrsOverviewStep({
           sorted.map((team) => {
             const teamAtRisk = team.objectives.reduce((sum, obj) => sum + obj.krsAtRisk, 0);
             const teamKrCount = team.objectives.reduce((sum, obj) => sum + obj.krCount, 0);
-            const teamAvgProgress = team.objectives.length > 0
+            const hasOwnOkrs = team.objectives.length > 0;
+            const teamAvgProgress = hasOwnOkrs
               ? Math.round(team.objectives.reduce((sum, obj) => sum + obj.progress, 0) / team.objectives.length)
               : 0;
+            const preSubmitted = preSubmittedSet.has(team.teamId);
 
             return (
               <Card
@@ -149,21 +161,37 @@ export function MbrTeamOkrsOverviewStep({
                 className={cn('transition-colors', teamAtRisk > 0 && 'border-status-orange/30')}
               >
                 <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-base truncate">{team.teamName}</CardTitle>
-                    {getTrendIcon(team.objectives)}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {preSubmitted && (
+                        <Badge variant="outline" className="text-[10px]">
+                          Pré-MBR enviado
+                        </Badge>
+                      )}
+                      {getTrendIcon(team.objectives)}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{team.objectives.length} OKRs · {teamKrCount} KRs</span>
-                      <span className="font-bold">{teamAvgProgress}%</span>
-                    </div>
-                    <Progress
-                      value={teamAvgProgress}
-                      className={cn('h-1.5', getProgressBarStyle(teamAvgProgress))}
-                    />
+                    {hasOwnOkrs ? (
+                      <>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{team.objectives.length} OKRs · {teamKrCount} KRs</span>
+                          <span className="font-bold">{teamAvgProgress}%</span>
+                        </div>
+                        <Progress
+                          value={teamAvgProgress}
+                          className={cn('h-1.5', getProgressBarStyle(teamAvgProgress))}
+                        />
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Sem OKRs próprias no ciclo — contribui via KRs de outro time.
+                      </p>
+                    )}
+
                     {teamAtRisk > 0 && (
                       <p className="text-xs text-status-orange">
                         {teamAtRisk} KR{teamAtRisk > 1 ? 's' : ''} em risco
