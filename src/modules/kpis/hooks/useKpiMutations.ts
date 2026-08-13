@@ -3,6 +3,8 @@ import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScoped
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
+import { getKpiValueUpdateErrorCopy } from "../utils/kpiValueErrors";
+
 import { KpiScope, KpiIndicatorType, KpiLifecycleStatus, KpiFrequencyValue } from "../types";
 
 interface UpdateKpiData {
