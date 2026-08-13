@@ -407,7 +407,8 @@ export default function MbrPage() {
 
   // Hidratar pauta consolidada do MBR a partir dos Pré-MBR + curadoria IA.
   // Adiciona itens novos ao final preservando ordem definida pelo líder.
-  const { data: allTeams = [] } = useTeams(true);
+  // (allTeams já carregado acima, junto ao seeding de times)
+
   const teamNamesByIdMemo = useMemo(() => {
     const map: Record<string, string> = {};
     for (const t of allTeams) map[t.id] = t.name;
