@@ -62,8 +62,10 @@ import {
   type KpiRagStatus,
   type KpiKrLinkStatus,
   type KpiTrendFilter,
+  type KpiTrendWindow,
+  KPI_TREND_WINDOW_DEFAULT,
+  TREND_WINDOW_LABELS,
 } from "../types";
-import { classifyKpiTrend } from "../utils/trendClassification";
 import { useBu } from "@/contexts/BuContext";
 import { useAreas } from "@/modules/areas/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
@@ -287,6 +289,14 @@ export default function KpiEvolutionPage() {
     parse: (v) => v as KpiTrendFilter | 'all',
   });
 
+  // v3.x — Janela (meses) dos consolidados usados no cálculo da tendência
+  const trendWindowState = useUrlState<KpiTrendWindow>({
+    key: 'trendWindow',
+    defaultValue: KPI_TREND_WINDOW_DEFAULT,
+    parse: (v) => (Number(v) === 3 || Number(v) === 12 ? (Number(v) as KpiTrendWindow) : KPI_TREND_WINDOW_DEFAULT),
+    serialize: (v) => String(v),
+  });
+
   const [selectedKpi, setSelectedKpi] = useState<KpiHistoryDialogData | null>(null);
 
   // Fetch areas for filter
@@ -303,17 +313,14 @@ export default function KpiEvolutionPage() {
     teamId: teamState.value === 'all' ? undefined : teamState.value,
     ragStatus: ragStatusState.value === 'all' ? undefined : ragStatusState.value,
     search: searchState.value || undefined,
+    trendWindowMonths: trendWindowState.value,
   });
   
   // v2.90.0: Apply KR link filter client-side
   const kpis = useMemo(() => {
     const byTrend = trendState.value === 'all'
       ? rawKpis
-      : rawKpis.filter(
-          (kpi) =>
-            classifyKpiTrend(kpi.current_value, kpi.previous_value, kpi.direction) ===
-            trendState.value,
-        );
+      : rawKpis.filter((kpi) => kpi.trend_class === trendState.value);
 
     if (krLinkStatusState.value === 'all' || !krLinks) return byTrend;
 
@@ -445,6 +452,7 @@ export default function KpiEvolutionPage() {
             ragStatus={ragStatusState.value}
             krLinkStatus={krLinkStatusState.value}
             trend={trendState.value}
+            trendWindow={trendWindowState.value}
             onCategoryChange={() => {}}
             onTeamChange={teamState.set}
             onAreaChange={areaState.set}
@@ -453,6 +461,7 @@ export default function KpiEvolutionPage() {
             onRagStatusChange={ragStatusState.set}
             onKrLinkStatusChange={krLinkStatusState.set}
             onTrendChange={trendState.set}
+            onTrendWindowChange={trendWindowState.set}
           />
         </ListPageFilters>
 
