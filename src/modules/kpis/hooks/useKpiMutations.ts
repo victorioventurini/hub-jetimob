@@ -257,7 +257,9 @@ export function useKpiMutations() {
       toast({ title: "Valor atualizado", description: "O valor foi atualizado com sucesso." });
     },
     onError: (error) => {
-      toast({ title: "Erro ao atualizar valor", description: error.message, variant: "destructive" });
+      const copy = getKpiValueUpdateErrorCopy(error);
+      toast({ title: copy.title, description: copy.description, variant: "destructive" });
+
     },
   });
 
