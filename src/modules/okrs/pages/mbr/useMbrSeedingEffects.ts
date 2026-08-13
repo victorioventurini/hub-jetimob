@@ -83,6 +83,22 @@ export function useSeedKpiSnapshots(args: {
 const VALID_RAG = new Set(['green', 'yellow', 'red', 'not_started']);
 const VALID_DIRECTIONS = new Set(['up', 'down', 'maintain']);
 
+/**
+ * Snapshot de time sem OKR própria no ciclo (entrou na pauta por ter
+ * submetido Pré-MBR). Health neutro — a análise vem do Pré-MBR.
+ */
+function buildEmptyTeamSnapshot(teamId: string, teamName: string): MbrTeamOkrSnapshot {
+  return {
+    teamId,
+    teamName: teamName || 'Time sem nome',
+    objectives: [],
+    healthScore: computeHealthScore([]),
+    healthStatus: computeHealthStatus(computeHealthScore([])),
+    reviewed: false,
+  };
+}
+
+
 export function useSeedTeamOkrSnapshots(args: {
   cycleId: string | undefined | null;
   hasFetched: boolean;
