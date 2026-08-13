@@ -3,6 +3,8 @@ import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScoped
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
+import { getKpiValueUpdateErrorCopy } from "../utils/kpiValueErrors";
+
 import { KpiScope, KpiIndicatorType, KpiLifecycleStatus, KpiFrequencyValue } from "../types";
 
 interface UpdateKpiData {
@@ -232,11 +234,15 @@ export function useKpiMutations() {
         // 0 linhas atualizadas → tipicamente RLS (não é o autor do registro
         // ou perdeu permissão). Mensagem clara em vez do críptico
         // "Cannot coerce the result to a single JSON object" do PostgREST.
-        throw new Error(
-          "Você não tem permissão para editar este valor. Apenas quem registrou o valor (ou um administrador da BU) pode alterá-lo.",
-        );
+        const err = new Error(
+          "Este valor foi registrado por outra pessoa. Peça a quem registrou ou a um administrador da BU para atualizá-lo.",
+        ) as Error & { code?: string };
+        err.code = "42501";
+        throw err;
+
       }
       return { ...result, kpi_id };
+
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
@@ -251,7 +257,9 @@ export function useKpiMutations() {
       toast({ title: "Valor atualizado", description: "O valor foi atualizado com sucesso." });
     },
     onError: (error) => {
-      toast({ title: "Erro ao atualizar valor", description: error.message, variant: "destructive" });
+      const copy = getKpiValueUpdateErrorCopy(error);
+      toast({ title: copy.title, description: copy.description, variant: "destructive" });
+
     },
   });
 

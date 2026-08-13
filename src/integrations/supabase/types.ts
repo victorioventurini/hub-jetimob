@@ -12174,6 +12174,10 @@ export type Database = {
         Args: { p_profile_id?: string; p_ticket_id: string }
         Returns: boolean
       }
+      can_write_kpi_value: {
+        Args: { _kpi_id: string; _profile_id: string }
+        Returns: boolean
+      }
       check_permission_scope_access: {
         Args: {
           p_bu_id: string

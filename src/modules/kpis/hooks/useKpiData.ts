@@ -5,6 +5,8 @@ import { KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, Kp
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
+import { getKpiValueCreateErrorCopy } from "../utils/kpiValueErrors";
+
 import {
   valueFrequencyToLegacy,
   isKpiUpdateOverdue,
@@ -439,12 +441,14 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       // Conflito de consolidado por período é tratado via modal no dialog (não exibir toast).
       const hint = (error as { hint?: string } | null)?.hint ?? '';
       if (typeof hint === 'string' && hint.startsWith('kpi_consolidated_period_conflict')) return;
+      const copy = getKpiValueCreateErrorCopy(error);
       toast({
-        title: "Erro ao registrar valor",
-        description: (error as { message?: string } | null)?.message ?? 'Erro desconhecido',
+        title: copy.title,
+        description: copy.description,
         variant: "destructive",
       });
     },
+
   });
 
   return {
