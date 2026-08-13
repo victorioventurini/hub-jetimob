@@ -589,7 +589,22 @@ export function MbrTeamOkrsDetailStep({
             for (const f of sub?.krFinalStates ?? []) {
               if (f?.krId) krFinalStateMap.set(f.krId, { state: f.state, finalProgress: f.finalProgress, paceStatus: f.paceStatus });
             }
+            if (currentTeam.objectives.length === 0) {
+              return (
+                <Card className="border-dashed">
+                  <CardContent className="p-3 space-y-1">
+                    <p className="text-xs font-medium">Sem OKRs próprias no ciclo</p>
+                    <p className="text-xs text-muted-foreground">
+                      Este time entrou na pauta pelo Pré-MBR enviado. A contribuição
+                      acontece via KRs de outros times — veja abaixo/acima os KPIs,
+                      destaques e próximos passos informados pelo líder.
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            }
             if (visibleObjectives.length === 0 && currentTeam.objectives.length > 0) {
+
               return (
                 <Card className="border-dashed">
                   <CardContent className="p-3 flex items-center gap-2">
