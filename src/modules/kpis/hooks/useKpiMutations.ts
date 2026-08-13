@@ -234,9 +234,12 @@ export function useKpiMutations() {
         // 0 linhas atualizadas → tipicamente RLS (não é o autor do registro
         // ou perdeu permissão). Mensagem clara em vez do críptico
         // "Cannot coerce the result to a single JSON object" do PostgREST.
-        throw new Error(
+        const err = new Error(
           "Este valor foi registrado por outra pessoa. Peça a quem registrou ou a um administrador da BU para atualizá-lo.",
-        );
+        ) as Error & { code?: string };
+        err.code = "42501";
+        throw err;
+
       }
       return { ...result, kpi_id };
 
