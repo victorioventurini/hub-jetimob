@@ -37,7 +37,7 @@ export interface MbrTeamOkrsDetailStepProps {
   teamOkrSnapshots: MbrTeamOkrSnapshot[];
   onTeamOkrSnapshotsChange: (snapshots: MbrTeamOkrSnapshot[]) => void;
   currentTeamIndex: number;
-  onCurrentTeamIndexChange: (index: number) => void;
+  onCurrentTeamIndexChange: (index: number, teamId?: string) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   /** Addendums from mbr-pre sessions, keyed by teamId */
