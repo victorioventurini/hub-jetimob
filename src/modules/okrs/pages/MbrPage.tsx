@@ -583,9 +583,11 @@ export default function MbrPage() {
           <MbrTeamOkrsOverviewStep
             teamOkrSnapshots={draft.data.teamOkrSnapshots}
             decisions={draft.data.decisions}
+            preSubmittedTeamIds={Object.keys(mbrPreByTeam)}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })
             }
+
             onContinue={goNext}
             onBack={goBack}
           />
