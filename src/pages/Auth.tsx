@@ -213,12 +213,11 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
             transition={{ duration: 0.4 }}
             className="w-full max-w-sm space-y-6"
           >
-            <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-6">
+            <div className="lg:hidden w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-6">
               <img
                 src={JetimobIcon}
                 alt="Next"
                 className="w-8 h-8"
-                style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
 
