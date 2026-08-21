@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
-import { Shield, Bell, ChevronRight, Building2, Handshake, CalendarDays } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Shield, Bell, ChevronRight, Building2, Handshake, CalendarDays, KeyRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -37,6 +38,7 @@ function SettingsCard({ to, icon: Icon, iconBgColor, title, description }: Setti
 
 export default function BuSettingsPage() {
   const { currentBu } = useBu();
+  const { isWildcard } = usePermissions();
   usePageTitle("Configurações da BU", {
     customDescription: "Gerencie as configurações específicas desta unidade de negócio."
   });
@@ -81,6 +83,15 @@ export default function BuSettingsPage() {
                 title="Parceiros"
                 description="Gerenciar empresas parceiras ativas nesta unidade de negócio"
               />
+              {isWildcard && (
+                <SettingsCard
+                  to="/settings/api-keys"
+                  icon={KeyRound}
+                  iconBgColor="bg-status-purple-muted text-status-purple"
+                  title="Chaves de API"
+                  description="Gerar e revogar chaves para outros sistemas consumirem os dados desta BU"
+                />
+              )}
               <SettingsCard
                 to="/settings/rituals"
                 icon={CalendarDays}
