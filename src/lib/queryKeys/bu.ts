@@ -43,3 +43,10 @@ export const modulesPageKeys = {
   allPrefix: () => ['all-modules'] as const,
   buModulesPrefix: () => ['bu-modules'] as const,
 } as const;
+
+export const buApiKeysKeys = {
+  all: () => ['bu-api-keys'] as const,
+  list: (buId: string | null) => ['bu-api-keys', 'list', buId] as const,
+  usage: (buId: string | null, apiKeyId: string | null) =>
+    ['bu-api-keys', 'usage', buId, apiKeyId] as const,
+} as const;

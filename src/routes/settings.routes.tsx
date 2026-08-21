@@ -21,6 +21,7 @@ const PartnersPage = lazyWithRetry(() => import('@/modules/partners/pages/Partne
 const PartnerFormPage = lazyWithRetry(() => import('@/modules/partners/pages/PartnerFormPage'));
 const PartnerDetailPage = lazyWithRetry(() => import('@/modules/partners/pages/PartnerDetailPage'));
 const RitualCalendarPage = lazyWithRetry(() => import('@/modules/okrs/pages/RitualCalendarPage'));
+const BuApiKeysPage = lazyWithRetry(() => import('@/modules/settings/api-keys/pages/BuApiKeysPage'));
 
 /**
  * Helper para wrapping consistente de rotas Settings
@@ -73,6 +74,18 @@ export const settingsRoutes = (
         </BuRequiredRoute>
       </ProtectedRoute>
     } />
+
+    {/* BU API Keys (BU Admin only) */}
+    <Route path="/settings/api-keys" element={
+      <ProtectedRoute>
+        <BuRequiredRoute>
+          <BuAdminRoute>
+            <HubLayout><BuApiKeysPage /></HubLayout>
+          </BuAdminRoute>
+        </BuRequiredRoute>
+      </ProtectedRoute>
+    } />
+    
     
     {/* Partners (BU-scoped) */}
     <Route path="/settings/partners" element={<PartnersRoute><PartnersPage /></PartnersRoute>} />
