@@ -413,7 +413,7 @@ function BrandingSide() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8"
+          className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center mx-auto mb-8"
         >
           <img src={JetimobIcon} alt="Next" className="w-12 h-12" />
         </motion.div>
