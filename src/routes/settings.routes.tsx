@@ -21,6 +21,7 @@ const PartnersPage = lazyWithRetry(() => import('@/modules/partners/pages/Partne
 const PartnerFormPage = lazyWithRetry(() => import('@/modules/partners/pages/PartnerFormPage'));
 const PartnerDetailPage = lazyWithRetry(() => import('@/modules/partners/pages/PartnerDetailPage'));
 const RitualCalendarPage = lazyWithRetry(() => import('@/modules/okrs/pages/RitualCalendarPage'));
+const BuApiKeysPage = lazyWithRetry(() => import('@/modules/settings/api-keys/pages/BuApiKeysPage'));
 
 /**
  * Helper para wrapping consistente de rotas Settings
