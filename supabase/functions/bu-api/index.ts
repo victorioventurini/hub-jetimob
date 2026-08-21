@@ -176,7 +176,7 @@ async function handleTeams(url: URL, buId: string): Promise<Response> {
   const { limit, offset, to } = paging(url);
   const { data, error, count } = await admin
     .from("teams")
-    .select("id, name, slug, area_id, leader_id, status, created_at", { count: "exact" })
+    .select("id, name, slug, description, area_id, parent_team_id, leader_user_id, status, member_count, created_at", { count: "exact" })
     .eq("bu_id", buId)
     .is("deleted_at", null)
     .order("name", { ascending: true })
@@ -189,7 +189,7 @@ async function handleAreas(url: URL, buId: string): Promise<Response> {
   const { limit, offset, to } = paging(url);
   const { data, error, count } = await admin
     .from("areas")
-    .select("id, name, slug, leader_id, status, created_at", { count: "exact" })
+    .select("id, name, slug, description, leader_user_id, co_leader_user_id, status, color, icon, created_at", { count: "exact" })
     .eq("bu_id", buId)
     .is("deleted_at", null)
     .order("name", { ascending: true })
@@ -420,7 +420,7 @@ async function handleKpis(
   }
 
   const kpiSelect =
-    "id, name, description, category, indicator_type, unit, direction, frequency, target_value, current_value, rag_status, lifecycle_status, status, owner_id, team_id, area_id, scope, created_at, updated_at";
+    "id, name, description, category, indicator_type, unit, direction, frequency, consolidation_frequency, update_frequency, update_mode, target_value, target_source, lifecycle_status, status, owner_user_id, team_id, area_id, responsible_team_id, responsible_area_id, scope, is_global, created_at, updated_at";
 
   if (segments[1]) {
     const { data, error } = await admin
@@ -766,7 +766,11 @@ Deno.serve(async (req) => {
 
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error
+      ? error.message
+      : typeof error === "object" && error !== null && "message" in error
+        ? String((error as { message: unknown }).message)
+        : JSON.stringify(error);
     console.error(`[bu-api] ${req.method} ${route} failed:`, message);
     if (apiKey) {
       await logUsage({
