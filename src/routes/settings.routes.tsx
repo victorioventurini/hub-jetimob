@@ -74,6 +74,18 @@ export const settingsRoutes = (
         </BuRequiredRoute>
       </ProtectedRoute>
     } />
+
+    {/* BU API Keys (BU Admin only) */}
+    <Route path="/settings/api-keys" element={
+      <ProtectedRoute>
+        <BuRequiredRoute>
+          <BuAdminRoute>
+            <HubLayout><BuApiKeysPage /></HubLayout>
+          </BuAdminRoute>
+        </BuRequiredRoute>
+      </ProtectedRoute>
+    } />
+    
     
     {/* Partners (BU-scoped) */}
     <Route path="/settings/partners" element={<PartnersRoute><PartnersPage /></PartnersRoute>} />
