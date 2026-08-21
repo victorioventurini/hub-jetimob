@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { useBuScope } from '@/hooks/useBuScope';
+import { useCurrentBuId } from '@/hooks/useBuScope';
 import { buApiKeysKeys } from '@/lib/queryKeys/bu';
 import { toast } from 'sonner';
 import type {
@@ -18,7 +18,7 @@ const LOG_FIELDS =
 
 export function useBuApiKeys() {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBuScope();
+  const currentBuId = useCurrentBuId();
 
   return useQuery({
     queryKey: buApiKeysKeys.list(currentBuId),
@@ -38,7 +38,7 @@ export function useBuApiKeys() {
 
 export function useBuApiKeyUsage(apiKeyId: string | null) {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBuScope();
+  const currentBuId = useCurrentBuId();
 
   return useQuery({
     queryKey: buApiKeysKeys.usage(currentBuId, apiKeyId),
@@ -82,7 +82,7 @@ async function invokeManage<T>(
 
 export function useCreateBuApiKey() {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBuScope();
+  const currentBuId = useCurrentBuId();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -103,7 +103,7 @@ export function useCreateBuApiKey() {
 
 export function useUpdateBuApiKey() {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBuScope();
+  const currentBuId = useCurrentBuId();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -129,7 +129,7 @@ export function useUpdateBuApiKey() {
 
 export function useRevokeBuApiKey() {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBuScope();
+  const currentBuId = useCurrentBuId();
   const queryClient = useQueryClient();
 
   return useMutation({
