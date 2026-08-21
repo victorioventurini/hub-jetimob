@@ -1,38 +1,51 @@
-# Pré-MBR do time Comercial: por que o Vitor não conseguiu preencher
+# Chaves de API por BU (Configurações)
 
-## O que foi verificado
+Novo local em Configurações da BU para gerar, listar e revogar chaves de API que sistemas externos usam para consumir dados do Hub daquela BU. Ao criar a chave, o admin escolhe **quais módulos** ela acessa e **qual permissão** (somente leitura ou leitura + escrita) em cada um.
 
-Não houve erro de permissão nem de RLS. O Vitor tem as permissões de KPI necessárias (`kpis.value.create:bu`, `kpis.value.add:bu`, `kpis.settings.manage:bu` via templates "KPIs: Admin v2" e "Operador v2") e a janela do rito está aberta (override de 11 a 15/08/2026). Não existe sessão de Pré-MBR criada por ele no ciclo atual.
+## O que foi verificado no projeto
 
-O bloqueio é a etapa **"Validação de Dados"**, que abre o Pré-MBR e impede o avanço enquanto houver qualquer pendência (o botão vira "Resolver pendências (N)" e apenas super admin tem a opção de pular). Para o time Comercial, com mês de referência julho/2026, há 3 pendências:
+- Existe uma API interna (`internal-api`) que autentica por um **único token compartilhado** guardado como segredo, expõe usuários/BUs/áreas/times de forma **global** (sem escopo de BU) e é somente leitura. Não serve para dar chave a terceiros por BU.
+- Existe a tabela `automation_incoming_tokens` (BU-scoped, com hash de token, `allowed_actions`, rate limit, validade) usada pelo módulo de automações — mas hoje **sem nenhuma tela**: a página de automações só tem as abas Eventos, Ações e Logs. Ela é voltada a disparar ações, não a servir dados.
+- As configurações da BU (`/settings`) são uma lista de cards (Permissões, Notificações, Áreas, Ritos, Parceiros). Não há nada de API.
 
-| Pendência | Situação |
-|---|---|
-| KPI "Ciclo de vendas" | último valor em 21/06/2026 — sem valor consolidado de julho |
-| KPI "Taxa de Win" | último valor em 30/06/2026 — sem valor consolidado de julho |
-| KR "Aumentar a receita oriunda de novos produtos de R$3.243 para R$15.000" | nunca recebeu check-in |
+Por isso a proposta cria uma superfície própria de chaves de API de leitura/escrita de dados, sem mexer nos tokens de automação.
 
-Os outros 6 KRs do Comercial têm check-in de 10/08 e passam na regra. Os KPIs "New Logos" e "MMR de parceiros" têm consolidado de julho e estão em dia.
+## Experiência do usuário
 
-Observação secundária: o `profiles.team_id` do Vitor aponta para **Marketing**, embora ele lidere **Comercial**. Ao abrir o rito sem `?team=`, ele pode cair no contexto de Marketing (cujo Pré-MBR já foi enviado por outra pessoa), o que reforça a impressão de "não consigo preencher".
+Novo card em `/settings` → **Chaves de API**, visível e acessível apenas para administradores da BU, levando a `/settings/api-keys`:
 
-## Ajustes propostos
+- **Lista de chaves**: nome, sistema consumidor, módulos e nível de acesso (badges), prefixo da chave (ex.: `jet_a1b2…`), validade, último uso, status (ativa / expirada / revogada).
+- **Criar chave** (diálogo): nome, descrição opcional, sistema consumidor, validade (30/90/365 dias ou sem expiração), e uma matriz de módulos com o nível por módulo:
 
-### 1. Destravar agora (dados)
-Registrar, com o Vitor, o valor consolidado de julho de "Ciclo de vendas" e "Taxa de Win" e o check-in do KR de novos produtos — tudo direto na própria etapa de validação (os diálogos de registro e check-in já existem ali). Isso libera o Pré-MBR do Comercial imediatamente.
+```text
+Módulo                Sem acesso   Leitura   Leitura e escrita
+Usuários e times          o           x              o
+OKRs                      o           o              x
+KPIs                      o           x              o
+Projetos                  x           o              o
+Tickets                   x           o              o
+Ritos                     x           o              o
+```
 
-### 2. Corrigir o time do perfil
-Ajustar `profiles.team_id` do Vitor para Comercial, para que o rito, os check-ins e os filtros por time o coloquem no contexto correto por padrão.
+- **Chave exibida uma única vez** após a criação, com botão de copiar e aviso de que não será mostrada novamente (só o hash é guardado).
+- **Ações por chave**: revogar (com confirmação), renomear, editar escopos, e "gerar nova chave" (revoga e cria substituta).
+- **Aba de uso**: últimas chamadas por chave (endpoint, status, data), para depuração de quem está consumindo.
+- **Painel de documentação** na própria página: URL base, exemplo de chamada com `curl`, lista dos endpoints liberados pelos escopos escolhidos.
 
-### 3. Tornar o gate explicável e não-cego (frontend)
-- Mostrar no topo da etapa o motivo textual do bloqueio já expandido (hoje o detalhe só aparece em toast ao clicar no botão), com o mês de referência em destaque.
-- Quando o time do usuário no perfil for diferente do time do rito, exibir aviso "Você está preenchendo o Pré-MBR do time X" com o seletor de time visível.
+## Como a API funciona
 
-### 4. Permitir "sem dados" justificado no gate (opcional — decidir)
-Hoje um KPI sem valor no mês fechado bloqueia o rito de forma absoluta. Alternativa: permitir que o líder marque o KPI como "sem dados no mês" com justificativa obrigatória, que já é um campo existente do Pré-MBR (`kpiNoDataReasons`), e liberar o avanço. KRs sem check-in continuariam bloqueando.
+- Autenticação por header `Authorization: Bearer <chave>`. A chave nunca é armazenada em texto — guardamos hash SHA-256 + prefixo visível para identificação.
+- Toda requisição é resolvida para **uma BU** (a BU dona da chave); nenhum dado de outra BU é acessível, independentemente do endpoint.
+- Cada endpoint exige um escopo (ex.: `okrs:read`, `kpis:write`). Sem o escopo, resposta 403.
+- Endpoints de escrita ficam limitados ao essencial: registrar valor de KPI, criar check-in de KR e abrir ticket. O restante é leitura.
+- Rate limit por chave (padrão 60 req/min) e registro de cada chamada para a aba de uso.
+- Chaves revogadas ou expiradas respondem 401.
 
 ## Notas técnicas
 
-- Gate: `src/modules/okrs/components/wizards/mbr-pre/MbrPreDataValidationStep.tsx` (`handlePrimary` bloqueia quando `totalPending > 0`).
-- Regras: `src/modules/okrs/hooks/useMbrPreValidationData.ts` — KPI pendente quando `update_overdue` ou sem consolidado do `referenceMonth`; KR pendente quando nunca teve check-in ou último check-in anterior ao início do mês de referência.
-- Itens 3 e 4 são mudanças de apresentação/gate no wizard; nenhuma migração de schema é necessária. O item 2 é correção de dado no perfil.
+- Nova tabela `bu_api_keys` (bu_id, name, description, consumer_system, key_hash, key_prefix, scopes text[], status, expires_at, last_used_at, created_by, revoked_at/by, soft delete) + `bu_api_key_usage_logs` (chave, método, rota, status, latência, ip, data). Ambas com GRANTs explícitos e RLS: leitura/gestão apenas para admin da BU (`is_current_bu(bu_id)` + checagem de admin), escrita de logs apenas via service role.
+- Criação da chave em edge function (`bu-api-keys`), que valida sessão + admin da BU, gera o valor aleatório, grava só o hash e devolve o valor uma única vez. Frontend nunca gera nem guarda o segredo.
+- Nova edge function `bu-api` como gateway público: valida a chave, resolve BU e escopos, aplica rate limit, roteia para handlers por módulo e grava o log. Reaproveita os shapes de usuários/times/áreas já existentes em `internal-api` (movidos para `_shared/`), sem alterar o comportamento atual daquela função.
+- Frontend: `src/modules/settings/api-keys/` com `BuApiKeysPage`, diálogo de criação, tabela de chaves e aba de uso; hooks com query keys em `src/lib/queryKeys`, cliente BU-scoped, colunas explícitas (sem `select('*')`), filtros/abas em URL state.
+- Rota `/settings/api-keys` protegida por `BuAdminRoute` (mesmo padrão de `/settings/rituals`), e novo card em `BuSettingsPage` renderizado só para admin da BU.
+- Catálogo de escopos centralizado em um único arquivo, consumido pela UI e pelas edge functions, para não divergirem.
