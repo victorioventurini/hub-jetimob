@@ -410,10 +410,10 @@ export default function TicketDetailPage() {
                   />
                   
                   <ScrollArea 
-                    className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] pr-4"
+                    className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] w-full max-w-full sm:pr-4 [&_[data-radix-scroll-area-viewport]>div]:!block"
                     viewportRef={scrollViewportRef}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-4 w-full max-w-full">
                       {messages.filter(m => !m.is_pinned).map((message) => {
                         // Check if message is from current user (internal or external)
                         const isOwnMessage = isExternal
