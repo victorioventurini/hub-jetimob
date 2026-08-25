@@ -82,7 +82,7 @@ export function MessageBubble({
 
       {/* Content area */}
       <div className={cn(
-        "flex-1 max-w-[80%]",
+        "flex-1 min-w-0 max-w-full sm:max-w-[80%]",
         isOwnMessage && "text-right"
       )}>
         {/* Header: author name, badges, timestamp, actions */}
@@ -163,6 +163,7 @@ export function MessageBubble({
         {message.content && (
           <div className={cn(
             "rounded-lg px-4 py-2 text-sm whitespace-pre-wrap inline-block",
+            "max-w-full break-words [overflow-wrap:anywhere]",
             "bg-muted text-foreground",
             isOwnMessage ? "text-right" : "text-left"
           )}>
