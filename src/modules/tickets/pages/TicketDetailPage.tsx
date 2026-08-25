@@ -375,8 +375,8 @@ export default function TicketDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content - Messages Thread */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
+        <div className="lg:col-span-2 space-y-4 min-w-0">
+          <Card className="min-w-0 overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Mensagens</CardTitle>
@@ -410,10 +410,10 @@ export default function TicketDetailPage() {
                   />
                   
                   <ScrollArea 
-                    className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] pr-4"
+                    className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] w-full max-w-full sm:pr-4 [&_[data-radix-scroll-area-viewport]>div]:!block"
                     viewportRef={scrollViewportRef}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-4 w-full max-w-full">
                       {messages.filter(m => !m.is_pinned).map((message) => {
                         // Check if message is from current user (internal or external)
                         const isOwnMessage = isExternal
