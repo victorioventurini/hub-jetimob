@@ -69,7 +69,7 @@ export function QuotedMessage({
       </p>
 
       {hasContent && (
-        <p className="text-xs text-muted-foreground line-clamp-2">
+        <p className="text-xs text-muted-foreground line-clamp-2 break-words [overflow-wrap:anywhere]">
           {truncateContent(trimmedContent)}
         </p>
       )}
