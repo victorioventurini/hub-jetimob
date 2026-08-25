@@ -375,8 +375,8 @@ export default function TicketDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content - Messages Thread */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
+        <div className="lg:col-span-2 space-y-4 min-w-0">
+          <Card className="min-w-0 overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Mensagens</CardTitle>
