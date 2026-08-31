@@ -6,7 +6,9 @@ import { AlertCircle, Mail, WifiOff } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Button } from "@/components/ui/button";
 import { initSessionContext } from "@/lib/analytics";
-import { normalizeAuthNext } from "@/lib/authRedirect";
+import { resolveAuthTarget } from "@/lib/authRedirect";
+import { readSharedSessionRaw } from "@/integrations/supabase/sharedSessionStorage";
+
 import { logger } from "@/lib/logger";
 
 type AuthErrorKind = "expired" | "network" | "generic";
