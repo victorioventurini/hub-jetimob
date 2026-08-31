@@ -35,6 +35,7 @@ const formSchema = z.object({
   email: z.string().trim().email("Email inválido"),
   phone: z.string().optional(),
   status: z.enum(["active", "inactive"]),
+  can_view_company_tickets: z.boolean(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -52,6 +53,7 @@ interface EditContactFormProps {
       email?: string;
       phone?: string | null;
       status?: "active" | "inactive";
+      can_view_company_tickets?: boolean;
     },
     options?: { onSuccess?: () => void }
   ) => void;

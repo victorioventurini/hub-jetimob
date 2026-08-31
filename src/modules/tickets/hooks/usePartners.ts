@@ -362,6 +362,7 @@ export function useUpdatePartnerContact() {
       email?: string;
       phone?: string | null;
       status?: PartnerContactStatus;
+      can_view_company_tickets?: boolean;
     }) => {
       const updateData = { ...data };
       if (updateData.email) {
