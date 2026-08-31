@@ -14,6 +14,8 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { sharedSessionStorage } from "./sharedSessionStorage";
+
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -46,8 +48,12 @@ function createGlobalClient(): SupabaseClient<Database> {
 
   const created = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
-      storage: localStorage,
+      // SSO: em *.jetimob.com a sessão vai para cookie no domínio raiz,
+      // permitindo que os satélites VibeCoding leiam a mesma sessão.
+      // Fora do domínio (preview/localhost) cai para localStorage.
+      storage: sharedSessionStorage(),
       persistSession: true,
+
       autoRefreshToken: true,
       // CRITICAL: Disable URL detection to prevent competing with BU-scoped client
       // The AuthCallback page handles session extraction from URL explicitly

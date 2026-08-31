@@ -2,7 +2,7 @@ import { useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { normalizeAuthNext } from "@/lib/authRedirect";
+import { resolveAuthTarget } from "@/lib/authRedirect";
 
 /**
  * AuthConfirm
@@ -26,9 +26,11 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") || "magiclink";
 
-  const next = useMemo(() => {
-    return normalizeAuthNext(searchParams.get("next"));
-  }, [searchParams]);
+  // Mantém o destino final (rota interna ou sistema VibeCoding via SSO)
+  const next = useMemo(
+    () => resolveAuthTarget(searchParams.get("next")).target,
+    [searchParams]
+  );
 
   const isValidLink = Boolean(tokenHash && type);
 

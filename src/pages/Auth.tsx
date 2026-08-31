@@ -9,7 +9,7 @@ import { ArrowRight, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
-import { normalizeAuthNext } from "@/lib/authRedirect";
+import { resolveAuthTarget } from "@/lib/authRedirect";
 
 const STORAGE_KEY = "next_last_email";
 const STORAGE_TTL_DAYS = 30;
@@ -90,17 +90,35 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     return () => clearTimeout(timer);
   }, [authLoading]);
 
+  // Destino pós-login: `?next=` (SSO de satélites VibeCoding) tem precedência
+  // sobre o state interno do React Router.
+  const nextFromUrl = searchParams.get("next");
+
+  const resolvedTarget = (() => {
+    if (nextFromUrl) return resolveAuthTarget(nextFromUrl);
+
+    const from = (location.state as { from?: Location } | null)?.from;
+    const internal = from && from.pathname && from.pathname !== "/auth"
+      ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
+      : "/";
+
+    return resolveAuthTarget(internal);
+  })();
+
+  const targetKind = resolvedTarget.kind;
+  const targetValue = resolvedTarget.target;
+
   // Redirect if already logged in (preserve original destination if any)
   useEffect(() => {
     if (!user || authLoading) return;
 
-    const from = (location.state as { from?: Location } | null)?.from;
-    const target = from && from.pathname && from.pathname !== "/auth"
-      ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
-      : "/";
+    if (targetKind === "external") {
+      window.location.replace(targetValue);
+      return;
+    }
 
-    navigate(target, { replace: true });
-  }, [user, authLoading, navigate, location.state]);
+    navigate(targetValue, { replace: true });
+  }, [user, authLoading, navigate, targetKind, targetValue]);
 
   // Clear domain error when email changes
   useEffect(() => {
@@ -114,16 +132,13 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
-  // Build redirect URL preserving original destination
+  // Build redirect URL preserving original destination (interna ou satélite SSO)
   const getRedirectUrl = useCallback(() => {
-    const from = (location.state as { from?: Location } | null)?.from;
+    const callback = new URL("/auth/callback", window.location.origin);
+    callback.searchParams.set("next", targetValue);
+    return callback.toString();
+  }, [targetValue]);
 
-    const target = from && from.pathname && from.pathname !== "/auth"
-      ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
-      : "/";
-
-    return `${window.location.origin}${normalizeAuthNext(target)}`;
-  }, [location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

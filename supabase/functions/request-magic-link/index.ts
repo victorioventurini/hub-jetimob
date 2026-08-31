@@ -64,6 +64,37 @@ function normalizeNextPath(raw: string | null | undefined): string {
   }
 }
 
+/**
+ * SSO VibeCoding — o Next é o provedor de identidade dos sistemas irmãos.
+ * Um satélite (ex.: comercial.jetimob.com) manda o usuário para
+ * `/auth?next=<url absoluta>`; após o login ele volta para lá. Só aceitamos
+ * HTTPS em jetimob.com (e subdomínios) para evitar open redirect.
+ */
+function isAllowedSsoUrl(candidate: string | null | undefined): boolean {
+  if (!candidate) return false;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "https:") return false;
+    return url.hostname === "jetimob.com" || url.hostname.endsWith(".jetimob.com");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve o valor de `next` do callback: URL absoluta de um satélite
+ * autorizado, ou caminho interno normalizado.
+ */
+function resolveNextValue(redirectUrl: URL): string {
+  const rawNext = redirectUrl.searchParams.get("next");
+  if (rawNext && isAllowedSsoUrl(rawNext)) return rawNext;
+  if (rawNext) return normalizeNextPath(rawNext);
+  return normalizeNextPath(
+    `${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`,
+  );
+}
+
+
 // Check if email domain is allowed in any active BU
 // OPTIMIZED v2: ALL queries in parallel, no sequential follow-ups
 async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
@@ -279,7 +310,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   // For domains protected by URL detonation gateways, route to /auth/confirm
   // (manual confirmation page) instead of /auth/callback (auto-verify).
   const redirectUrl = new URL(redirectTo);
-  const nextPath = normalizeNextPath(`${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`);
+  const nextPath = resolveNextValue(redirectUrl);
 
   const useConfirm = shouldUseConfirmFlow(email);
   const callbackPath = useConfirm ? "/auth/confirm" : "/auth/callback";

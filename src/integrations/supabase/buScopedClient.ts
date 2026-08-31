@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 import { supabase as globalClient } from "./globalClient";
+import { readSharedSessionRaw } from "./sharedSessionStorage";
 import { logger } from "@/lib/logger";
+
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -32,12 +34,13 @@ function readAccessTokenFromStorage(): string | null {
       );
     };
 
-    // 1) Canonical key
+    // 1) Canonical key (cookie compartilhado em *.jetimob.com, senão localStorage)
     if (DEFAULT_AUTH_STORAGE_KEY) {
-      const raw = localStorage.getItem(DEFAULT_AUTH_STORAGE_KEY);
+      const raw = readSharedSessionRaw(DEFAULT_AUTH_STORAGE_KEY);
       const token = tryExtractToken(raw);
       if (token) return token;
     }
+
 
     // 2) Fallback scan
     for (let i = 0; i < localStorage.length; i++) {

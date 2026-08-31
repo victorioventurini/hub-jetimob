@@ -72,3 +72,6 @@ verify_jwt = false
 
 [functions.internal-api]
 verify_jwt = false
+
+[functions.identity-me]
+verify_jwt = false

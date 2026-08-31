@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, forwardRef } from "react";
+import { useCallback, useEffect, useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
@@ -6,7 +6,9 @@ import { AlertCircle, Mail, WifiOff } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Button } from "@/components/ui/button";
 import { initSessionContext } from "@/lib/analytics";
-import { normalizeAuthNext } from "@/lib/authRedirect";
+import { resolveAuthTarget } from "@/lib/authRedirect";
+import { readSharedSessionRaw } from "@/integrations/supabase/sharedSessionStorage";
+
 import { logger } from "@/lib/logger";
 
 type AuthErrorKind = "expired" | "network" | "generic";
@@ -72,9 +74,21 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
   const [error, setError] = useState<AuthErrorState | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
 
-  const next = useMemo(() => {
-    return normalizeAuthNext(searchParams.get("next"));
-  }, [searchParams]);
+  // Destino final: caminho interno OU sistema VibeCoding autorizado (SSO)
+  const resolved = useMemo(
+    () => resolveAuthTarget(searchParams.get("next")),
+    [searchParams]
+  );
+  const next = resolved.target;
+
+  const goNext = useCallback(() => {
+    if (resolved.kind === "external") {
+      window.location.replace(resolved.target);
+      return;
+    }
+    navigate(resolved.target, { replace: true });
+  }, [navigate, resolved]);
+
 
   // Tenta extrair email da sessão (se já houver) ou do JWT do token_hash (não disponível)
   // Como fallback, deixamos o usuário re-digitar em /auth.
@@ -125,7 +139,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
               const { data: checkData } = await supabase.auth.getSession();
 
               const storageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || "oiwnghihyqdsinouwmga"}-auth-token`;
-              const storedSession = localStorage.getItem(storageKey);
+              const storedSession = readSharedSessionRaw(storageKey);
               const hasStoredToken =
                 storedSession && JSON.parse(storedSession)?.access_token;
 
@@ -144,10 +158,10 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
             }
 
             const finalStorageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || "oiwnghihyqdsinouwmga"}-auth-token`;
-            const finalCheck = localStorage.getItem(finalStorageKey);
+            const finalCheck = readSharedSessionRaw(finalStorageKey);
             if (!finalCheck || !JSON.parse(finalCheck)?.access_token) {
               console.warn(
-                "[AuthCallback] Token not in localStorage after polling, forcing setSession"
+                "[AuthCallback] Token not in session storage after polling, forcing setSession"
               );
               await supabase.auth.setSession({
                 access_token: data.session.access_token,
@@ -157,7 +171,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
             }
 
             logger.debug("[AuthCallback] Redirecting to:", next);
-            if (mounted) navigate(next, { replace: true });
+            if (mounted) goNext();
             return;
           }
         }
@@ -178,7 +192,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
 
         if (session) {
           logger.debug("[AuthCallback] Existing session found, redirecting to:", next);
-          if (mounted) navigate(next, { replace: true });
+          if (mounted) goNext();
           return;
         }
 
@@ -188,7 +202,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
           data: { session: retrySession },
         } = await supabase.auth.getSession();
         if (retrySession && mounted) {
-          navigate(next, { replace: true });
+          goNext();
           return;
         }
 
@@ -209,7 +223,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
       mounted = false;
       clearTimeout(timer);
     };
-  }, [navigate, next, searchParams]);
+  }, [navigate, next, goNext, searchParams]);
 
   if (error) {
     const Icon =
