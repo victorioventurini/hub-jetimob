@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, forwardRef } from "react";
+import { useCallback, useEffect, useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
