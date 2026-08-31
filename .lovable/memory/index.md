@@ -43,3 +43,4 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [External User Tickets Access](mem://features/tickets/external-user-module-access) — userRole='external' ganha acesso ao módulo Tickets sem template V2 (RLS can_view_ticket é a defesa)
 - [BU API Keys](mem://features/settings/bu-api-keys) — chaves de API por BU, gateway `bu-api`, escopos por módulo, rate limit
 
+- [SSO VibeCoding](mem://architecture/auth/sso-vibecoding-shared-session) — Next como provedor de identidade: sessão em cookie `.jetimob.com`, allowlist de redirect `*.jetimob.com`, edge `identity-me`
