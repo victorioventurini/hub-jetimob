@@ -34,12 +34,13 @@ function readAccessTokenFromStorage(): string | null {
       );
     };
 
-    // 1) Canonical key
+    // 1) Canonical key (cookie compartilhado em *.jetimob.com, senão localStorage)
     if (DEFAULT_AUTH_STORAGE_KEY) {
-      const raw = localStorage.getItem(DEFAULT_AUTH_STORAGE_KEY);
+      const raw = readSharedSessionRaw(DEFAULT_AUTH_STORAGE_KEY);
       const token = tryExtractToken(raw);
       if (token) return token;
     }
+
 
     // 2) Fallback scan
     for (let i = 0; i < localStorage.length; i++) {
