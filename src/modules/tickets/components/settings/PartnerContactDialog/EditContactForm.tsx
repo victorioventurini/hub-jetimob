@@ -35,6 +35,7 @@ const formSchema = z.object({
   email: z.string().trim().email("Email inválido"),
   phone: z.string().optional(),
   status: z.enum(["active", "inactive"]),
+  can_view_company_tickets: z.boolean(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -52,6 +53,7 @@ interface EditContactFormProps {
       email?: string;
       phone?: string | null;
       status?: "active" | "inactive";
+      can_view_company_tickets?: boolean;
     },
     options?: { onSuccess?: () => void }
   ) => void;
@@ -75,6 +77,7 @@ export function EditContactForm({
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
       status: contact.status,
+      can_view_company_tickets: contact.can_view_company_tickets ?? false,
     },
   });
 
@@ -89,6 +92,7 @@ export function EditContactForm({
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
       status: contact.status,
+      can_view_company_tickets: contact.can_view_company_tickets ?? false,
     });
     setDomainError(null);
   }, [contact, form]);
@@ -152,6 +156,7 @@ export function EditContactForm({
         email: data.email.trim().toLowerCase(),
         phone: phoneDigits,
         status: data.status,
+        can_view_company_tickets: data.can_view_company_tickets,
       },
       { onSuccess }
     );
@@ -268,6 +273,27 @@ export function EditContactForm({
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="can_view_company_tickets"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Pode ver todos os tickets da empresa</FormLabel>
+                <FormDescription>
+                  Indicado para gestores da conta: além dos tickets em que participa, o contato
+                  visualiza todos os tickets da empresa parceira nesta BU
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

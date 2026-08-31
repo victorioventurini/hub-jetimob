@@ -41,6 +41,7 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [All Hands](mem://features/rituals/all-hands-standard) — Rito mensal (1ª sexta) reaproveita steps MBR read-only; cadência via sync-ritual-calendar
 
 - [External User Tickets Access](mem://features/tickets/external-user-module-access) — userRole='external' ganha acesso ao módulo Tickets sem template V2 (RLS can_view_ticket é a defesa)
+- [External Company-Wide Ticket Visibility](mem://features/tickets/external-company-wide-visibility) — flag `can_view_company_tickets` no contato parceiro (gestor vê todos os tickets da empresa na BU)
 - [BU API Keys](mem://features/settings/bu-api-keys) — chaves de API por BU, gateway `bu-api`, escopos por módulo, rate limit
 
 - [SSO VibeCoding](mem://architecture/auth/sso-vibecoding-shared-session) — Next como provedor de identidade: sessão em cookie `.jetimob.com`, allowlist de redirect `*.jetimob.com`, edge `identity-me`

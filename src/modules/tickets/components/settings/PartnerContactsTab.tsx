@@ -183,9 +183,14 @@ export function PartnerContactsTab() {
                       <PhoneLink phone={contact.phone} />
                     </TableCell>
                     <TableCell>
-                      <Badge variant={contact.status === "active" ? "default" : "secondary"}>
-                        {contact.status === "active" ? "Ativo" : "Inativo"}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant={contact.status === "active" ? "default" : "secondary"}>
+                          {contact.status === "active" ? "Ativo" : "Inativo"}
+                        </Badge>
+                        {contact.can_view_company_tickets && (
+                          <Badge variant="outline">Vê tickets da empresa</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">

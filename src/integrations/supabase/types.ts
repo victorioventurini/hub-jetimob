@@ -8284,6 +8284,7 @@ export type Database = {
       partner_contacts: {
         Row: {
           bu_id: string | null
+          can_view_company_tickets: boolean
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -8299,6 +8300,7 @@ export type Database = {
         }
         Insert: {
           bu_id?: string | null
+          can_view_company_tickets?: boolean
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -8314,6 +8316,7 @@ export type Database = {
         }
         Update: {
           bu_id?: string | null
+          can_view_company_tickets?: boolean
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null

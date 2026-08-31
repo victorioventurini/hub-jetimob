@@ -210,7 +210,7 @@ export function usePartnerContacts(companyId?: string) {
           id,
           is_active,
           partner_contact:partner_contacts!inner (
-            id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+            id, bu_id, external_company_id, name, email, phone, status, can_view_company_tickets, created_at, updated_at,
             external_company:external_companies(id, name)
           )
         `)
@@ -223,7 +223,7 @@ export function usePartnerContacts(companyId?: string) {
         let query = supabase
           .from("partner_contacts")
           .select(`
-            id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+            id, bu_id, external_company_id, name, email, phone, status, can_view_company_tickets, created_at, updated_at,
             external_company:external_companies(id, name)
           `)
           .eq("bu_id", buId)
@@ -276,7 +276,7 @@ export function usePartnerContact(id: string | null) {
       const { data, error } = await supabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+          id, bu_id, external_company_id, name, email, phone, status, can_view_company_tickets, created_at, updated_at,
           external_company:external_companies(id, name)
         `)
         .eq("id", id)
@@ -362,6 +362,7 @@ export function useUpdatePartnerContact() {
       email?: string;
       phone?: string | null;
       status?: PartnerContactStatus;
+      can_view_company_tickets?: boolean;
     }) => {
       const updateData = { ...data };
       if (updateData.email) {
