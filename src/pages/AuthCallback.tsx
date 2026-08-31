@@ -74,9 +74,21 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
   const [error, setError] = useState<AuthErrorState | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
 
-  const next = useMemo(() => {
-    return normalizeAuthNext(searchParams.get("next"));
-  }, [searchParams]);
+  // Destino final: caminho interno OU sistema VibeCoding autorizado (SSO)
+  const resolved = useMemo(
+    () => resolveAuthTarget(searchParams.get("next")),
+    [searchParams]
+  );
+  const next = resolved.target;
+
+  const goNext = useCallback(() => {
+    if (resolved.kind === "external") {
+      window.location.replace(resolved.target);
+      return;
+    }
+    navigate(resolved.target, { replace: true });
+  }, [navigate, resolved]);
+
 
   // Tenta extrair email da sessão (se já houver) ou do JWT do token_hash (não disponível)
   // Como fallback, deixamos o usuário re-digitar em /auth.
