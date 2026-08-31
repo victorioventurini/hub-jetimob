@@ -48,8 +48,12 @@ function createGlobalClient(): SupabaseClient<Database> {
 
   const created = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
-      storage: localStorage,
+      // SSO: em *.jetimob.com a sessão vai para cookie no domínio raiz,
+      // permitindo que os satélites VibeCoding leiam a mesma sessão.
+      // Fora do domínio (preview/localhost) cai para localStorage.
+      storage: sharedSessionStorage(),
       persistSession: true,
+
       autoRefreshToken: true,
       // CRITICAL: Disable URL detection to prevent competing with BU-scoped client
       // The AuthCallback page handles session extraction from URL explicitly
