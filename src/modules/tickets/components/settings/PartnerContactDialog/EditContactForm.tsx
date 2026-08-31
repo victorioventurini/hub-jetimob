@@ -156,6 +156,7 @@ export function EditContactForm({
         email: data.email.trim().toLowerCase(),
         phone: phoneDigits,
         status: data.status,
+        can_view_company_tickets: data.can_view_company_tickets,
       },
       { onSuccess }
     );
