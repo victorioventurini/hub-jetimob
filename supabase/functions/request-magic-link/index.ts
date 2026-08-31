@@ -310,7 +310,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   // For domains protected by URL detonation gateways, route to /auth/confirm
   // (manual confirmation page) instead of /auth/callback (auto-verify).
   const redirectUrl = new URL(redirectTo);
-  const nextPath = normalizeNextPath(`${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`);
+  const nextPath = resolveNextValue(redirectUrl);
 
   const useConfirm = shouldUseConfirmFlow(email);
   const callbackPath = useConfirm ? "/auth/confirm" : "/auth/callback";
