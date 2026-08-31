@@ -274,6 +274,27 @@ export function EditContactForm({
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="can_view_company_tickets"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Pode ver todos os tickets da empresa</FormLabel>
+                <FormDescription>
+                  Indicado para gestores da conta: além dos tickets em que participa, o contato
+                  visualiza todos os tickets da empresa parceira nesta BU
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+
+
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
