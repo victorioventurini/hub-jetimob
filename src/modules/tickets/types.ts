@@ -64,6 +64,7 @@ export interface PartnerContact {
   email: string;
   phone: string | null;
   status: PartnerContactStatus;
+  can_view_company_tickets?: boolean;
   created_at: string;
   created_by: string | null;
   updated_at: string;
