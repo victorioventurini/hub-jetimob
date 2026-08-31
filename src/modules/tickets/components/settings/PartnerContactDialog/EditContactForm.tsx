@@ -77,6 +77,7 @@ export function EditContactForm({
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
       status: contact.status,
+      can_view_company_tickets: contact.can_view_company_tickets ?? false,
     },
   });
 
@@ -91,6 +92,7 @@ export function EditContactForm({
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
       status: contact.status,
+      can_view_company_tickets: contact.can_view_company_tickets ?? false,
     });
     setDomainError(null);
   }, [contact, form]);
