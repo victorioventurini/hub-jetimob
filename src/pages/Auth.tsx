@@ -9,7 +9,7 @@ import { ArrowRight, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
-import { normalizeAuthNext } from "@/lib/authRedirect";
+import { resolveAuthTarget } from "@/lib/authRedirect";
 
 const STORAGE_KEY = "next_last_email";
 const STORAGE_TTL_DAYS = 30;
