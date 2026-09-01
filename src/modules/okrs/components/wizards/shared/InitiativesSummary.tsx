@@ -215,7 +215,7 @@ export function InitiativesSummary({
             {/* All initiatives list */}
             <div className="space-y-2">
               {initiatives.map(init => {
-                const config = STATUS_CONFIG[init.status];
+                const config = STATUS_CONFIG[init.status] ?? STATUS_CONFIG.planned;
                 const StatusIcon = config.icon;
                 const isAtRisk = markedAtRisk.includes(init.id);
                 const isItemExpanded = expandedInitiative === init.id;
