@@ -296,6 +296,9 @@ export const INITIATIVE_STATUS_COLORS = {
   completed: {
     badge: 'bg-status-green-muted text-status-green-muted-foreground',
   },
+  cancelled: {
+    badge: 'bg-muted text-muted-foreground',
+  },
 } as const;
 
 export type InitiativeStatusKey = keyof typeof INITIATIVE_STATUS_COLORS;
