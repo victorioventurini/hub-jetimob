@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Pencil,
+  XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Initiative, InitiativeStatus } from '@/modules/okrs/types/initiative';
@@ -83,6 +84,11 @@ const STATUS_CONFIG: Record<InitiativeStatus, {
     label: 'Concluída',
     icon: CheckCircle2,
     className: 'bg-success-muted text-success-muted-foreground',
+  },
+  cancelled: {
+    label: 'Cancelada',
+    icon: XCircle,
+    className: 'bg-muted text-muted-foreground line-through',
   },
 };
 
@@ -209,7 +215,7 @@ export function InitiativesSummary({
             {/* All initiatives list */}
             <div className="space-y-2">
               {initiatives.map(init => {
-                const config = STATUS_CONFIG[init.status];
+                const config = STATUS_CONFIG[init.status] ?? STATUS_CONFIG.planned;
                 const StatusIcon = config.icon;
                 const isAtRisk = markedAtRisk.includes(init.id);
                 const isItemExpanded = expandedInitiative === init.id;

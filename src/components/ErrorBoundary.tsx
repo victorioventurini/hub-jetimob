@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/globalClient';
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  /** Contexto extra logado em `app_error_logs.metadata` (ex.: wizard/step). */
+  context?: Record<string, unknown>;
 }
 
 interface ErrorBoundaryState {
@@ -47,6 +49,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         message: error.message || 'Unknown error',
         stack: error.stack ?? null,
         metadata: {
+          ...(this.props.context ?? {}),
           componentStack: errorInfo.componentStack,
           pathname: typeof window !== 'undefined' ? window.location.pathname : null,
           search: typeof window !== 'undefined' ? window.location.search : null,

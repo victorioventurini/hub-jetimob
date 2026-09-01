@@ -1,7 +1,7 @@
 // Initiative Types
 import { INITIATIVE_STATUS_COLORS } from '@/lib/colors';
 
-export type InitiativeStatus = 'planned' | 'in_progress' | 'blocked' | 'completed';
+export type InitiativeStatus = 'planned' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
 export type InitiativePriority = 'low' | 'medium' | 'high';
 
 export interface Initiative {
@@ -67,6 +67,7 @@ export function getInitiativeStatusLabel(status: InitiativeStatus): string {
     in_progress: 'Em progresso',
     blocked: 'Bloqueada',
     completed: 'Concluída',
+    cancelled: 'Cancelada',
   };
   return labels[status];
 }

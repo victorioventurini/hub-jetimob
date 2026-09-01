@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { getInitiativeStatusLabel, getInitiativeStatusColor, type InitiativeStatus } from "../../types/initiative";
-import { Circle, Play, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Circle, Play, AlertTriangle, CheckCircle2, XCircle, type LucideIcon } from "lucide-react";
 
 interface InitiativeStatusBadgeProps {
   status: InitiativeStatus;
@@ -8,13 +8,18 @@ interface InitiativeStatusBadgeProps {
   className?: string;
 }
 
+const STATUS_ICONS: Record<InitiativeStatus, LucideIcon> = {
+  planned: Circle,
+  in_progress: Play,
+  blocked: AlertTriangle,
+  completed: CheckCircle2,
+  cancelled: XCircle,
+};
+
 export function InitiativeStatusBadge({ status, showIcon = true, className }: InitiativeStatusBadgeProps) {
-  const Icon = {
-    planned: Circle,
-    in_progress: Play,
-    blocked: AlertTriangle,
-    completed: CheckCircle2,
-  }[status];
+  // Fallback defensivo: um status novo/inesperado nunca deve derrubar a árvore
+  // de render (React #130 — componente undefined).
+  const Icon = STATUS_ICONS[status] ?? Circle;
 
   return (
     <Badge variant="secondary" className={`${getInitiativeStatusColor(status)} ${className || ''}`}>
