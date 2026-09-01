@@ -84,6 +84,11 @@ const STATUS_CONFIG: Record<InitiativeStatus, {
     icon: CheckCircle2,
     className: 'bg-success-muted text-success-muted-foreground',
   },
+  cancelled: {
+    label: 'Cancelada',
+    icon: XCircle,
+    className: 'bg-muted text-muted-foreground line-through',
+  },
 };
 
 function isOverdue(initiative: Initiative): boolean {
