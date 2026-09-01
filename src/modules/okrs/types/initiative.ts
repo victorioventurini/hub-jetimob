@@ -67,6 +67,7 @@ export function getInitiativeStatusLabel(status: InitiativeStatus): string {
     in_progress: 'Em progresso',
     blocked: 'Bloqueada',
     completed: 'Concluída',
+    cancelled: 'Cancelada',
   };
   return labels[status];
 }
