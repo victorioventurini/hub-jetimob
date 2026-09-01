@@ -49,6 +49,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         message: error.message || 'Unknown error',
         stack: error.stack ?? null,
         metadata: {
+          ...(this.props.context ?? {}),
           componentStack: errorInfo.componentStack,
           pathname: typeof window !== 'undefined' ? window.location.pathname : null,
           search: typeof window !== 'undefined' ? window.location.search : null,
