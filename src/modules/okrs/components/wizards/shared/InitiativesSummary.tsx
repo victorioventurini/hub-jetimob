@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Pencil,
+  XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Initiative, InitiativeStatus } from '@/modules/okrs/types/initiative';
