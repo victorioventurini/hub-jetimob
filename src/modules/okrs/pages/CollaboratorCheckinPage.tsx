@@ -787,7 +787,13 @@ export default function CollaboratorCheckinPage() {
         ) : undefined
       }
     >
-      {renderStepContent()}
+      <WizardStepBoundary
+        wizard="collaborator-checkin"
+        step={draft.currentStep}
+        onBack={goBack}
+      >
+        {renderStepContent()}
+      </WizardStepBoundary>
     </FullPageWizardShell>
   );
 }
