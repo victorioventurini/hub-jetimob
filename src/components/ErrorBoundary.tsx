@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/globalClient';
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  /** Contexto extra logado em `app_error_logs.metadata` (ex.: wizard/step). */
+  context?: Record<string, unknown>;
 }
 
 interface ErrorBoundaryState {
