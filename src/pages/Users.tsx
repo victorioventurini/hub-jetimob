@@ -112,9 +112,11 @@ export default function UsersPage() {
       excludeExternal: true,
     }),
     queryFn: async ({ queryKey }): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
+      // Guard de sessão via cliente de auth (SSOT). NUNCA usar o cliente BU-scoped
+      // aqui: em *.jetimob.com a sessão está em cookie compartilhado.
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await globalSupabase.auth.getSession();
       if (!session) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
