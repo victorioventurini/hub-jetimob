@@ -70,13 +70,65 @@ interface ExecutionResult {
   ran_at: string;
 }
 
-// Get CRON_SECRET from database config (same pattern as other integrations)
+// =============================================================================
+// TRANSIENT ERROR HANDLING
+// When the database/pooler is temporarily unreachable (timeouts, 522, reset
+// connections), the dispatcher must NOT fail hard: an external cron service
+// disables the job after repeated failures. Transient failures are answered
+// with HTTP 200 + success:false + error_kind:"transient" so a short backend
+// instability does not accumulate as failures on the cron provider.
+// =============================================================================
+
+class TransientError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TransientError";
+  }
+}
+
+const TRANSIENT_PATTERNS = [
+  "522", "523", "524", "timeout", "timed out", "connection",
+  "connection terminated", "econnreset", "econnrefused", "fetch failed",
+  "pooler", "temporarily unavailable", "503", "502",
+];
+
+function isTransientMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return TRANSIENT_PATTERNS.some((p) => m.includes(p));
+}
+
+async function withRetry<T>(fn: () => Promise<T>, label: string, attempts = 2, baseDelayMs = 500): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!(e instanceof TransientError) || i === attempts) throw e;
+      console.warn(`[cron-dispatcher] ${label} transient failure (attempt ${i + 1}), retrying: ${msg}`);
+      await new Promise((r) => setTimeout(r, baseDelayMs * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
+// Get CRON_SECRET from database config (same pattern as other integrations).
+// Throws TransientError when the database is temporarily unreachable.
+// Returns null only when the integration is configured-but-disabled.
 async function getCronSecret(supabase: EdgeSupabaseClient): Promise<string | null> {
-  const { data, error } = await supabase
-    .from("hub_integrations_global_config")
-    .select("config_encrypted, is_enabled_global")
-    .eq("integration_key", "cron-job")
-    .maybeSingle();
+  const { data, error } = await withRetry(async () => {
+    const res = await supabase
+      .from("hub_integrations_global_config")
+      .select("config_encrypted, is_enabled_global")
+      .eq("integration_key", "cron-job")
+      .maybeSingle();
+
+    if (res.error && isTransientMessage(res.error.message ?? "")) {
+      throw new TransientError(res.error.message);
+    }
+    return res;
+  }, "getCronSecret");
 
   if (error || !data?.is_enabled_global) {
     console.log("[cron-dispatcher] Integration not enabled or error:", error);
@@ -299,7 +351,32 @@ Deno.serve(async (req) => {
 
   // Validate cron secret from database config
   const cronSecret = req.headers.get("x-cron-secret");
-  const expectedSecret = await getCronSecret(supabase);
+
+  let expectedSecret: string | null;
+  try {
+    expectedSecret = await getCronSecret(supabase);
+  } catch (e) {
+    if (e instanceof TransientError) {
+      // Backend temporarily unreachable: answer 200 so the external cron
+      // provider does not count this as a failure and auto-disable the job.
+      console.error(`[cron-dispatcher] Transient backend error, skipping run (${correlationId}):`, e.message);
+      return new Response(JSON.stringify({
+        success: false,
+        error_kind: "transient",
+        correlation_id: correlationId,
+        duration_ms: Date.now() - startTime,
+        ran_at: new Date().toISOString(),
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    console.error(`[cron-dispatcher] Failed to load cron config (${correlationId}):`, e);
+    return new Response(JSON.stringify({ error: "Internal error", correlation_id: correlationId }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!expectedSecret) {
     return new Response(JSON.stringify({ error: "Integration not configured or disabled" }), {
@@ -348,7 +425,23 @@ Deno.serve(async (req) => {
       ran_at: new Date().toISOString(),
     };
 
-    await logExecution(supabase, result);
+    const message = error instanceof Error ? error.message : String(error);
+    const transient = error instanceof TransientError || isTransientMessage(message);
+    console.error(`[cron-dispatcher] Run failed (${correlationId}) transient=${transient}:`, message);
+
+    if (!transient) {
+      await logExecution(supabase, result);
+    }
+
+    if (transient) {
+      // 200 + success:false: prevents the external cron provider from
+      // accumulating failures and auto-disabling the job during short
+      // backend outages.
+      return new Response(JSON.stringify({ ...result, error_kind: "transient", error: message }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({ error: "Internal error", correlation_id: correlationId }), {
       status: 500,
