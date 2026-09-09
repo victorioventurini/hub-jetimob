@@ -23,6 +23,7 @@ import {
   Network,
 } from "lucide-react";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase as globalSupabase } from "@/integrations/supabase/globalClient";
 import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
