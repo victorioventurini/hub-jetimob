@@ -1,62 +1,40 @@
-# Prompt pronto — Regras de login (magic link + lembrar e-mail)
+# Reativar o cron das notificações
 
-Copie o texto abaixo e cole no outro projeto Lovable. A UI não está descrita — apenas comportamento e regras.
+## O que aconteceu
 
----
+O serviço externo de agendamento desligou o job porque as chamadas vinham falhando. As falhas não vêm do código: os registros do disparador mostram erro "522 - Connection timed out" ao tentar falar com o banco, e agora as consultas ao banco também estão retornando "conexão indisponível". Ou seja, o banco do Hub está intermitente/fora do ar, e o disparador falha em cadeia.
 
-```text
-Implemente a página de login (/auth) com autenticação exclusivamente por magic link
-do Lovable Cloud (e-mail padrão do Lovable, sem domínio customizado). Não descrevo
-a UI — siga os padrões do projeto. As REGRAS de comportamento são:
+Confirmado nesta sessão:
+- Log do disparador: resposta HTML de timeout (522) em vez de dados.
+- Consultas diretas ao banco: falham com pooler indisponível.
+- Verificação geral de saúde: reporta "normal", o que confirma que o problema é de infraestrutura intermitente, não de configuração do app.
 
-## 1. Magic link (envio padrão do Lovable)
-- Use supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } }).
-- emailRedirectTo = `${window.location.origin}/auth/callback?next=<destino>`.
-- Crie a rota pública /auth/callback que aguarda a sessão hidratar
-  (onAuthStateChange / getSession) e só então navega para o destino `next`.
-- Valide `next`: aceite apenas caminhos internos começando com "/";
-  rejeite "//", URLs absolutas e javascript: (anti open-redirect).
-  Destino inválido → "/".
-- Se o usuário já estiver logado e abrir /auth, redirecione para o destino.
+## Plano
 
-## 2. Lembrar o último e-mail
-- Ao enviar o magic link com sucesso, salve em localStorage a chave
-  "<app>_last_email" com JSON { email, savedAt }.
-- TTL de 30 dias: ao ler, se expirado, remova e trate como ausente.
-- Se houver e-mail salvo (e não houver ?email= na URL), a tela abre no estado
-  "returning": saudação personalizada com o primeiro nome derivado do e-mail
-  (parte antes do "@", antes do primeiro "."), exibe o e-mail salvo e o botão
-  principal envia o link direto sem pedir digitação.
-- Sempre ofereça "Trocar e-mail" / "Usar outro e-mail" para voltar ao estado
-  de primeiro acesso com o campo vazio.
-- O parâmetro ?email= na URL tem precedência sobre o e-mail salvo
-  (pré-preenche o campo e força estado de primeiro acesso).
+1. Recuperar o banco
+   - Reiniciar o backend do Hub (precisa da sua aprovação) e aguardar ficar saudável.
+   - Confirmar com uma consulta simples antes de qualquer outra coisa.
 
-## 3. Estados da tela
-- first-access: campo de e-mail + botão "Receber link".
-- returning: sem campo; saudação + e-mail salvo + botão "Receber link".
-- link-sent: confirmação "Verifique seu e-mail", mostra o endereço, avisa que
-  o link expira em 10 minutos e sugere olhar o spam.
+2. Validar o disparador
+   - Chamar o endpoint do cron com o segredo correto e confirmar resposta 200 com os blocos `outbox`, `health` e `maintenance`.
+   - Conferir o histórico em `cron_execution_logs` e o backlog de `notification_outbox` (e-mails represados no período parado).
 
-## 4. UX e resiliência
-- Valide formato de e-mail no submit (regex simples); inválido → toast de erro,
-  sem chamar o backend.
-- Botão "Reenviar link" com cooldown de 60 segundos (contador visível).
-- Enquanto verifica a sessão, mostre loading; se passar de 5 segundos,
-  exiba o formulário mesmo assim (nunca prender o usuário no loading).
-- Mensagens de erro amigáveis em português: erro de autorização/domínio vira
-  mensagem inline no campo; falhas de rede/timeout viram toast genérico
-  "Tenta de novo?".
-- Ao trocar o e-mail digitado, limpe erros anteriores.
-- Botões com estado de loading durante as chamadas.
+3. Drenar o que ficou parado
+   - Rodar o processamento do outbox manualmente uma vez para enviar as notificações acumuladas.
+   - Conferir se transições automáticas de ciclo e marcação de ritual perdido ficaram atrasadas e reexecutá-las.
 
-## 5. Sessão
-- Mantenha o padrão do Supabase client (persistSession em localStorage).
-- Não implemente senha, OAuth ou signup por aqui — apenas magic link.
-```
----
+4. Reativar o agendamento
+   - Você reativa o job no cron-job.org (o serviço externo exige ação na conta deles).
+   - Manter a mesma URL e o cabeçalho `x-cron-secret`.
 
-## Observações
-- No projeto de origem o "lembrar e-mail" usa localStorage com TTL de 30 dias (não cookie de navegador) — o prompt reflete isso, que é o comportamento real e mais simples.
-- O envio de e-mail é o padrão do Lovable (sem edge function customizada), conforme solicitado.
-- O anti open-redirect de `next` é mantido por segurança; no projeto de origem ele também aceita URLs de satélites SSO, o que não se aplica ao novo projeto.
+5. Reduzir o risco de novo desligamento automático
+   - Tornar o disparador tolerante a falhas transitórias: tentar novamente as chamadas ao banco e responder 200 com `success: false` e detalhe do erro quando a falha for temporária, em vez de 500. Assim uma instabilidade curta do banco não acumula falhas que desligam o job.
+   - Manter o 500 apenas para erros reais de configuração (segredo ausente/integração desativada) e 401 para segredo inválido.
+   - Registrar a causa da falha no log de execução para diagnóstico.
+
+## Detalhes técnicos
+
+- Arquivo: `supabase/functions/cron-dispatcher/index.ts`.
+- Envolver `getCronSecret` e as RPCs em uma pequena política de retry (2 tentativas, backoff curto) e classificar erro de rede/timeout como transitório.
+- No `catch` principal, distinguir transitório (HTTP 200 + `success:false` + `error_kind:"transient"`) de permanente (HTTP 500), preservando o registro em `cron_execution_logs`.
+- Nenhuma mudança de schema é necessária.
