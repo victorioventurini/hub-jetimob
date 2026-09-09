@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 import { supabase as globalClient } from "./globalClient";
-import { readSharedSessionRaw } from "./sharedSessionStorage";
+import { readSharedSessionRaw, sharedSessionStorage } from "./sharedSessionStorage";
 import { logger } from "@/lib/logger";
 
 
@@ -205,7 +205,10 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
       fetch: createBuAwareFetch(),
     },
     auth: {
-      storage: localStorage,
+      // CRITICAL: must be the SAME storage as globalClient. Em *.jetimob.com a
+      // sessão vive em cookie no domínio raiz (SSO); usar `localStorage` aqui
+      // faz `getSession()` retornar null e telas quebrarem com "Sessão expirada".
+      storage: sharedSessionStorage(),
       persistSession: true,
       // CRITICAL: Only globalClient handles token refresh to prevent 429 storms.
       // buScopedClient piggybacks on globalClient's session via shared localStorage key.
