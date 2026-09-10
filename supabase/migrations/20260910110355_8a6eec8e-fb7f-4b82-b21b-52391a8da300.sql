@@ -1,0 +1,1 @@
+DELETE FROM kpi_values WHERE id = 'f53d6009-34e7-4491-83b7-eee8b73d0346' AND kpi_id = 'db355067-64bf-403b-b24b-f0d961ab4f3c' AND input_type = 'partial';
