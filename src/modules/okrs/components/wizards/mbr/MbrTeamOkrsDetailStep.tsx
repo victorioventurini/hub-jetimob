@@ -98,7 +98,9 @@ export function MbrTeamOkrsDetailStep({
   const currentTeam = teamsWithOkrs[safeIndex] ?? null;
 
   // Toggle: hide/show on-track OKRs (default: hidden — focus on risk/off-track)
-  const [showOnTrack, setShowOnTrack] = useState(false);
+  // Default: exibir todas as OKRs do time. Ocultar as "on track" é opt-in —
+  // times com todas as OKRs verdes apareciam vazios no MBR.
+  const [showOnTrack, setShowOnTrack] = useState(true);
   const [showProjects, setShowProjects] = useState(false);
 
   // Objetivo "on track" = todos os KRs verdes/not_started e nenhum em risco
