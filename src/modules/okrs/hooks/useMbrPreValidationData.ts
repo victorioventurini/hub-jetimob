@@ -137,17 +137,18 @@ export function useMbrPreValidationData({
     const snapByKpi = new Map(monthlySnapshots.map((s) => [s.kpiId, s]));
     for (const k of allTeamKpis) {
       const snap = snapByKpi.get(k.id);
-      // "Consolidação pendente" agora é restrita ao `referenceMonth`: o time
-      // só precisa ter o valor consolidado do mês analisado pelo rito.
-      // Períodos anteriores são dívida histórica e não bloqueiam o Pré-MBR.
+      // O gate do Pré-MBR é MENSAL: só exige o valor CONSOLIDADO do
+      // `referenceMonth` (mês fechado analisado pelo rito).
+      //
+      // `update_overdue` (cadência de atualização — ex.: semanal) NÃO bloqueia
+      // mais o rito: exigir parciais do mês corrente é fora do escopo do
+      // Pré-MBR e gerava falsos pendentes mesmo com o consolidado do mês de
+      // referência preenchido. Períodos anteriores seguem sendo dívida
+      // histórica e também não bloqueiam.
       const refMonthMissing = !snap
         || snap.currentValue == null
         || snap.latestInputType === 'partial';
-      if (k.update_overdue && refMonthMissing) {
-        pending.push({ kpi: k, reason: 'both' });
-      } else if (k.update_overdue) {
-        pending.push({ kpi: k, reason: 'overdue' });
-      } else if (refMonthMissing) {
+      if (refMonthMissing) {
         pending.push({ kpi: k, reason: 'pending_consolidation' });
       } else {
         ok.push(k);
