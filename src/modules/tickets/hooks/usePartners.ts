@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { useIdentity } from "@/hooks/useIdentity";
 import type { PartnerCompany, PartnerContact, PartnerCompanyStatus, PartnerContactStatus } from "../types";
 
 // ===========================================
@@ -295,6 +296,7 @@ export function useCreatePartnerContact() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (data: {
@@ -306,8 +308,7 @@ export function useCreatePartnerContact() {
       sendInvite?: boolean;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
-
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!realProfileId) throw new Error("Perfil não identificado");
 
       const { data: contact, error } = await supabase
         .from("partner_contacts")
@@ -318,12 +319,34 @@ export function useCreatePartnerContact() {
           email: data.email.toLowerCase(),
           phone: data.phone || null,
           status: data.status || "active",
-          created_by: user?.id,
+          created_by: realProfileId,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // BU association is mandatory — without it the contact is invisible in the BU
+      const { error: assocError } = await supabase
+        .from("partner_contact_bu_associations")
+        .insert({
+          partner_contact_id: contact.id,
+          bu_id: buId,
+          is_active: (data.status || "active") === "active",
+          created_by: realProfileId,
+        });
+
+      if (assocError) {
+        console.error("[useCreatePartnerContact] Failed to create BU association:", assocError);
+        await supabase
+          .from("partner_contacts")
+          .update({ deleted_at: new Date().toISOString(), status: "inactive" })
+          .eq("id", contact.id);
+        throw new Error(
+          "Não foi possível vincular o contato a esta unidade de negócio. Tente novamente."
+        );
+      }
+
 
       const shouldSendInvite = data.sendInvite !== false;
       if (shouldSendInvite && contact) {

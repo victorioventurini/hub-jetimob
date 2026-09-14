@@ -10,6 +10,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { supabase as globalSupabase } from "@/integrations/supabase/globalClient";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { useIdentity } from "@/hooks/useIdentity";
 import { toast } from "sonner";
 import type { PartnerContact, PartnerContactStatus } from "../types";
 
@@ -249,6 +250,7 @@ export function useCreateGlobalContact() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (data: {
@@ -260,8 +262,7 @@ export function useCreateGlobalContact() {
       sendInvite?: boolean;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
-
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!realProfileId) throw new Error("Perfil não identificado");
 
       // 1. Create global contact
       const { data: contact, error } = await supabase
@@ -273,26 +274,33 @@ export function useCreateGlobalContact() {
           email: data.email.toLowerCase(),
           phone: data.phone || null,
           status: data.status || "active",
-          created_by: user?.id,
+          created_by: realProfileId,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // 2. Create BU association
+      // 2. Create BU association (mandatory — contact is invisible in the BU without it)
       const { error: assocError } = await supabase
         .from("partner_contact_bu_associations")
         .insert({
           partner_contact_id: contact.id,
           bu_id: buId,
           is_active: data.status === "active",
-          created_by: user?.id,
+          created_by: realProfileId,
         });
 
       if (assocError) {
         console.error("[useCreateGlobalContact] Failed to create BU association:", assocError);
-        // Don't fail - contact was created
+        // Roll back the contact so we never leave an orphan record behind
+        await supabase
+          .from("partner_contacts")
+          .update({ deleted_at: new Date().toISOString(), status: "inactive" })
+          .eq("id", contact.id);
+        throw new Error(
+          "Não foi possível vincular o contato a esta unidade de negócio. Tente novamente."
+        );
       }
 
       // 3. Send invitation if requested
