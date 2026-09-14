@@ -37,6 +37,7 @@ import {
 } from "../hooks";
 import { useBu } from "@/contexts/BuContext";
 import { PartnerContactsSection } from "../components/PartnerContactsSection";
+import { PartnerEditDialog } from "../components/PartnerEditDialog";
 
 function formatDocument(doc: string | null, type: string | null): string {
   if (!doc) return "Não informado";
