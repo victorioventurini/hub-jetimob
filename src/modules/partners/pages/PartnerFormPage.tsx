@@ -124,7 +124,7 @@ export default function PartnerFormPage() {
         });
       }
 
-      navigate(`/partners/${result?.id}`);
+      navigate(`/settings/partners/${result?.id}`);
     } catch (error) {
       // Error handled by mutation
     }
@@ -137,7 +137,7 @@ export default function PartnerFormPage() {
         bu_id: currentBuId,
         is_active: true,
       });
-      navigate(`/partners/${existingPartner.id}`);
+      navigate(`/settings/partners/${existingPartner.id}`);
     }
   };
 
@@ -213,7 +213,7 @@ export default function PartnerFormPage() {
                           variant="outline"
                           asChild
                         >
-                          <Link to={`/partners/${existingPartner.id}`}>
+                          <Link to={`/settings/partners/${existingPartner.id}`}>
                             Ver detalhes
                           </Link>
                         </Button>
@@ -336,7 +336,7 @@ export default function PartnerFormPage() {
                   variant="outline"
                   asChild
                 >
-                  <Link to="/partners">Cancelar</Link>
+                  <Link to="/settings/partners">Cancelar</Link>
                 </Button>
                 <Button type="submit" isLoading={isSubmitting} loadingText="Cadastrando...">
                   Cadastrar Parceiro
