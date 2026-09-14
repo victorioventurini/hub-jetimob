@@ -2,6 +2,7 @@
  * PartnerDetailPage - Detalhes de um parceiro com gestão de BUs
  */
 
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Building2, Users, Check, X, Loader2, Edit, Trash2 } from "lucide-react";
