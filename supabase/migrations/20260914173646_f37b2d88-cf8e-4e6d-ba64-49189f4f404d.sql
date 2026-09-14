@@ -1,0 +1,1 @@
+ALTER TABLE public.external_companies ALTER COLUMN created_by SET DEFAULT public.my_profile_id();

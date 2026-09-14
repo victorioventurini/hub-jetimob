@@ -171,7 +171,7 @@ export default function PartnersPage() {
   // Handler quando encontra parceiro por documento
   const handleFoundPartner = () => {
     if (foundPartner) {
-      navigate(`/partners/${foundPartner.id}`);
+      navigate(`/settings/partners/${foundPartner.id}`);
     }
   };
 
@@ -242,7 +242,7 @@ export default function PartnersPage() {
                     </p>
                   </div>
                   <Button asChild>
-                    <Link to={`/partners/new?document=${cleanDoc}`}>
+                    <Link to={`/settings/partners/new?document=${cleanDoc}`}>
                       Cadastrar parceiro
                     </Link>
                   </Button>
@@ -305,7 +305,7 @@ export default function PartnersPage() {
                     : "Comece cadastrando o primeiro parceiro"}
                 </p>
                 <Button asChild>
-                  <Link to="/partners/new">
+                  <Link to="/settings/partners/new">
                     <Plus className="h-4 w-4 mr-2" />
                     Novo Parceiro
                   </Link>

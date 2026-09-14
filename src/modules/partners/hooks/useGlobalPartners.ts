@@ -8,6 +8,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { partnersKeys } from "@/lib/queryKeys/partners";
+import { useIdentity } from "@/hooks/useIdentity";
 import { toast } from "sonner";
 import type {
   GlobalPartnerCompany,
@@ -101,12 +102,14 @@ export function useSearchPartnerByDocument(document: string | null) {
  */
 export function useCreateGlobalPartner() {
   const queryClient = useQueryClient();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (data: CreatePartnerCompanyData) => {
       const { data: created, error } = await supabase
         .from("external_companies")
         .insert([{
+          created_by: realProfileId,
           name: data.name,
           legal_name: data.legal_name || null,
           person_type: data.person_type,
