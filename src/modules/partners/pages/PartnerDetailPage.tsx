@@ -147,7 +147,12 @@ export default function PartnerDetailPage() {
           backLabel="Voltar para Parceiros"
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" size="icon">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsEditOpen(true)}
+                aria-label="Editar empresa parceira"
+              >
                 <Edit className="h-4 w-4" />
               </Button>
               <AlertDialog>
