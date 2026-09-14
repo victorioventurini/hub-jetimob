@@ -23,6 +23,7 @@ import { CreateApiKeyDialog } from '../components/CreateApiKeyDialog';
 import { ApiKeyRevealDialog } from '../components/ApiKeyRevealDialog';
 import { ApiKeyUsageDialog } from '../components/ApiKeyUsageDialog';
 import { ApiDocsCard } from '../components/ApiDocsCard';
+import { McpServerCard } from '../components/McpServerCard';
 import type { BuApiKey, CreatedBuApiKey } from '../types';
 
 function isExpired(key: BuApiKey) {
@@ -147,6 +148,8 @@ export default function BuApiKeysPage() {
       )}
 
       <ApiDocsCard />
+
+      <McpServerCard />
 
       <CreateApiKeyDialog
         open={createOpen}
