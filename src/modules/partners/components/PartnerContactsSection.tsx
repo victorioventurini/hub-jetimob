@@ -1,0 +1,219 @@
+/**
+ * PartnerContactsSection - Gestão de usuários externos de uma empresa parceira
+ * Reaproveita hooks e diálogos do módulo de tickets (fonte única de verdade).
+ */
+import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Users, Plus, Pencil, Trash2, Upload } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PhoneLink } from "@/components/ui/phone-link";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
+import { useLocalSearch } from "@/shared/url/useLocalSearch";
+
+import { usePartnerCompanies, usePartnerContacts } from "@/modules/tickets/hooks";
+import { PartnerContactDialog } from "@/modules/tickets/components/settings/PartnerContactDialog";
+import { PartnerContactImportDialog } from "@/modules/tickets/components/settings/PartnerContactImportDialog";
+import { MigrateTicketsDialog } from "@/modules/tickets/components/settings/MigrateTicketsDialog";
+import type { PartnerCompany, PartnerContact } from "@/modules/tickets/types";
+
+interface PartnerContactsSectionProps {
+  companyId: string;
+  companyName: string;
+}
+
+function PartnerContactsSectionComponent({ companyId, companyName }: PartnerContactsSectionProps) {
+  const { data: companies = [], isLoading: loadingCompanies } = usePartnerCompanies();
+  const { data: contacts = [], isLoading: loadingContacts } = usePartnerContacts(companyId);
+
+  const { value: search, setValue: setSearch } = useLocalSearch("contactSearch", 300);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<PartnerContact | null>(null);
+  const [contactToRemove, setContactToRemove] = useState<PartnerContact | null>(null);
+
+  // Restringe o seletor de empresa dos diálogos a esta empresa
+  const scopedCompanies = useMemo<PartnerCompany[]>(() => {
+    const found = companies.find((c) => c.id === companyId);
+    if (found) return [found];
+    return [
+      {
+        id: companyId,
+        name: companyName,
+        legal_name: null,
+        allowed_domains: [],
+        status: "active",
+        notes: null,
+        created_at: new Date().toISOString(),
+        created_by: null,
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      } as PartnerCompany,
+    ];
+  }, [companies, companyId, companyName]);
+
+  const filteredContacts = useMemo(() => {
+    if (!search.trim()) return contacts;
+    const term = search.toLowerCase();
+    return contacts.filter(
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.email?.toLowerCase().includes(term) ||
+        c.phone?.includes(term)
+    );
+  }, [contacts, search]);
+
+  const handleEdit = (contact: PartnerContact) => {
+    setEditingContact(contact);
+    setDialogOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditingContact(null);
+    setDialogOpen(true);
+  };
+
+  const isLoading = loadingCompanies || loadingContacts;
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle className="text-base">Usuários externos</CardTitle>
+            <CardDescription>
+              Pessoas de {companyName} com acesso aos tickets desta unidade de negócio
+            </CardDescription>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <UrlSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar usuário..."
+              className="w-full sm:w-[200px]"
+            />
+            <Button variant="outline" onClick={() => setImportDialogOpen(true)} className="w-full sm:w-auto">
+              <Upload className="h-4 w-4 mr-2" />
+              Importar
+            </Button>
+            <Button onClick={handleCreate} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar usuário
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : filteredContacts.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title={search ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
+              description={
+                search
+                  ? "Tente outro termo de busca."
+                  : "Adicione usuários externos desta empresa para que possam abrir e acompanhar tickets."
+              }
+              compact
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredContacts.map((contact) => (
+                  <TableRow key={contact.id}>
+                    <TableCell>
+                      <Link to={`/contacts/${contact.id}`} className="flex items-center gap-3 text-left">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>{contact.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground hover:text-primary transition-colors">
+                            {contact.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{contact.email}</p>
+                        </div>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <PhoneLink phone={contact.phone} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant={contact.status === "active" ? "default" : "secondary"}>
+                          {contact.status === "active" ? "Ativo" : "Inativo"}
+                        </Badge>
+                        {contact.can_view_company_tickets && (
+                          <Badge variant="outline">Vê tickets da empresa</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(contact)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setContactToRemove(contact)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <PartnerContactDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        contact={editingContact}
+        companies={scopedCompanies}
+        defaultCompanyId={companyId}
+      />
+
+      {contactToRemove && (
+        <MigrateTicketsDialog
+          open={!!contactToRemove}
+          onOpenChange={(open) => !open && setContactToRemove(null)}
+          contact={contactToRemove}
+        />
+      )}
+
+      <PartnerContactImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        companyId={companyId}
+        companyName={companyName}
+      />
+    </>
+  );
+}
+
+export const PartnerContactsSection = React.memo(PartnerContactsSectionComponent);

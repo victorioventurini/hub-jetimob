@@ -35,6 +35,7 @@ import {
   useDeleteGlobalPartner,
 } from "../hooks";
 import { useBu } from "@/contexts/BuContext";
+import { PartnerContactsSection } from "../components/PartnerContactsSection";
 
 function formatDocument(doc: string | null, type: string | null): string {
   if (!doc) return "Não informado";
@@ -242,6 +243,11 @@ export default function PartnerDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Usuários externos */}
+        {partnerId && (
+          <PartnerContactsSection companyId={partnerId} companyName={partner.name} />
+        )}
 
         {/* Status na BU atual */}
         <Card>
