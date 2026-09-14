@@ -13370,6 +13370,10 @@ export type Database = {
         Args: { p_question_id: string; p_version_id: string }
         Returns: undefined
       }
+      storage_path_uuid: {
+        Args: { p_idx: number; p_name: string }
+        Returns: string
+      }
       submit_ritual_evaluation: {
         Args: {
           p_change_one_thing: string
