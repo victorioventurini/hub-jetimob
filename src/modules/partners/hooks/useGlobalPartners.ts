@@ -8,6 +8,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { partnersKeys } from "@/lib/queryKeys/partners";
+import { useIdentity } from "@/hooks/useIdentity";
 import { toast } from "sonner";
 import type {
   GlobalPartnerCompany,
