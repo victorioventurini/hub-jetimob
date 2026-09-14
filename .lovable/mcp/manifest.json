@@ -1,0 +1,849 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://oiwnghihyqdsinouwmga.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "next",
+      "version": "1.0.0",
+      "title": "Next"
+    },
+    "tools": [
+      {
+        "name": "whoami",
+        "title": "Quem sou eu no Next",
+        "description": "Retorna o perfil do usuário conectado e as unidades de negócio a que ele tem acesso. Use antes das outras ferramentas quando não souber qual unidade usar.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_people",
+        "title": "Listar pessoas",
+        "description": "Lista as pessoas (jetimobers) da unidade com time, cargo, modelo de trabalho e situação. Aceita busca por nome ou e-mail. Não retorna dados pessoais sensíveis.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "situacao": {
+              "type": "string",
+              "enum": [
+                "active",
+                "vacation",
+                "terminated",
+                "external"
+              ],
+              "description": "Filtra pela situação (padrão: apenas ativos)."
+            },
+            "modelo_trabalho": {
+              "type": "string",
+              "enum": [
+                "onsite",
+                "hybrid",
+                "remote"
+              ]
+            },
+            "time": {
+              "type": "string",
+              "description": "Nome do time para filtrar."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "person_performance",
+        "title": "Performance de uma pessoa",
+        "description": "Panorama consolidado de performance de um jetimober: dados de trabalho, objetivos e KRs sob responsabilidade com progresso, check-ins recentes, KPIs com último valor e meta, projetos e marcos, e alertas do que merece atenção.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "pessoa": {
+              "type": "string",
+              "description": "Nome, e-mail ou id da pessoa."
+            },
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            }
+          },
+          "required": [
+            "pessoa"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "team_performance",
+        "title": "Performance de um time",
+        "description": "Panorama de performance de todas as pessoas ativas de um time: objetivos, KRs com progresso, KPIs e alertas por pessoa. Use para comparar o time.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "string",
+              "description": "Nome do time."
+            },
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            }
+          },
+          "required": [
+            "time"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_org_structure",
+        "title": "Estrutura da unidade",
+        "description": "Lista times, áreas, squads e cargos da unidade, com líderes e situação. Use para entender a estrutura antes de consultar pessoas ou OKRs.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_cycles",
+        "title": "Listar ciclos",
+        "description": "Lista os ciclos de OKR da unidade (ano, trimestre, mês) com datas, tipo e situação. Use para descobrir o ciclo ativo antes de consultar OKRs.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "planning",
+                "active",
+                "closed"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_objectives",
+        "title": "Listar objetivos (OKRs)",
+        "description": "Lista objetivos organizacionais e/ou de time da unidade, com ciclo, responsável, saúde, progresso médio e quantidade de KRs.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "escopo": {
+              "type": "string",
+              "enum": [
+                "org",
+                "team",
+                "todos"
+              ],
+              "description": "Padrão: todos."
+            },
+            "ciclo": {
+              "type": "string",
+              "description": "Nome do ciclo (ex.: 2026-Q3). Omita para o ciclo ativo."
+            },
+            "time": {
+              "type": "string",
+              "description": "Nome do time."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "active",
+                "completed",
+                "cancelled",
+                "discarded"
+              ]
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_key_results",
+        "title": "Listar key results (KRs)",
+        "description": "Lista KRs de time e organizacionais com baseline, resultado, meta, orientação, progresso calculado, farol e data do último check-in. Permite filtrar por objetivo, time, responsável, ciclo e KRs em risco.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "escopo": {
+              "type": "string",
+              "enum": [
+                "org",
+                "team",
+                "todos"
+              ]
+            },
+            "objetivo_id": {
+              "type": "string",
+              "description": "Id do objetivo."
+            },
+            "time": {
+              "type": "string"
+            },
+            "ciclo": {
+              "type": "string",
+              "description": "Nome do ciclo. Omita para o ciclo ativo."
+            },
+            "em_risco": {
+              "type": "boolean",
+              "description": "Se verdadeiro, retorna apenas KRs ativos com progresso abaixo de 70%."
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_checkins",
+        "title": "Listar check-ins de KR",
+        "description": "Lista check-ins registrados nos KRs da unidade, com valor anterior e novo, confiança, bloqueios e comentários. Permite filtrar por KR, pessoa, time e período.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "kr_id": {
+              "type": "string"
+            },
+            "pessoa": {
+              "type": "string",
+              "description": "Nome, e-mail ou id de quem registrou."
+            },
+            "desde": {
+              "type": "string",
+              "description": "Data inicial (AAAA-MM-DD)."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_initiatives",
+        "title": "Listar iniciativas de OKR",
+        "description": "Lista as iniciativas (ações) vinculadas aos KRs da unidade, com status, prioridade, progresso, responsável e prazo. Use para ver o que está bloqueado ou atrasado.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "kr_id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "planned",
+                "in_progress",
+                "blocked",
+                "completed",
+                "cancelled"
+              ]
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_kpis",
+        "title": "Listar KPIs e métricas",
+        "description": "Lista os KPIs e métricas da unidade com meta, orientação, frequência, último valor consolidado, farol e tendência (crescimento, estabilidade ou queda) calculada sobre a série consolidada.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "categoria": {
+              "type": "string",
+              "enum": [
+                "financeiro",
+                "growth",
+                "cs",
+                "produto",
+                "operacoes",
+                "pessoas"
+              ]
+            },
+            "tipo": {
+              "type": "string",
+              "enum": [
+                "kpi",
+                "metric"
+              ]
+            },
+            "janela_meses": {
+              "type": "integer",
+              "description": "Janela para a tendência: 3, 6 ou 12 meses (padrão 6)."
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "kpi_history",
+        "title": "Histórico de um KPI",
+        "description": "Retorna a série histórica de um KPI da unidade (valores consolidados e parciais), com período, farol, origem e observações.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "kpi": {
+              "type": "string",
+              "description": "Nome ou id do KPI."
+            },
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "desde": {
+              "type": "string",
+              "description": "Data inicial (AAAA-MM-DD)."
+            },
+            "apenas_consolidados": {
+              "type": "boolean",
+              "description": "Padrão: falso (traz parciais também)."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "required": [
+            "kpi"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_projects",
+        "title": "Listar projetos",
+        "description": "Lista os projetos da unidade com responsável, status, datas e marcos (com prazo e situação de cada marco). Use para saber o andamento e o que está atrasado.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "planned",
+                "in_progress",
+                "paused",
+                "done",
+                "cancelled"
+              ]
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "incluir_marcos": {
+              "type": "boolean",
+              "description": "Padrão: verdadeiro."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_tickets",
+        "title": "Listar tickets",
+        "description": "Lista os tickets visíveis para o usuário na unidade, com tipo, situação, prazo, responsável, categoria e empresa parceira. Respeita as regras de visibilidade do Next.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "waiting",
+                "paused",
+                "in_progress",
+                "done",
+                "discarded"
+              ]
+            },
+            "tipo": {
+              "type": "string",
+              "enum": [
+                "internal",
+                "external"
+              ]
+            },
+            "atrasados": {
+              "type": "boolean",
+              "description": "Somente tickets em aberto com prazo vencido."
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_ticket",
+        "title": "Detalhar um ticket",
+        "description": "Retorna os dados de um ticket e o histórico de mensagens da conversa, além dos participantes. Respeita as regras de visibilidade do Next.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "ticket_id": {
+              "type": "string",
+              "description": "Id do ticket."
+            },
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            }
+          },
+          "required": [
+            "ticket_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_rituals",
+        "title": "Listar ritos",
+        "description": "Lista as ocorrências dos ritos da unidade (check-in, pré-weekly, weekly, pré-MBR, MBR, QBR) com data planejada, situação e time, além das cadências configuradas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "tipo": {
+              "type": "string",
+              "description": "Tipo do rito (ex.: weekly, mbr, qbr, checkin)."
+            },
+            "desde": {
+              "type": "string",
+              "description": "Data inicial (AAAA-MM-DD)."
+            },
+            "ate": {
+              "type": "string",
+              "description": "Data final (AAAA-MM-DD)."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_assets",
+        "title": "Listar ativos (patrimônio)",
+        "description": "Lista os ativos do inventário da unidade com código interno, categoria, marca/modelo, situação, quantidade e quem/onde está no momento.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "situacao": {
+              "type": "string",
+              "enum": [
+                "available",
+                "loaned",
+                "maintenance",
+                "written_off"
+              ]
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_assessments",
+        "title": "Listar avaliações",
+        "description": "Lista as avaliações da unidade com situação, janela de disponibilidade e um resumo das aplicações (respostas iniciadas, enviadas e nota objetiva média). Não retorna respostas individuais nem CPF.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "active",
+                "archived"
+              ]
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_partners",
+        "title": "Listar empresas parceiras",
+        "description": "Lista as empresas parceiras vinculadas à unidade, com razão social, documento, situação e os contatos externos de cada uma.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive"
+              ]
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "incluir_contatos": {
+              "type": "boolean",
+              "description": "Padrão: verdadeiro."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_analyses",
+        "title": "Listar análises e decisões",
+        "description": "Lista os relatórios de análise da unidade (premissa, módulos, período, resultado e ações sugeridas) e as decisões estratégicas registradas neles.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "generating",
+                "complete",
+                "failed"
+              ]
+            },
+            "incluir_resultado": {
+              "type": "boolean",
+              "description": "Se verdadeiro, inclui o texto completo do resultado (pode ser longo)."
+            },
+            "busca": {
+              "type": "string",
+              "description": "Texto para filtrar por nome/título."
+            },
+            "limite": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Quantidade máxima de registros (padrão 50, máximo 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_next",
+        "title": "Busca geral no Next",
+        "description": "Busca um termo em vários módulos ao mesmo tempo (pessoas, objetivos, KRs, KPIs, projetos, tickets, ativos e parceiros) e devolve os resultados agrupados por módulo. Use quando não souber onde o assunto está registrado.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "termo": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Texto a procurar."
+            },
+            "bu": {
+              "type": "string",
+              "description": "Unidade de negócio (nome, slug ou id). Omita para usar a sua unidade padrão."
+            }
+          },
+          "required": [
+            "termo"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
