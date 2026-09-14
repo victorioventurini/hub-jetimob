@@ -314,6 +314,8 @@ export default function PartnerDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PartnerEditDialog open={isEditOpen} onOpenChange={setIsEditOpen} partner={partner} />
     </HubLayout>
   );
 }
