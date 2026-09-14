@@ -2,6 +2,7 @@
  * PartnerDetailPage - Detalhes de um parceiro com gestão de BUs
  */
 
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Building2, Users, Check, X, Loader2, Edit, Trash2 } from "lucide-react";
@@ -36,6 +37,7 @@ import {
 } from "../hooks";
 import { useBu } from "@/contexts/BuContext";
 import { PartnerContactsSection } from "../components/PartnerContactsSection";
+import { PartnerEditDialog } from "../components/PartnerEditDialog";
 
 function formatDocument(doc: string | null, type: string | null): string {
   if (!doc) return "Não informado";
@@ -74,6 +76,7 @@ export default function PartnerDetailPage() {
   const { data: associations } = usePartnerBuAssociations(partnerId || null);
   const toggleAssociation = useTogglePartnerBuAssociation();
   const deletePartner = useDeleteGlobalPartner();
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -144,7 +147,12 @@ export default function PartnerDetailPage() {
           backLabel="Voltar para Parceiros"
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" size="icon">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsEditOpen(true)}
+                aria-label="Editar empresa parceira"
+              >
                 <Edit className="h-4 w-4" />
               </Button>
               <AlertDialog>
@@ -306,6 +314,8 @@ export default function PartnerDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PartnerEditDialog open={isEditOpen} onOpenChange={setIsEditOpen} partner={partner} />
     </HubLayout>
   );
 }
