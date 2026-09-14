@@ -244,6 +244,11 @@ export default function PartnerDetailPage() {
           </CardContent>
         </Card>
 
+        {/* Usuários externos */}
+        {partnerId && (
+          <PartnerContactsSection companyId={partnerId} companyName={partner.name} />
+        )}
+
         {/* Status na BU atual */}
         <Card>
           <CardHeader>
