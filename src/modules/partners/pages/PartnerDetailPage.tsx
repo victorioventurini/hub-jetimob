@@ -76,6 +76,7 @@ export default function PartnerDetailPage() {
   const { data: associations } = usePartnerBuAssociations(partnerId || null);
   const toggleAssociation = useTogglePartnerBuAssociation();
   const deletePartner = useDeleteGlobalPartner();
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   if (isLoading) {
     return (
