@@ -9,7 +9,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { sendEmail } from "../_shared/email-sender.ts";
-import { NO_REPLY_EMAIL } from "../_shared/constants.ts";
+import { NO_REPLY_EMAIL, SITE_URL } from "../_shared/constants.ts";
 import { 
   withErrorHandling, 
   createErrorResponse,
@@ -152,8 +152,8 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   let subject = "Você foi convidado para acessar o Next";
   let body_html = "";
 
-  // Build base URL for access
-  const accessUrl = `${SUPABASE_URL.replace(".supabase.co", "")}/auth`;
+  // Build base URL for access (public app URL, never the backend URL)
+  const accessUrl = `${SITE_URL.replace(/\/+$/, "")}/auth?email=${encodeURIComponent(contactData.email ?? "")}`;
 
   if (templateError || !templateData || templateData.length === 0) {
     console.warn(`[${requestId}] No template found, using fallback`);
