@@ -8,6 +8,13 @@
       "when": 1790278207825,
       "tag": "0000_ticket_visibility_assigned_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790618416559,
+      "tag": "0001_sync_auth_email_from_work_email",
+      "breakpoints": true
     }
   ]
 }
