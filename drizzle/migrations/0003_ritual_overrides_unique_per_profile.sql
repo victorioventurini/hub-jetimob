@@ -1,0 +1,2 @@
+ALTER TABLE public.ritual_window_overrides DROP CONSTRAINT ritual_window_overrides_bu_id_cycle_id_wizard_type_anchor_key;
+CREATE UNIQUE INDEX ritual_window_overrides_scope_key ON public.ritual_window_overrides (bu_id, cycle_id, wizard_type, anchor, COALESCE(profile_id, '00000000-0000-0000-0000-000000000000'::uuid));

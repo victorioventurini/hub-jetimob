@@ -22,6 +22,13 @@
       "when": 1790850945314,
       "tag": "0002_ritual_overrides_qbr_support",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790850970521,
+      "tag": "0003_ritual_overrides_unique_per_profile",
+      "breakpoints": true
     }
   ]
 }
