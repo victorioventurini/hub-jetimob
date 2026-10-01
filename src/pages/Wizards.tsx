@@ -255,7 +255,8 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
     });
   }
 
-  if (qbrStatus === 'reviewing') {
+  // A janela de acesso da página (useRitualAvailability) controla quando a Reunião abre de fato
+  if (qbrStatus === 'open' || qbrStatus === 'collecting' || qbrStatus === 'reviewing') {
     wizards.push({
       id: 'qbr-meeting',
       name: 'QBR',
@@ -296,7 +297,7 @@ function useQbrStatus() {
   const supabase = useBuScopedSupabase();
   // Use status-based active cycle (not date-based) to correctly detect
   // cycles that are still formally active even after their end_date (e.g., during QBR period)
-  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
+  const { qbrReviewCycle: quarterlyCycle } = useActiveCycle();
 
   const { data, isLoading } = useQuery({
     queryKey: qbrKeys.cycleStatusWizards(quarterlyCycle?.id),
