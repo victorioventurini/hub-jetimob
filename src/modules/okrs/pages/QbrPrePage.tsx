@@ -104,7 +104,7 @@ export default function QbrPrePage() {
   usePageTitle(selectedTeam ? `Pré-QBR - ${selectedTeam.name}` : 'Pré-QBR');
 
   // Cycle (status-based)
-  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const { qbrReviewCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   const availability = useRitualAvailability('qbr-pre', quarterlyCycle);
 
   // Validate qbr_status

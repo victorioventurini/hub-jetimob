@@ -93,7 +93,7 @@ export default function QbrPreCLevelPage() {
   usePageTitle('Pré-QBR Executivo');
 
   // Cycle (status-based)
-  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const { qbrReviewCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   const availability = useRitualAvailability('qbr-pre-clevel', quarterlyCycle);
 
   // Load qbr_status for informational display (no longer a hard gate)

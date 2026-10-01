@@ -256,7 +256,7 @@ export function useRitualAvailability(
   const { realProfileId: myProfileId } = useIdentity();
 
   const { data: overrides } = useQuery({
-    queryKey: [...queryKeys.okrs.ritualWindowOverrides(buId, cycleId), myProfileId ?? null],
+    queryKey: queryKeys.okrs.ritualWindowOverrides(buId, cycleId, myProfileId),
     queryFn: async (): Promise<RitualWindowOverride[]> => {
       if (!client || !buId || !cycleId) return [];
       const { data, error } = await client

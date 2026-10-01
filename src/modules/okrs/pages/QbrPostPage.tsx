@@ -74,7 +74,7 @@ export default function QbrPostPage() {
   const buSupabase = useBuScopedSupabase();
   usePageTitle('Pós-QBR');
 
-  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const { qbrReviewCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   const availability = useRitualAvailability('qbr-post', quarterlyCycle);
 
   // Check qbr_status = 'done' or 'ready' (post can happen after meeting)
