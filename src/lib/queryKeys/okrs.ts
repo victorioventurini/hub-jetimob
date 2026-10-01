@@ -310,8 +310,8 @@ export const okrsKeys = {
     ['ritual-occurrences', buId] as const,
   ritualAdherencePrefix: (buId: string | null) =>
     ['ritual-adherence', buId] as const,
-  ritualWindowOverrides: (buId: string | null, cycleId: string | null) =>
-    ['ritual-window-overrides', buId, cycleId] as const,
+  ritualWindowOverrides: (buId: string | null, cycleId: string | null, profileId?: string | null) =>
+    ['ritual-window-overrides', buId, cycleId, profileId ?? null] as const,
   ritualOccurrences: (buId: string | null, filters?: Record<string, unknown>) =>
     ['ritual-occurrences', buId, filters] as const,
   ritualOccurrenceBySession: (sessionId: string | null) =>

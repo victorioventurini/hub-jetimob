@@ -80,6 +80,18 @@ export function useActiveCycle() {
     return data?.active?.find(c => c.type === 'quarter') ?? null;
   }, [data?.active]);
 
+  /**
+   * Ciclo sob revisão do QBR: o último quarter fechado enquanto seu QBR estiver
+   * em andamento (qbr_status aberto), senão o quarter ativo.
+   */
+  const qbrReviewCycle = useMemo(() => {
+    const closed = data?.lastClosedQuarter ?? null;
+    if (closed && ['open', 'collecting', 'reviewing', 'ready'].includes(closed.qbr_status ?? '')) {
+      return closed;
+    }
+    return activeQuarterlyCycle;
+  }, [data?.lastClosedQuarter, activeQuarterlyCycle]);
+
   const planningCycles = useMemo(() => {
     return data?.planning ?? [];
   }, [data?.planning]);
@@ -91,6 +103,8 @@ export function useActiveCycle() {
     activeQuarterlyCycle,
     /** Último quarter fechado (para rituais de revisão) */
     lastClosedQuarterlyCycle: data?.lastClosedQuarter ?? null,
+    /** Ciclo sob revisão do QBR (Q fechado com QBR aberto, senão Q ativo) */
+    qbrReviewCycle,
     /** Todos os ciclos ativos */
     activeCycles: data?.active ?? [],
     /** Ciclos em planejamento */

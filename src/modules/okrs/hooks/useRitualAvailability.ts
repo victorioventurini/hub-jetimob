@@ -17,6 +17,7 @@ import { RITUAL_LABELS as SSOT_RITUAL_LABELS } from '../constants/ritualLabels';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { queryKeys } from '@/lib/queryKeys';
+import { useIdentity } from '@/hooks/useIdentity';
 
 // ⚠️ TEMPORARY DEV FLAG — remove after QBR flow testing
 const DEV_FORCE_QBR_AVAILABLE = new Date() < new Date('2026-04-15');
@@ -70,8 +71,9 @@ interface WindowDef {
 
 export interface RitualWindowOverride {
   wizard_type: string;
-  anchor: 'review_date' | 'review_date_first_month';
+  anchor: 'review_date' | 'review_date_first_month' | 'retro_date';
   opens_date: string;
+  profile_id?: string | null;
   closes_date: string;
 }
 
@@ -97,9 +99,11 @@ function withOverride(
   defaultWindow: { opens: Date | null; closes: Date | null },
   overrides: RitualWindowOverride[] | undefined,
   wizardType: string,
-  anchor: 'review_date' | 'review_date_first_month',
+  anchor: 'review_date' | 'review_date_first_month' | 'retro_date',
 ): { opens: Date | null; closes: Date | null } {
-  const o = overrides?.find(x => x.wizard_type === wizardType && x.anchor === anchor);
+  const matches = overrides?.filter(x => x.wizard_type === wizardType && x.anchor === anchor) ?? [];
+  // Override individual (profile_id) tem precedência sobre o da BU inteira
+  const o = matches.find(x => !!x.profile_id) ?? matches[0];
   if (!o) return defaultWindow;
   return {
     opens: parseDate(o.opens_date),
@@ -194,43 +198,43 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
 
   // QBR phases
   'qbr-pre': {
-    getWindow: (c) => {
+    getWindow: (c, overrides) => {
       const retro = parseDate(c.retro_date);
-      return {
+      return withOverride({
         opens: parseDate(c.planning_date),
         closes: retro ? calendarDaysOffset(retro, -2) : null,
-      };
+      }, overrides, 'qbr-pre', 'retro_date');
     },
   },
   'qbr-pre-clevel': {
-    getWindow: (c) => {
+    getWindow: (c, overrides) => {
       const planning = parseDate(c.planning_date);
       const retro = parseDate(c.retro_date);
-      if (!planning) return { opens: null, closes: null };
-      return {
+      if (!planning) return withOverride({ opens: null, closes: null }, overrides, 'qbr-pre-clevel', 'retro_date');
+      return withOverride({
         opens: planning,
         closes: retro ? calendarDaysOffset(retro, -2) : null,
-      };
+      }, overrides, 'qbr-pre-clevel', 'retro_date');
     },
   },
   'qbr-meeting': {
-    getWindow: (c) => {
+    getWindow: (c, overrides) => {
       const retro = parseDate(c.retro_date);
-      if (!retro) return { opens: null, closes: null };
-      return {
+      if (!retro) return withOverride({ opens: null, closes: null }, overrides, 'qbr-meeting', 'retro_date');
+      return withOverride({
         opens: retro,
         closes: addBusinessDaysToDate(retro, 2),
-      };
+      }, overrides, 'qbr-meeting', 'retro_date');
     },
   },
   'qbr-post': {
-    getWindow: (c) => {
+    getWindow: (c, overrides) => {
       const retro = parseDate(c.retro_date);
-      if (!retro) return { opens: null, closes: null };
-      return {
+      if (!retro) return withOverride({ opens: null, closes: null }, overrides, 'qbr-post', 'retro_date');
+      return withOverride({
         opens: retro,
         closes: addBusinessDaysToDate(retro, 5),
-      };
+      }, overrides, 'qbr-post', 'retro_date');
     },
   },
 };
@@ -247,21 +251,26 @@ export function useRitualAvailability(
   const { client, buId, isReady } = useOptionalBuClient();
 
   const isMbrFamily = wizardType === 'mbr' || wizardType === 'mbr-pre';
+  const isQbrFamily = DEV_QBR_TYPES.includes(wizardType);
   const cycleId = cycle?.id ?? null;
+  const { realProfileId: myProfileId } = useIdentity();
 
   const { data: overrides } = useQuery({
-    queryKey: queryKeys.okrs.ritualWindowOverrides(buId, cycleId),
+    queryKey: queryKeys.okrs.ritualWindowOverrides(buId, cycleId, myProfileId),
     queryFn: async (): Promise<RitualWindowOverride[]> => {
       if (!client || !buId || !cycleId) return [];
       const { data, error } = await client
         .from('ritual_window_overrides')
-        .select('wizard_type, anchor, opens_date, closes_date')
+        .select('wizard_type, anchor, opens_date, closes_date, profile_id')
         .eq('bu_id', buId)
         .eq('cycle_id', cycleId);
       if (error) throw error;
-      return (data ?? []) as RitualWindowOverride[];
+      // Mantém overrides da BU inteira + os individuais do próprio usuário
+      return ((data ?? []) as RitualWindowOverride[]).filter(
+        o => !o.profile_id || o.profile_id === myProfileId,
+      );
     },
-    enabled: isReady && !!cycleId && isMbrFamily,
+    enabled: isReady && !!cycleId && (isMbrFamily || isQbrFamily),
     staleTime: 60_000,
   });
 
