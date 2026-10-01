@@ -15,6 +15,13 @@
       "when": 1790618416559,
       "tag": "0001_sync_auth_email_from_work_email",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790850945314,
+      "tag": "0002_ritual_overrides_qbr_support",
+      "breakpoints": true
     }
   ]
 }

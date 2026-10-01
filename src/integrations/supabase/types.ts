@@ -9862,6 +9862,7 @@ export type Database = {
           cycle_id: string
           id: string
           opens_date: string
+          profile_id: string | null
           reason: string | null
           updated_at: string
           wizard_type: string
@@ -9875,6 +9876,7 @@ export type Database = {
           cycle_id: string
           id?: string
           opens_date: string
+          profile_id?: string | null
           reason?: string | null
           updated_at?: string
           wizard_type: string
@@ -9888,6 +9890,7 @@ export type Database = {
           cycle_id?: string
           id?: string
           opens_date?: string
+          profile_id?: string | null
           reason?: string | null
           updated_at?: string
           wizard_type?: string
@@ -9905,6 +9908,27 @@ export type Database = {
             columns: ["cycle_id"]
             isOneToOne: false
             referencedRelation: "cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_window_overrides_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_window_overrides_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_window_overrides_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
