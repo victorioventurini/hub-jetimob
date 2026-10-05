@@ -10120,6 +10120,7 @@ export type Database = {
           checkin_day: number
           checkin_deadline_hour: number
           checkin_frequency: string
+          co_leader_user_id: string | null
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -10138,6 +10139,7 @@ export type Database = {
           checkin_day?: number
           checkin_deadline_hour?: number
           checkin_frequency?: string
+          co_leader_user_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -10156,6 +10158,7 @@ export type Database = {
           checkin_day?: number
           checkin_deadline_hour?: number
           checkin_frequency?: string
+          co_leader_user_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -10181,6 +10184,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_co_leader_user_id_fkey"
+            columns: ["co_leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_co_leader_user_id_fkey"
+            columns: ["co_leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_co_leader_user_id_fkey"
+            columns: ["co_leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
           {
