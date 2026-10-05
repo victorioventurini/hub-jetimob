@@ -86,7 +86,7 @@ export function useDecisionsScopeContext() {
         (buSupabase as any)
           .from('teams')
           .select('id')
-          .eq('leader_user_id', profileId)
+          .or(`leader_user_id.eq.${profileId},co_leader_user_id.eq.${profileId}`)
           .is('deleted_at', null),
       ]);
 
