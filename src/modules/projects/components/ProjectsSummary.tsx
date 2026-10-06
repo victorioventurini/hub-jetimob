@@ -29,7 +29,9 @@ import {
 import { ExternalLink, ChevronDown, ChevronUp, FolderKanban, CalendarDays, StickyNote, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { format, isPast, parseISO } from 'date-fns';
+import { format as dfFormat, isPast as dfIsPast, parseISO, isValid } from 'date-fns';
+const format = (d: Date, f: string, o?: Parameters<typeof dfFormat>[2]) => (isValid(d) ? dfFormat(d, f, o) : '-');
+const isPast = (d: Date) => isValid(d) && dfIsPast(d);
 import { ptBR } from 'date-fns/locale';
 import { useProjectsForWizard } from '../hooks/useProjectsForWizard';
 import { useUpdateMilestone } from '../hooks/useMilestoneMutations';

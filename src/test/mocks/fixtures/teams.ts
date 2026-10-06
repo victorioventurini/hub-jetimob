@@ -105,6 +105,7 @@ export function createMockTeam(overrides: MockTeamData = {}): TeamWithRelations 
     status: overrides.status ?? 'active',
     parent_team_id: overrides.parent_team_id ?? null,
     leader_user_id: overrides.leader_user_id ?? null,
+    co_leader_user_id: null,
     area_id: overrides.area_id ?? null,
     created_at: overrides.created_at ?? now,
     updated_at: overrides.updated_at ?? now,

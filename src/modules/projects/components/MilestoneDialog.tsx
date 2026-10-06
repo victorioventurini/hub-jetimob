@@ -31,7 +31,7 @@ const schema = z.object({
     .min(1, 'Nome obrigatório')
     .max(ENTITY_NAME_LIMITS.MILESTONE_NAME, `Máximo de ${ENTITY_NAME_LIMITS.MILESTONE_NAME} caracteres`),
   start_date: z.string().min(1, 'Data de início obrigatória'),
-  due_date: z.string().min(1, 'Data de prazo obrigatória'),
+  due_date: z.string().min(1, 'Data de prazo obrigatória').regex(/^(20\d{2})-\d{2}-\d{2}$/, 'Data inválida: use um ano entre 2000 e 2099'),
   owner_id: z.string().min(1, 'Responsável obrigatório'),
   notes: z.string().optional(),
 }).refine((v) => !v.start_date || !v.due_date || v.start_date <= v.due_date, {
