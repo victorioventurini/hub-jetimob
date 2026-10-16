@@ -91,3 +91,6 @@ export async function requireSharedSession() {
   (não implementado).
 - Cookies chunked têm limite prático (~12 fatias); sessões maiores são rejeitadas
   pelo adapter, que registra aviso no console.
+
+## 6. Política de login (2026-10)
+Internos (@jetimob.com, @victorio.com.br, @jetxp.com.br) entram somente com Google; parceiros, pelo link por e-mail. Ver `src/lib/authPolicy.ts`.
