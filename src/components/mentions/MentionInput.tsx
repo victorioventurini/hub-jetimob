@@ -414,6 +414,33 @@ export function MentionInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Position dropdown (portal, fixed) — flips above when no room below
+  useLayoutEffect(() => {
+    if (!showSuggestions) { setDropdownPos(null); return; }
+    const update = () => {
+      const el = editorRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const needed = 272; // max-h-64 + borders
+      const spaceBelow = window.innerHeight - r.bottom;
+      const placeAbove = spaceBelow < needed && r.top > spaceBelow;
+      setDropdownPos({
+        left: r.left,
+        width: r.width,
+        top: r.bottom + 4,
+        bottom: window.innerHeight - r.top + 4,
+        placeAbove,
+      });
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [showSuggestions]);
+
   const minHeight = rows * 24; // Approximate line height
   // Show external badges when context supports both internal and external users
   const showExternalBadges = context === 'internal+external';
