@@ -104,16 +104,50 @@ function readChunked(key: string): string | null {
   return parts.length ? parts.join("") : null;
 }
 
-function writeChunked(key: string, value: string, domain: string) {
+/**
+ * Fatia o valor JÁ CODIFICADO (o limite de ~4KB do navegador vale para o
+ * valor gravado, e encodeURIComponent pode triplicar o tamanho do JSON).
+ * Nunca corta dentro de uma sequência %XX nem no meio de um caractere UTF-8
+ * multibyte, para que cada fatia continue decodificável isoladamente.
+ */
+function splitEncoded(encoded: string): string[] {
   const chunks: string[] = [];
-  for (let i = 0; i < value.length; i += CHUNK_SIZE) {
-    chunks.push(value.slice(i, i + CHUNK_SIZE));
+  let start = 0;
+  while (start < encoded.length) {
+    let end = Math.min(start + CHUNK_SIZE, encoded.length);
+    if (end < encoded.length) {
+      // Recua se o corte cai dentro de um %XX
+      if (encoded[end - 1] === "%") end -= 1;
+      else if (encoded[end - 2] === "%") end -= 2;
+      // Recua enquanto a próxima sequência for byte de continuação UTF-8 (%80-%BF)
+      while (end > start && /^%[89AB]/i.test(encoded.slice(end, end + 3))) end -= 3;
+    }
+    chunks.push(encoded.slice(start, end));
+    start = end;
   }
+  return chunks;
+}
+
+function writeRawCookie(name: string, encodedValue: string, domain: string) {
+  document.cookie = [
+    `${name}=${encodedValue}`,
+    "Path=/",
+    `Domain=${domain}`,
+    `Max-Age=${MAX_AGE_SECONDS}`,
+    "SameSite=Lax",
+    window.location.protocol === "https:" ? "Secure" : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
+
+function writeChunked(key: string, value: string, domain: string) {
+  const chunks = splitEncoded(encodeURIComponent(value));
 
   // Limpa formato anterior (valor único) para evitar leitura ambígua
   deleteCookie(key, domain);
 
-  chunks.forEach((chunk, index) => writeCookie(`${key}.${index}`, chunk, domain));
+  chunks.forEach((chunk, index) => writeRawCookie(`${key}.${index}`, chunk, domain));
 
   // Remove chunks residuais de um valor maior gravado antes
   for (let i = chunks.length; i < MAX_CHUNKS; i++) {
