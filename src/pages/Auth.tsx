@@ -393,6 +393,28 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
             </div>
           )}
 
+          <div className="space-y-3">
+            <Button
+              type="button"
+              className="w-full h-12 gap-2 text-base"
+              onClick={handleGoogle}
+              disabled={googleLoading}
+              isLoading={googleLoading}
+              loadingText="Abrindo o Google..."
+            >
+              Entrar com Google
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Colaboradores entram com a conta Google corporativa. Parceiros recebem o link por e-mail abaixo.
+            </p>
+            {isReturning && domainError && (
+              <div className="flex items-center gap-2 text-destructive text-sm">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{domainError}</span>
+              </div>
+            )}
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isReturning && (
               <div className="space-y-2">
