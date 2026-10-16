@@ -48,6 +48,22 @@ export const POLICY_MESSAGES: Record<PolicyViolation, string> = {
  * global (cookie compartilhado .jetimob.com). Copia a sessão se necessário.
  */
 export async function syncOAuthSessionToGlobal(): Promise<void> {
+  // Retorno em página cheia: tokens chegam no hash (#access_token=...).
+  if (typeof window !== "undefined" && window.location.hash.includes("access_token=")) {
+    const p = new URLSearchParams(window.location.hash.slice(1));
+    const access_token = p.get("access_token");
+    const refresh_token = p.get("refresh_token");
+    if (access_token && refresh_token) {
+      const { error } = await globalClient.auth.setSession({ access_token, refresh_token });
+      const clean = window.location.pathname + window.location.search;
+      if (!error) {
+        // Recarrega sem o hash para o app hidratar a sessão já gravada.
+        window.location.replace(clean);
+        await new Promise(() => {});
+      }
+      window.history.replaceState(null, "", clean);
+    }
+  }
   const { data } = await lovableClient.auth.getSession();
   const s = data.session;
   if (!s) return;
