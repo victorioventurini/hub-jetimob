@@ -6,7 +6,8 @@
 // - 'internal+external': Internal + external contacts (for Tickets)
 // ============================================================
 
-import { useState, useRef, useEffect, useCallback, useMemo, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, KeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-state';
@@ -94,6 +95,9 @@ export function MentionInput({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const editorRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{
+    left: number; width: number; top: number; bottom: number; placeAbove: boolean;
+  } | null>(null);
   const lastValueRef = useRef<string>(value);
 
   // Use the unified hook for fetching mentionable users
@@ -410,6 +414,33 @@ export function MentionInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Position dropdown (portal, fixed) — flips above when no room below
+  useLayoutEffect(() => {
+    if (!showSuggestions) { setDropdownPos(null); return; }
+    const update = () => {
+      const el = editorRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const needed = 272; // max-h-64 + borders
+      const spaceBelow = window.innerHeight - r.bottom;
+      const placeAbove = spaceBelow < needed && r.top > spaceBelow;
+      setDropdownPos({
+        left: r.left,
+        width: r.width,
+        top: r.bottom + 4,
+        bottom: window.innerHeight - r.top + 4,
+        placeAbove,
+      });
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [showSuggestions]);
+
   const minHeight = rows * 24; // Approximate line height
   // Show external badges when context supports both internal and external users
   const showExternalBadges = context === 'internal+external';
@@ -484,12 +515,21 @@ export function MentionInput({
       </div>
 
       {/* Mention Suggestions Dropdown */}
-      {showSuggestions && (
+      {showSuggestions && dropdownPos && createPortal(
         <div
           ref={suggestionsRef}
+          style={{
+            position: 'fixed',
+            pointerEvents: 'auto',
+            left: dropdownPos.left,
+            width: dropdownPos.width,
+            ...(dropdownPos.placeAbove
+              ? { bottom: dropdownPos.bottom }
+              : { top: dropdownPos.top }),
+          }}
           className={cn(
-            "absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden",
-            "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+            "z-[100] bg-popover border rounded-lg shadow-lg overflow-hidden",
+            "animate-in fade-in-0 zoom-in-95 duration-200"
           )}
         >
           {isLoadingCandidates ? (
@@ -561,7 +601,8 @@ export function MentionInput({
               <p className="text-sm text-muted-foreground">Nenhum usuário encontrado</p>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
