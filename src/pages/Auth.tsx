@@ -119,6 +119,17 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   const targetKind = effectiveTarget.kind;
   const targetValue = effectiveTarget.target;
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [loginMode, setLoginMode] = useState<"internal" | "external">(() => {
+    try {
+      return localStorage.getItem("next_login_mode") === "external" ? "external" : "internal";
+    } catch {
+      return "internal";
+    }
+  });
+  const changeLoginMode = (mode: "internal" | "external") => {
+    setLoginMode(mode);
+    try { localStorage.setItem("next_login_mode", mode); } catch { /* noop */ }
+  };
   const [policyChecked, setPolicyChecked] = useState(false);
 
   // Retorno do Google: copia a sessão para o cliente global (cookie SSO)
@@ -366,61 +377,65 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
             />
           </div>
 
-          {/* STATE 1: First Access */}
-          {!isReturning && (
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Buenas! 👋
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Digite seu e-mail @jet para receber o link de acesso.
-              </p>
-            </div>
-          )}
-
-          {/* STATE 2: Returning User */}
-          {isReturning && (
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {firstName
-                  ? `Buenas, ${firstName}.`
-                  : "Buenas! Bom te ver por aqui."}
-              </h1>
-              <p className="text-muted-foreground">
-                Vamos enviar o link para{" "}
-                <span className="font-medium text-foreground">{savedEmail}</span>.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <Button
-              type="button"
-              className="w-full h-12 gap-2 text-base"
-              onClick={handleGoogle}
-              disabled={googleLoading}
-              isLoading={googleLoading}
-              loadingText="Abrindo o Google..."
-            >
-              Entrar com Google
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Colaboradores entram com a conta Google corporativa. Parceiros recebem o link por e-mail abaixo.
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {isReturning && firstName ? `Buenas, ${firstName}.` : "Buenas! 👋"}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {loginMode === "internal"
+                ? "Colaboradores entram com a conta Google corporativa."
+                : isReturning
+                  ? <>Vamos enviar o link para <span className="font-medium text-foreground">{savedEmail}</span>.</>
+                  : "Parceiros recebem um link de acesso por e-mail."}
             </p>
+          </div>
+
+          <div role="tablist" aria-label="Tipo de login" className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+            {([["internal", "Login interno"], ["external", "Login externo"]] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                role="tab"
+                aria-selected={loginMode === mode}
+                onClick={() => changeLoginMode(mode)}
+                className={`h-9 rounded-md text-sm font-medium transition-colors ${
+                  loginMode === mode
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {loginMode === "internal" ? (
+            <div className="space-y-3">
+              <Button
+                type="button"
+                className="w-full h-12 gap-2 text-base"
+                onClick={handleGoogle}
+                disabled={googleLoading}
+                isLoading={googleLoading}
+                loadingText="Abrindo o Google..."
+              >
+                Entrar com Google
+              </Button>
+            </div>
+          ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
             {isReturning && domainError && (
               <div className="flex items-center gap-2 text-destructive text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>{domainError}</span>
               </div>
             )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
             {!isReturning && (
               <div className="space-y-2">
                 <Input
                   id="email"
                   type="email"
+                  aria-label="E-mail"
                   placeholder="seu.nome@empresa.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -463,6 +478,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
               </button>
             )}
           </form>
+          )}
 
           <p className="text-xs text-muted-foreground text-center pt-4">
             Ao continuar, você concorda com os{" "}
