@@ -10,6 +10,15 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 import { resolveAuthTarget } from "@/lib/authRedirect";
+import { lovable } from "@/integrations/lovable/index";
+import { supabase as globalSupabase } from "@/integrations/supabase/globalClient";
+import {
+  checkSessionPolicy,
+  isInternalEmail,
+  OAUTH_NEXT_KEY,
+  POLICY_MESSAGES,
+  syncOAuthSessionToGlobal,
+} from "@/lib/authPolicy";
 
 const STORAGE_KEY = "next_last_email";
 const STORAGE_TTL_DAYS = 30;
@@ -105,20 +114,57 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     return resolveAuthTarget(internal);
   })();
 
-  const targetKind = resolvedTarget.kind;
-  const targetValue = resolvedTarget.target;
+  const storedOAuthTarget = typeof window !== "undefined" ? sessionStorage.getItem(OAUTH_NEXT_KEY) : null;
+  const effectiveTarget = !nextFromUrl && storedOAuthTarget ? resolveAuthTarget(storedOAuthTarget) : resolvedTarget;
+  const targetKind = effectiveTarget.kind;
+  const targetValue = effectiveTarget.target;
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [policyChecked, setPolicyChecked] = useState(false);
+
+  // Retorno do Google: copia a sessão para o cliente global (cookie SSO)
+  useEffect(() => {
+    syncOAuthSessionToGlobal().catch((e) => console.warn("[Auth] sync OAuth session", e)).finally(() => setPolicyChecked(true));
+  }, []);
 
   // Redirect if already logged in (preserve original destination if any)
   useEffect(() => {
-    if (!user || authLoading) return;
+    if (!user || authLoading || !policyChecked) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await globalSupabase.auth.getSession();
+      if (cancelled || !data.session) return;
+      const violation = checkSessionPolicy(data.session);
+      if (violation) {
+        await globalSupabase.auth.signOut({ scope: "local" });
+        setDomainError(POLICY_MESSAGES[violation]);
+        return;
+      }
+      sessionStorage.removeItem(OAUTH_NEXT_KEY);
+      if (targetKind === "external") {
+        window.location.replace(targetValue);
+        return;
+      }
+      navigate(targetValue, { replace: true });
+    })();
+    return () => { cancelled = true; };
+  }, [user, authLoading, policyChecked, navigate, targetKind, targetValue]);
 
-    if (targetKind === "external") {
-      window.location.replace(targetValue);
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    sessionStorage.setItem(OAUTH_NEXT_KEY, targetValue);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/auth`,
+      extraParams: { prompt: "select_account" },
+    });
+    if (result.error) {
+      setGoogleLoading(false);
+      toast.error("Não foi possível entrar com o Google. Tenta de novo?");
       return;
     }
-
-    navigate(targetValue, { replace: true });
-  }, [user, authLoading, navigate, targetKind, targetValue]);
+    if (result.redirected) return;
+    await syncOAuthSessionToGlobal();
+    setGoogleLoading(false);
+  };
 
   // Clear domain error when email changes
   useEffect(() => {
@@ -151,6 +197,11 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       return;
     }
 
+    if (isInternalEmail(email)) {
+      setDomainError(POLICY_MESSAGES.internal_requires_google);
+      return;
+    }
+
     // Domain validation is done by the edge function to avoid duplicate queries
     // The edge function returns a proper error if the domain is not allowed
     setIsLoading(true);
@@ -160,8 +211,9 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     
     if (error) {
       const msg = (error.message || '').toLowerCase();
-      // Check if it's a domain/authorization error from edge function
-      if (msg.includes("não está autorizado") || msg.includes("não tem acesso")) {
+      if (msg.includes("use_google_sso")) {
+        setDomainError(POLICY_MESSAGES.internal_requires_google);
+      } else if (msg.includes("não está autorizado") || msg.includes("não tem acesso")) {
         setDomainError("Esse e-mail não tem acesso ao Next.");
       } else if (msg.includes("demorou demais") || msg.includes("conectar ao servidor") || msg.includes("conexão")) {
         toast.error(error.message);
