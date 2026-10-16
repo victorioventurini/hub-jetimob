@@ -520,6 +520,7 @@ export function MentionInput({
           ref={suggestionsRef}
           style={{
             position: 'fixed',
+            pointerEvents: 'auto',
             left: dropdownPos.left,
             width: dropdownPos.width,
             ...(dropdownPos.placeAbove
