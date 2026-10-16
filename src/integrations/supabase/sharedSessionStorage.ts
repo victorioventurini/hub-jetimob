@@ -59,18 +59,6 @@ function readCookieMap(): Map<string, string> {
   return map;
 }
 
-function writeCookie(name: string, value: string, domain: string) {
-  document.cookie = [
-    `${name}=${encodeURIComponent(value)}`,
-    "Path=/",
-    `Domain=${domain}`,
-    `Max-Age=${MAX_AGE_SECONDS}`,
-    "SameSite=Lax",
-    window.location.protocol === "https:" ? "Secure" : "",
-  ]
-    .filter(Boolean)
-    .join("; ");
-}
 
 function deleteCookie(name: string, domain: string) {
   document.cookie = `${name}=; Path=/; Domain=${domain}; Max-Age=0; SameSite=Lax`;
