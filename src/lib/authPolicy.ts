@@ -31,7 +31,13 @@ export type PolicyViolation = "internal_requires_google" | "google_requires_inte
 /** Retorna a violação de política da sessão, ou null se permitida. */
 export function checkSessionPolicy(session: Session): PolicyViolation | null {
   const internal = isInternalEmail(session.user.email);
-  const viaOAuth = sessionMethods(session).includes("oauth");
+  const methods = sessionMethods(session);
+  const provider = (session.user.app_metadata?.provider as string | undefined) ?? "";
+  const providers = (session.user.app_metadata?.providers as string[] | undefined) ?? [];
+  // Login Google pode chegar como "oauth" (redirect) ou "id_token" (popup/broker).
+  const viaOAuth =
+    methods.some((m) => m === "oauth" || m === "id_token" || m === "sso/saml") ||
+    (methods.length === 0 && (provider === "google" || providers.includes("google")));
   if (internal && !viaOAuth) return "internal_requires_google";
   if (!internal && viaOAuth) return "google_requires_internal_domain";
   return null;
