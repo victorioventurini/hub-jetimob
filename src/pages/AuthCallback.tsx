@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { initSessionContext } from "@/lib/analytics";
 import { resolveAuthTarget } from "@/lib/authRedirect";
 import { readSharedSessionRaw } from "@/integrations/supabase/sharedSessionStorage";
+import { checkSessionPolicy, POLICY_MESSAGES } from "@/lib/authPolicy";
 
 import { logger } from "@/lib/logger";
 
@@ -120,6 +121,15 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
           }
 
           if (data.session) {
+            const violation = checkSessionPolicy(data.session);
+            if (violation) {
+              await supabase.auth.signOut({ scope: "local" });
+              if (mounted) {
+                setError({ kind: "generic", message: POLICY_MESSAGES[violation] });
+                setIsProcessing(false);
+              }
+              return;
+            }
             logger.debug("[AuthCallback] Session established via verifyOtp:", {
               userId: data.session.user.id,
               email: data.session.user.email,
