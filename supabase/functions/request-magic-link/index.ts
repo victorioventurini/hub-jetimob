@@ -16,6 +16,7 @@ import {
 } from "../_shared/error-handler.ts";
 import { corsHeaders } from "../_shared/middleware.ts";
 import { createServiceClient, getSupabaseUrl, getSupabaseServiceKey } from "../_shared/client.ts";
+import { isInternalEmail } from "../_shared/internal-domains.ts";
 
 interface MagicLinkRequest {
   email: string;
@@ -265,6 +266,13 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     return createErrorResponse("INVALID_FORMAT", requestId, {
       message: "Email inválido",
       details: { field: "email" },
+    });
+  }
+
+  // Internos entram somente via Google (SSO)
+  if (isInternalEmail(email)) {
+    return createErrorResponse("FORBIDDEN", requestId, {
+      message: "use_google_sso: Colaboradores entram com a conta Google corporativa.",
     });
   }
 
