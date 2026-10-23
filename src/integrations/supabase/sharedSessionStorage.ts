@@ -8,7 +8,12 @@ function readCookieMap(): Map<string, string> {
   const cookies = new Map<string, string>();
   for (const part of document.cookie.split(";")) {
     const separator = part.indexOf("=");
-    if (separator > 0) cookies.set(part.slice(0, separator).trim(), part.slice(separator + 1));
+    if (separator > 0) {
+      const name = part.slice(0, separator).trim();
+      // Same-name host-only cookies can coexist with the legacy domain cookie.
+      // Keep the first visible value rather than overwriting it with a duplicate.
+      if (!cookies.has(name)) cookies.set(name, part.slice(separator + 1));
+    }
   }
   return cookies;
 }
