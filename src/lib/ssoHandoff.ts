@@ -45,3 +45,17 @@ export function resetSsoHandoffAttempts(host: string, storage: StorageLike = ses
   delete all[host];
   try { storage.setItem(KEY, JSON.stringify(all)); } catch { /* noop */ }
 }
+
+/**
+ * Pede ao backend um código de uso único para o sistema irmão e retorna a URL
+ * final (callback do satélite com token_hash). Lança erro se não for possível.
+ */
+export async function requestSsoHandoffUrl(
+  invoke: (body: { return_to: string }) => Promise<{ data: unknown; error: unknown }>,
+  returnTo: string,
+): Promise<string> {
+  const { data, error } = await invoke({ return_to: returnTo });
+  const url = (data as { redirect_url?: unknown } | null)?.redirect_url;
+  if (error || typeof url !== "string") throw error ?? new Error("handoff_failed");
+  return url;
+}
