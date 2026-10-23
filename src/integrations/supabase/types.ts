@@ -13493,6 +13493,10 @@ export type Database = {
         Args: { p_ancestor_team_id: string; p_team_id: string }
         Returns: boolean
       }
+      ticket_bu_matches: {
+        Args: { p_bu_id: string; p_ticket_id: string }
+        Returns: boolean
+      }
       ticket_status_label: { Args: { p_status: string }; Returns: string }
       update_project_v2: {
         Args: { p_payload: Json; p_project_id: string }
