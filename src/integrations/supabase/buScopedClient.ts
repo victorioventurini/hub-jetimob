@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 import { supabase as globalClient } from "./globalClient";
-import { readSharedSessionRaw, sharedSessionStorage } from "./sharedSessionStorage";
+import { readSharedSessionRaw } from "./sharedSessionStorage";
 import { logger } from "@/lib/logger";
 
 
@@ -34,7 +34,7 @@ function readAccessTokenFromStorage(): string | null {
       );
     };
 
-    // 1) Canonical key (cookie compartilhado em *.jetimob.com, senão localStorage)
+    // 1) Canonical key in origin-local storage (same as globalClient).
     if (DEFAULT_AUTH_STORAGE_KEY) {
       const raw = readSharedSessionRaw(DEFAULT_AUTH_STORAGE_KEY);
       const token = tryExtractToken(raw);
@@ -205,10 +205,7 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
       fetch: createBuAwareFetch(),
     },
     auth: {
-      // CRITICAL: must be the SAME storage as globalClient. Em *.jetimob.com a
-      // sessão vive em cookie no domínio raiz (SSO); usar `localStorage` aqui
-      // faz `getSession()` retornar null e telas quebrarem com "Sessão expirada".
-      storage: sharedSessionStorage(),
+      // Same default origin-local storage as globalClient; no session cookies.
       persistSession: true,
       // CRITICAL: Only globalClient handles token refresh to prevent 429 storms.
       // buScopedClient piggybacks on globalClient's session via shared localStorage key.

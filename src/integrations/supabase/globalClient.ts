@@ -14,11 +14,14 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
-import { sharedSessionStorage } from "./sharedSessionStorage";
+import { migrateLegacySharedSession } from "./sharedSessionStorage";
 
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// Migrate before any auth hydration. The SPA uses the SDK's default localStorage.
+migrateLegacySharedSession(SUPABASE_URL);
 
 // Singleton instance (HMR-safe)
 // Vite HMR can re-evaluate modules without a full page reload, which would otherwise
@@ -48,10 +51,7 @@ function createGlobalClient(): SupabaseClient<Database> {
 
   const created = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
-      // SSO: em *.jetimob.com a sessão vai para cookie no domínio raiz,
-      // permitindo que os satélites VibeCoding leiam a mesma sessão.
-      // Fora do domínio (preview/localhost) cai para localStorage.
-      storage: sharedSessionStorage(),
+      // Default SDK storage: localStorage, isolated to this origin (no cookies).
       persistSession: true,
 
       autoRefreshToken: true,

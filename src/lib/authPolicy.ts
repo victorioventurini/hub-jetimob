@@ -51,7 +51,7 @@ export const POLICY_MESSAGES: Record<PolicyViolation, string> = {
 
 /**
  * O login Google grava a sessão no cliente gerado; o Next usa o cliente
- * global (cookie compartilhado .jetimob.com). Copia a sessão se necessário.
+ * global (localStorage da origem atual). Copia a sessão se necessário.
  */
 export async function syncOAuthSessionToGlobal(): Promise<void> {
   // Retorno em página cheia: tokens chegam no hash (#access_token=...).
