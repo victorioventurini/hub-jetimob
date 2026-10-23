@@ -257,9 +257,25 @@ export function buildMagicLinkEmailHtml(options: {
   magicLink: string;
   displayName?: string;
   buName?: string;
+  emailOtp?: string;
 }): string {
-  const { magicLink, displayName = "usuário", buName } = options;
+  const { magicLink, displayName = "usuário", buName, emailOtp } = options;
   const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+
+  // Domínios com gateway agressivo (URL detonation que executa JS e clica
+  // no botão) recebem também um código de 6 dígitos: o scanner não consegue
+  // digitá-lo, então o código sobrevive mesmo se o link for consumido.
+  const otpBlock = emailOtp
+    ? `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <p style="color: #3f3f46; font-size: 14px; line-height: 1.5; margin-bottom: 12px;">
+            Se o botão não funcionar, digite este código na tela de confirmação:
+          </p>
+          <div style="display: inline-block; background-color: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 8px; padding: 12px 24px; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #18181b; font-family: 'Courier New', monospace;">
+            ${emailOtp}
+          </div>
+        </div>`
+    : "";
   
   return `
     <!DOCTYPE html>
