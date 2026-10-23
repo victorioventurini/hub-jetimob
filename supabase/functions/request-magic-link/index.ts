@@ -328,6 +328,18 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   callbackUrl.searchParams.set("token_hash", linkData.properties.hashed_token);
   callbackUrl.searchParams.set("type", "magiclink");
 
+  // Gateways agressivos executam JS e clicam no botão da tela de confirmação,
+  // consumindo o token_hash. Para esses domínios, enviamos também o código
+  // de 6 dígitos (email_otp): o scanner não consegue digitá-lo, então ele
+  // sobrevive mesmo se o link for consumido. O e-mail vai na URL para a
+  // tela de confirmação poder verificar o código.
+  const emailOtp = useConfirm
+    ? (linkData.properties as { email_otp?: string }).email_otp
+    : undefined;
+  if (useConfirm) {
+    callbackUrl.searchParams.set("email", email);
+  }
+
   const magicLink = callbackUrl.toString();
   console.log(`[${requestId}] Magic link generated for: ${email} (flow: ${useConfirm ? "confirm" : "auto"})`);
 
