@@ -106,3 +106,16 @@ export async function requireSharedSession() {
 
 ## 6. Política de login (2026-10)
 Internos (@jetimob.com, @victorio.com.br, @jetxp.com.br) entram somente com Google; parceiros, pelo link por e-mail. Ver `src/lib/authPolicy.ts`.
+
+## Modelo atual (2026-10): entrega de acesso de uso único
+
+O cookie compartilhado em `.jetimob.com` foi removido (estourava o header do site institucional, erro 520).
+Fluxo atual:
+
+1. Satélite sem sessão → `https://next.jetimob.com/auth?next=<url absoluta do satélite>`.
+2. Next (usuário logado, política Google para internos) chama a função `sso-handoff` com `return_to`.
+3. A função devolve `https://<satélite>/auth/callback?token_hash=…&type=magiclink&next=<caminho>` (nenhum e-mail é enviado; código expira em minutos e é de uso único).
+4. Satélite chama `auth.verifyOtp({ token_hash, type: "magiclink" })` no cliente de identidade do Next e cria a **própria** sessão (localStorage da sua origem).
+5. Anti-loop: mais de 2 retornos ao mesmo host em 1 minuto → o Next para e mostra "Não foi possível abrir o sistema …".
+
+Consequência: as sessões são independentes; sair do Next não derruba o satélite.
