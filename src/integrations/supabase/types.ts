@@ -12430,6 +12430,10 @@ export type Database = {
         Args: { p_profile_id: string; p_ticket_id: string }
         Returns: boolean
       }
+      can_upload_ticket_attachment: {
+        Args: { p_ticket_id: string }
+        Returns: boolean
+      }
       can_view_ticket: {
         Args: { p_profile_id?: string; p_ticket_id: string }
         Returns: boolean
@@ -13487,6 +13491,10 @@ export type Database = {
       }
       team_is_descendant: {
         Args: { p_ancestor_team_id: string; p_team_id: string }
+        Returns: boolean
+      }
+      ticket_bu_matches: {
+        Args: { p_bu_id: string; p_ticket_id: string }
         Returns: boolean
       }
       ticket_status_label: { Args: { p_status: string }; Returns: string }
