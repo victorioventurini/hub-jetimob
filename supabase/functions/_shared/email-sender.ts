@@ -304,6 +304,8 @@ export function buildMagicLinkEmailHtml(options: {
             Acessar o Next
           </a>
         </div>
+        ${otpBlock}
+
         
         <p style="color: #71717a; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
           Se você não solicitou este link, pode ignorar este e-mail com segurança.
