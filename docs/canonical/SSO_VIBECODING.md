@@ -1,5 +1,17 @@
 # SSO VibeCoding — Next como Provedor de Identidade
 
+> **Atualização vigente — 23/10/2026:** o Next é uma SPA e agora usa o
+> localStorage padrão do SDK, isolado por origem. Não grava cookies de sessão.
+> Antes da criação do cliente global, a sessão legada é copiada para localStorage
+> (sem sobrescrever uma sessão local existente) e os cookies do prefixo de auth
+> são expirados **somente com Domain=.jetimob.com**. Cookies host-only não são
+> apagados. A limpeza roda uma vez por carregamento, inclusive de chunks residuais.
+> Google, magic link, callback, política de login e allowlist de retorno continuam
+> iguais. **SSO automático por cookie entre satélites deixa de funcionar**; um
+> fluxo de troca de autorização sem cookie amplo seria necessário, fora deste ajuste.
+> As seções de cookie/integração abaixo são documentação histórica do modelo anterior,
+> não instruções para novas integrações. Não voltar a copiar o adaptador antigo.
+
 Status: canônico · Última atualização: 2026-08
 
 ## 1. Modelo

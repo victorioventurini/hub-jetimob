@@ -1,6 +1,6 @@
 ---
-name: SSO VibeCoding — sessão compartilhada em .jetimob.com
-description: Next é provedor de identidade dos satélites; sessão em cookie no domínio raiz, redirect allowlist *.jetimob.com, endpoint identity-me
+name: SSO VibeCoding — isolamento de sessão
+description: Sessão restrita à origem; cookies amplos proibidos para evitar headers excessivos nos sites irmãos
 type: feature
 ---
 
@@ -10,11 +10,11 @@ type: feature
 
 ## Regras
 
-1. Sessão do GoTrue vai para **cookie chunked em `.jetimob.com`** via
-   `src/integrations/supabase/sharedSessionStorage.ts`. Fora de `*.jetimob.com`
-   (preview/localhost) cai para `localStorage` → SSO só vale em produção.
-2. `globalClient.ts` usa `sharedSessionStorage()`. `buScopedClient.ts` lê o token
-   com `readSharedSessionRaw()` — **nunca** `localStorage.getItem` direto.
+1. A sessão deve ficar restrita à origem atual, preferindo localStorage nesta SPA.
+   Não gravar cookies de sessão em `.jetimob.com`: eles estouram os headers dos
+   sites irmãos. O compartilhamento automático por cookie foi descontinuado.
+2. Preservar o login existente quando possível ao migrar; expirar cookies amplos
+   antigos (inclusive todos os chunks), sem apagar cookies host-only.
 3. Destino pós-login: `resolveAuthTarget()` em `src/lib/authRedirect.ts`.
    Allowlist de redirect externo: **somente HTTPS em `jetimob.com` e subdomínios**.
    Qualquer outro valor vira caminho interno. Não relaxar (open redirect).
