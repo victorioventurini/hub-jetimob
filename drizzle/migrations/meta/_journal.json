@@ -50,6 +50,13 @@
       "when": 1792769038588,
       "tag": "0006_fix_attachment_upload_policies_name_shadowing",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792769050519,
+      "tag": "0007_fix_project_attachments_read_policy",
+      "breakpoints": true
     }
   ]
 }
