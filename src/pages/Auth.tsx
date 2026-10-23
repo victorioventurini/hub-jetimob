@@ -19,6 +19,7 @@ import {
   POLICY_MESSAGES,
   syncOAuthSessionToGlobal,
 } from "@/lib/authPolicy";
+import { registerSsoHandoffAttempt, requestSsoHandoffUrl, resetSsoHandoffAttempts } from "@/lib/ssoHandoff";
 
 const STORAGE_KEY = "next_last_email";
 const STORAGE_TTL_DAYS = 30;
@@ -131,6 +132,8 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     try { localStorage.setItem("next_login_mode", mode); } catch { /* noop */ }
   };
   const [policyChecked, setPolicyChecked] = useState(false);
+  const [handoffError, setHandoffError] = useState<string | null>(null);
+  const [handoffRetry, setHandoffRetry] = useState(0);
 
   // Retorno do Google: copia a sessão para o cliente global (cookie SSO)
   useEffect(() => {
@@ -152,13 +155,28 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       }
       sessionStorage.removeItem(OAUTH_NEXT_KEY);
       if (targetKind === "external") {
-        window.location.replace(targetValue);
+        // Sem cookie compartilhado: entrega um código de uso único ao sistema irmão.
+        const host = new URL(targetValue).hostname;
+        if (!registerSsoHandoffAttempt(host)) {
+          setHandoffError(host);
+          return;
+        }
+        try {
+          const url = await requestSsoHandoffUrl(
+            (body) => globalSupabase.functions.invoke("sso-handoff", { body }),
+            targetValue,
+          );
+          if (!cancelled) window.location.replace(url);
+        } catch (e) {
+          console.warn("[Auth] sso-handoff", e);
+          if (!cancelled) setHandoffError(host);
+        }
         return;
       }
       navigate(targetValue, { replace: true });
     })();
     return () => { cancelled = true; };
-  }, [user, authLoading, policyChecked, navigate, targetKind, targetValue]);
+  }, [user, authLoading, policyChecked, navigate, targetKind, targetValue, handoffRetry]);
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
@@ -272,6 +290,34 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingState text="Verificando sessão..." />
+      </div>
+    );
+  }
+
+  if (handoffError) {
+    const systemName = handoffError.split(".")[0];
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="w-full max-w-sm space-y-4 text-center">
+          <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+          <h1 className="text-xl font-semibold">Não foi possível abrir o sistema {systemName}</h1>
+          <p className="text-sm text-muted-foreground">
+            Você está logado no Next, mas o acesso ao outro sistema não foi concluído.
+          </p>
+          <Button
+            className="w-full"
+            onClick={() => {
+              resetSsoHandoffAttempts(handoffError);
+              setHandoffError(null);
+              setHandoffRetry((n) => n + 1);
+            }}
+          >
+            Tentar de novo
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => navigate("/", { replace: true })}>
+            Ir para o Next
+          </Button>
+        </div>
       </div>
     );
   }

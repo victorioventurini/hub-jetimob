@@ -84,7 +84,8 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
 
   const goNext = useCallback(() => {
     if (resolved.kind === "external") {
-      window.location.replace(resolved.target);
+      // O /auth faz o handoff de uso único para o sistema irmão.
+      navigate(`/auth?next=${encodeURIComponent(resolved.target)}`, { replace: true });
       return;
     }
     navigate(resolved.target, { replace: true });
