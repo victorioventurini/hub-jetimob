@@ -1,8 +1,13 @@
 import { useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { Shield, ArrowRight } from "lucide-react";
+import { Shield, ArrowRight, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { resolveAuthTarget } from "@/lib/authRedirect";
+import { supabase as globalClient } from "@/integrations/supabase/globalClient";
+import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
+import { checkSessionPolicy, POLICY_MESSAGES } from "@/lib/authPolicy";
+import { initSessionContext } from "@/lib/analytics";
 
 /**
  * AuthConfirm
@@ -16,15 +21,24 @@ import { resolveAuthTarget } from "@/lib/authRedirect";
  * que, ao ser clicado manualmente, navega para /auth/callback preservando
  * todos os query params (token_hash, type, next).
  *
+ * Gateways mais agressivos executam JS e clicam no botão em sandbox. Para
+ * esses casos, o e-mail inclui também um código de 6 dígitos (email_otp):
+ * o scanner não consegue digitá-lo, então o código sobrevive mesmo se o
+ * link for consumido. Quando a URL traz `email`, exibimos o campo de código.
+ *
  * Acionada via lista URL_DETONATION_DOMAINS em request-magic-link.
  */
 const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [confirming, setConfirming] = useState(false);
+  const [code, setCode] = useState("");
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") || "magiclink";
+  const email = searchParams.get("email");
 
   // Mantém o destino final (rota interna ou sistema VibeCoding via SSO)
   const next = useMemo(
@@ -42,6 +56,39 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
     callbackUrl.searchParams.set("type", type);
     callbackUrl.searchParams.set("next", next);
     navigate(`${callbackUrl.pathname}${callbackUrl.search}`, { replace: true });
+  };
+
+  const handleCodeSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const token = code.replace(/\D/g, "");
+    if (!email || token.length !== 6 || verifyingCode) return;
+
+    setVerifyingCode(true);
+    setCodeError(null);
+
+    const { data, error } = await globalClient.auth.verifyOtp({
+      email,
+      token,
+      type: "magiclink",
+    });
+
+    if (error || !data.session) {
+      setVerifyingCode(false);
+      setCodeError("Código inválido ou expirado. Confira o e-mail e tente novamente.");
+      return;
+    }
+
+    const violation = checkSessionPolicy(data.session);
+    if (violation) {
+      await globalClient.auth.signOut({ scope: "local" });
+      setVerifyingCode(false);
+      setCodeError(POLICY_MESSAGES[violation]);
+      return;
+    }
+
+    initSessionContext({ userId: data.session.user.id });
+    clearBuClientCache();
+    navigate(next, { replace: true });
   };
 
   return (
@@ -84,6 +131,35 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
               <p className="text-xs text-muted-foreground">
                 Este passo extra protege o link contra escaneamentos automáticos de segurança do seu provedor de email.
               </p>
+
+              {email && (
+                <form onSubmit={handleCodeSubmit} className="w-full space-y-3 pt-4 border-t">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <KeyRound className="h-4 w-4" />
+                    <span>Ou digite o código de 6 dígitos enviado no e-mail</span>
+                  </div>
+                  <Input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="text-center text-lg tracking-[0.5em] font-mono"
+                    maxLength={6}
+                  />
+                  {codeError && (
+                    <p className="text-sm text-destructive">{codeError}</p>
+                  )}
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="w-full"
+                    disabled={code.replace(/\D/g, "").length !== 6 || verifyingCode}
+                  >
+                    {verifyingCode ? "Verificando..." : "Entrar com código"}
+                  </Button>
+                </form>
+              )}
             </div>
           )}
         </div>

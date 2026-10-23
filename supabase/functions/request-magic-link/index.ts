@@ -351,6 +351,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     magicLink,
     displayName,
     buName: buName || undefined,
+    emailOtp,
   });
 
   const emailResult = await sendEmail({
