@@ -57,6 +57,13 @@
       "when": 1792769050519,
       "tag": "0007_fix_project_attachments_read_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792769506991,
+      "tag": "0008_ticket_attachment_upload_helper",
+      "breakpoints": true
     }
   ]
 }
