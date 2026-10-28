@@ -85,6 +85,13 @@
       "when": 1793217586462,
       "tag": "0011_external_manager_contact_capabilities",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793218312767,
+      "tag": "0012_capability_scope_all_users",
+      "breakpoints": true
     }
   ]
 }
