@@ -6,6 +6,6 @@
 
 # Soul ticket access
 - [x] Reproduce Victorio's private-ticket denial with an authenticated session.
-- [ ] Restore existing platform administrative access without widening other users' access.
-- [ ] Prevent same-unit tickets from displaying a cross-unit switch notice.
-- [ ] Verify the ticket opens for Victorio and verify denied access boundaries.
+- [x] Restore existing platform administrative access without widening other users' access.
+- [x] Prevent same-unit tickets from displaying a cross-unit switch notice (10 tests passed).
+- [x] Verify the ticket opens for Victorio and verify denied access boundaries (authenticated browser plus profile-spoof denial).
