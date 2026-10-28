@@ -8,7 +8,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Plus, Search, Users, Trash2, FolderTree } from "lucide-react";
-import { usePartnerCompanies, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
+import { usePartnerCompanies, usePartnerContacts, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
 import { ContactCapabilityDialog } from "./ContactCapabilityDialog";
 import { toast } from "sonner";
 import { useUrlSearch, useUrlState } from "@/shared/url";
@@ -20,10 +20,12 @@ export function ContactCapabilitiesTab() {
     defaultValue: null,
   });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [initialContactId, setInitialContactId] = useState<string | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<{ contactName: string; capabilities: ContactCapability[] } | null>(null);
 
   const { data: companies = [], isLoading: loadingCompanies, error: companiesError } = usePartnerCompanies();
-  const { data: capabilities = [], isLoading: loadingCapabilities } = useCompanyContactCapabilities(selectedCompanyId || undefined);
+  const { data: capabilities = [], isLoading: loadingCapabilities, error: capabilitiesError } = useCompanyContactCapabilities(selectedCompanyId || undefined);
+  const { data: contacts = [], isLoading: loadingContacts, error: contactsError } = usePartnerContacts(selectedCompanyId || undefined);
   const deleteCapability = useDeleteContactCapability();
 
   const activeCompanies = companies.filter(c => c.status === "active");
@@ -31,10 +33,13 @@ export function ContactCapabilitiesTab() {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Group capabilities by contact (a contact may have many capabilities — one row per category/subcategory).
-  // The previous UI rendered one row per capability, which looked like duplicated contacts.
+  // Start with BU-associated company contacts so an empty capability list never hides a contact.
   const groupedByContact = useMemo(() => {
     const map = new Map<string, { contact: NonNullable<ContactCapability["contact"]>; capabilities: ContactCapability[] }>();
+    for (const contact of contacts) {
+      if (contact.status !== "active" || contact.deleted_at) continue;
+      map.set(contact.id, { contact, capabilities: [] });
+    }
     for (const cap of capabilities) {
       if (!cap.contact) continue;
       const entry = map.get(cap.contact_id);
@@ -45,7 +50,12 @@ export function ContactCapabilitiesTab() {
       }
     }
     return Array.from(map.values()).sort((a, b) => a.contact.name.localeCompare(b.contact.name));
-  }, [capabilities]);
+  }, [contacts, capabilities]);
+
+  const openCapabilityDialog = (contactId?: string) => {
+    setInitialContactId(contactId);
+    setDialogOpen(true);
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -142,12 +152,12 @@ export function ContactCapabilitiesTab() {
                 </CardTitle>
                 <CardDescription>
                   {selectedCompanyId 
-                    ? "Contatos que recebem tickets automaticamente por categoria"
+                    ? "Contatos vinculados à empresa e suas categorias de atendimento"
                     : "Escolha uma empresa à esquerda para ver as capacidades"}
                 </CardDescription>
               </div>
               {selectedCompanyId && (
-                <Button size="sm" onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
+                <Button size="sm" onClick={() => openCapabilityDialog()} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar
                 </Button>
@@ -160,15 +170,15 @@ export function ContactCapabilitiesTab() {
                   title="Nenhuma empresa selecionada"
                   description="Selecione uma empresa para ver e configurar as capacidades dos contatos."
                 />
-              ) : loadingCapabilities ? (
-                <LoadingState text="Carregando capacidades..." />
+              ) : loadingCapabilities || loadingContacts ? (
+                <LoadingState text="Carregando contatos e capacidades..." />
+              ) : contactsError || capabilitiesError ? (
+                <ErrorState title="Erro ao carregar contatos" description="Não foi possível carregar os contatos e suas categorias." />
               ) : groupedByContact.length === 0 ? (
                 <EmptyState
-                  icon={FolderTree}
-                  title="Nenhuma capacidade configurada"
-                  description="Adicione capacidades para que tickets sejam atribuídos automaticamente aos contatos."
-                  actionLabel="Adicionar capacidade"
-                  onAction={() => setDialogOpen(true)}
+                  icon={Users}
+                  title="Nenhum contato vinculado"
+                  description="Esta empresa não possui contatos ativos vinculados à unidade selecionada."
                 />
               ) : (
                 <div className="space-y-3">
@@ -197,6 +207,9 @@ export function ContactCapabilitiesTab() {
                             <span className="text-xs text-muted-foreground truncate">{contact.email}</span>
                           </div>
                           <div className="flex flex-col gap-1.5">
+                            {contactCaps.length === 0 && (
+                              <Badge variant="outline" className="w-fit">Sem categorias configuradas</Badge>
+                            )}
                             {Array.from(byCategory.values()).map((cat, idx) => (
                               <div key={idx} className="flex flex-wrap items-center gap-1.5">
                                 <Badge variant="outline">{cat.categoryName}</Badge>
@@ -211,7 +224,18 @@ export function ContactCapabilitiesTab() {
                             ))}
                           </div>
                         </div>
-                        <Button
+                        {contactCaps.length === 0 ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => openCapabilityDialog(contact.id)}
+                            aria-label={`Configurar categorias de ${contact.name}`}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Configurar
+                          </Button>
+                        ) : <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setDeleteTarget({ contactName: contact.name, capabilities: contactCaps })}
@@ -219,7 +243,7 @@ export function ContactCapabilitiesTab() {
                           aria-label={`Remover capacidades de ${contact.name}`}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        </Button>}
                       </div>
                     );
                   })}
@@ -236,6 +260,7 @@ export function ContactCapabilitiesTab() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           companyId={selectedCompanyId}
+          initialContactId={initialContactId}
         />
       )}
 
