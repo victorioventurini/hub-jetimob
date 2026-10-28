@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePartnerContacts, useTicketCategories, useCreateContactCapability } from "../../hooks";
+import { usePartnerServiceMappings } from "../../hooks/usePartnerServices";
 import { toast } from "sonner";
 
 interface ContactCapabilityDialogProps {
@@ -86,7 +87,8 @@ export function ContactCapabilityDialog({
 
   // Reset subcategory when category changes
   useEffect(() => {
-    setSubcategoryId("__all__");
+    setSubcategoryId(allowWhole ? "__all__" : subcategories[0]?.id ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId]);
 
   const handleSubmit = async () => {
@@ -144,6 +146,12 @@ export function ContactCapabilityDialog({
             </Select>
           </div>
 
+          {noServices && (
+            <p className="rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
+              Esta empresa ainda não tem categorias atendidas — configure os serviços do parceiro.
+            </p>
+          )}
+
           {/* Category Select */}
           <div className="space-y-2">
             <Label>Categoria *</Label>
@@ -170,12 +178,14 @@ export function ContactCapabilityDialog({
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">
-                    <span className="font-medium">Toda a categoria</span>
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      Atende qualquer subcategoria
-                    </span>
-                  </SelectItem>
+                  {allowWhole && (
+                    <SelectItem value="__all__">
+                      <span className="font-medium">Toda a categoria</span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        Atende qualquer subcategoria
+                      </span>
+                    </SelectItem>
+                  )}
                   {subcategories.map((sub) => (
                     <SelectItem key={sub.id} value={sub.id}>
                       {sub.name}
@@ -196,7 +206,7 @@ export function ContactCapabilityDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!contactId || !categoryId || createCapability.isPending}
+            disabled={!contactId || !categoryId || !subcategoryId || noServices || createCapability.isPending}
           >
             {createCapability.isPending ? "Salvando..." : "Adicionar"}
           </Button>
