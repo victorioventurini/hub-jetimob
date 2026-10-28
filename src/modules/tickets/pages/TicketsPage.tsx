@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Users } from "lucide-react";
+import { useManagedPartnerCompany } from "../hooks/useManagedPartnerCompany";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export default function TicketsPage() {
   // Check if impersonating an external user
   const isViewingAsExternal = isImpersonating && impersonatedUser?.employmentStatus === "external";
   const canCreateTicket = !isExternal && !isViewingAsExternal;
+  const { data: managedCompanyId } = useManagedPartnerCompany();
   const canAccessSettings = isWildcard || has("tickets.settings.view");
   
   usePageTitle("Tickets", {
@@ -36,6 +38,14 @@ export default function TicketsPage() {
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="tickets" />
+              {managedCompanyId && (
+                <Button asChild variant="outline">
+                  <Link to="/tickets/team">
+                    <Users className="h-4 w-4 mr-2" />
+                    Minha equipe
+                  </Link>
+                </Button>
+              )}
               {canAccessSettings && (
                 <Button asChild variant="outline" size="icon">
                   <Link to="/tickets/settings">
