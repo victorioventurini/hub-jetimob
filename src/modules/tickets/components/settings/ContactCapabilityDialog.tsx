@@ -43,14 +43,37 @@ export function ContactCapabilityDialog({
   const { data: categories = [] } = useTicketCategories();
   const createCapability = useCreateContactCapability();
 
-  const activeContacts = contacts.filter((c) => c.status === "active");
-  const externalCategories = categoryOptions ?? categories.filter(
-    (c) => c.scope === "external" || c.scope === "both"
+  const { data: mappings = [], isLoading: mappingsLoading } = usePartnerServiceMappings(
+    categoryOptions ? undefined : companyId
   );
-  
-  // Get subcategories from the selected category (embedded in category data)
-  const selectedCategory = externalCategories.find((c) => c.id === categoryId);
+
+  const activeContacts = contacts.filter((c) => c.status === "active");
+
+  // Only categories/subcategories the partner company actually serves in this BU
+  const externalCategories = useMemo(() => {
+    if (categoryOptions) return categoryOptions;
+    const active = mappings.filter((m) => m.status === "active");
+    return categories
+      .filter((c) => active.some((m) => m.category_id === c.id))
+      .map((c) => {
+        const forCat = active.filter((m) => m.category_id === c.id);
+        const whole = forCat.some((m) => !m.subcategory_id);
+        const allowed = new Set(forCat.map((m) => m.subcategory_id));
+        return {
+          id: c.id,
+          name: c.name,
+          wholeCategory: whole,
+          subcategories: (c.subcategories || []).filter((s: { id: string }) => whole || allowed.has(s.id)),
+        };
+      });
+  }, [categoryOptions, categories, mappings]);
+
+  const selectedCategory = externalCategories.find((c) => c.id === categoryId) as
+    | { subcategories?: { id: string; name: string }[]; wholeCategory?: boolean }
+    | undefined;
   const subcategories = selectedCategory?.subcategories || [];
+  const allowWhole = selectedCategory?.wholeCategory !== false;
+  const noServices = !categoryOptions && !mappingsLoading && externalCategories.length === 0;
 
   // Reset form when dialog opens/closes
   useEffect(() => {
