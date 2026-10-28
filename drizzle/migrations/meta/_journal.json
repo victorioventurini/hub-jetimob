@@ -78,6 +78,13 @@
       "when": 1793206486174,
       "tag": "0010_restore_ticket_platform_admin_read",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793217586462,
+      "tag": "0011_external_manager_contact_capabilities",
+      "breakpoints": true
     }
   ]
 }

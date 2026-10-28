@@ -48,6 +48,10 @@ export const ticketsKeys = {
     ['tickets', 'company-contact-capabilities', buId, companyId] as const,
   partnerContactProfile: (contactId: string) =>
     ['tickets', 'partner-contact-profile', contactId] as const,
+  managedPartnerCompany: (buId: string | null) =>
+    ['tickets', 'managed-partner-company', buId] as const,
+  managedCompanyCategories: (buId: string | null) =>
+    ['tickets', 'managed-company-categories', buId] as const,
   contactCapabilitiesPrefix: () => ['contact-capabilities'] as const,
   companyContactCapabilitiesPrefix: () => ['company-contact-capabilities'] as const,
   

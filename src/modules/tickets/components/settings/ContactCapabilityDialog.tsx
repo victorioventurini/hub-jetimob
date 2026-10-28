@@ -24,6 +24,8 @@ interface ContactCapabilityDialogProps {
   onOpenChange: (open: boolean) => void;
   companyId: string;
   initialContactId?: string;
+  /** Restringe as opções (ex.: gestor externo só vê o que a empresa atende). */
+  categoryOptions?: { id: string; name: string; subcategories: { id: string; name: string }[] }[];
 }
 
 export function ContactCapabilityDialog({
@@ -31,6 +33,7 @@ export function ContactCapabilityDialog({
   onOpenChange,
   companyId,
   initialContactId,
+  categoryOptions,
 }: ContactCapabilityDialogProps) {
   const [contactId, setContactId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string>("");
@@ -41,12 +44,12 @@ export function ContactCapabilityDialog({
   const createCapability = useCreateContactCapability();
 
   const activeContacts = contacts.filter((c) => c.status === "active");
-  const externalCategories = categories.filter(
+  const externalCategories = categoryOptions ?? categories.filter(
     (c) => c.scope === "external" || c.scope === "both"
   );
   
   // Get subcategories from the selected category (embedded in category data)
-  const selectedCategory = categories.find((c) => c.id === categoryId);
+  const selectedCategory = externalCategories.find((c) => c.id === categoryId);
   const subcategories = selectedCategory?.subcategories || [];
 
   // Reset form when dialog opens/closes

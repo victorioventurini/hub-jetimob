@@ -15,6 +15,7 @@ const TicketsPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketsP
 const TicketsListPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketsListPage'));
 const CreateTicketPage = lazyWithRetry(() => import('@/modules/tickets/pages/CreateTicketPage'));
 const TicketDetailPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketDetailPage'));
+const TeamCapabilitiesPage = lazyWithRetry(() => import('@/modules/tickets/pages/TeamCapabilitiesPage'));
 const TicketsSettingsPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketsSettingsPage'));
 
 /**
@@ -45,6 +46,9 @@ export const ticketRoutes = (
 
     {/* Tickets Settings - Standalone (possui PageHeader próprio) */}
     <Route path="/tickets/settings" element={<TicketRoute><TicketsSettingsPage /></TicketRoute>} />
+
+    {/* Gestor externo: categorias da própria equipe */}
+    <Route path="/tickets/team" element={<TicketRoute><TeamCapabilitiesPage /></TicketRoute>} />
 
     {/* Ticket Detail - Standalone page without tabs */}
     <Route path="/tickets/:id" element={<TicketRoute><TicketDetailPage /></TicketRoute>} />

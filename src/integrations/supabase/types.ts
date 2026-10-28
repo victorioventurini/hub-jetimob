@@ -12414,6 +12414,10 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_manage_partner_contact_capabilities: {
+        Args: { p_bu_id: string; p_contact_id: string }
+        Returns: boolean
+      }
       can_manage_team_okr: {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
@@ -13139,6 +13143,15 @@ export type Database = {
         Returns: number
       }
       list_archived_projects: { Args: never; Returns: Json }
+      list_managed_company_categories: {
+        Args: { p_bu_id: string }
+        Returns: {
+          category_id: string
+          category_name: string
+          subcategory_id: string
+          subcategory_name: string
+        }[]
+      }
       list_partner_companies_with_privacy: {
         Args: { p_bu_id: string }
         Returns: {
@@ -13198,6 +13211,7 @@ export type Database = {
         Returns: string
       }
       milestone_status_label: { Args: { p_status: string }; Returns: string }
+      my_managed_partner_company: { Args: { p_bu_id: string }; Returns: string }
       my_profile_id: { Args: never; Returns: string }
       my_profile_id_strict: { Args: never; Returns: string }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
