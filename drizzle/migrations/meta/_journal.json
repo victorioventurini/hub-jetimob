@@ -71,6 +71,13 @@
       "when": 1792769534019,
       "tag": "0009_ticket_attachment_upload_policy_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793206486174,
+      "tag": "0010_restore_ticket_platform_admin_read",
+      "breakpoints": true
     }
   ]
 }
