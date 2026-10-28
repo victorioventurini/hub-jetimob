@@ -26,6 +26,7 @@ import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
 import { CrossBuTicketBanner } from "../components/CrossBuTicketBanner";
 import type { TicketStatus, TicketMessage } from "../types";
 import type { ParsedMention } from "@/components/mentions";
+import { isTicketInOtherBu } from "../lib/ticketBuResolution";
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +44,7 @@ export default function TicketDetailPage() {
     return contact?.contactId ?? null;
   }, [isExternal, currentBu?.id, externalContacts]);
 
-  const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
+  const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id ?? null);
   const { data: resolvedTicketBuId } = useResolveTicketBu(!ticket && !isLoadingTicket ? id : null);
   const resolvedBuMembership = useMemo(
     () => (resolvedTicketBuId ? userBus.find((m) => m.bu_id === resolvedTicketBuId) : null),
@@ -294,15 +295,18 @@ export default function TicketDetailPage() {
   }
 
   if (!ticket) {
-    const otherBuName = resolvedBuMembership?.bu_unit?.name;
+    const otherBuName = isTicketInOtherBu(currentBu?.id, resolvedTicketBuId)
+      ? resolvedBuMembership?.bu_unit?.name
+      : undefined;
+    const isInCurrentBu = Boolean(currentBu?.id && resolvedTicketBuId === currentBu.id);
     return (
       <HubLayout>
         <div className="space-y-6">
           <PageHeader
-            title={otherBuName ? "Ticket em outra BU" : "Ticket não encontrado"}
+            title={otherBuName ? "Ticket em outra BU" : isInCurrentBu ? "Acesso ao ticket" : "Ticket não encontrado"}
             breadcrumbs={[
               { label: "Tickets", href: "/tickets" },
-              { label: otherBuName ? "Outra BU" : "Não encontrado" },
+              { label: otherBuName ? "Outra BU" : isInCurrentBu ? "Acesso" : "Não encontrado" },
             ]}
           />
           {otherBuName && resolvedTicketBuId ? (
@@ -313,8 +317,10 @@ export default function TicketDetailPage() {
             />
           ) : (
             <VicErrorState
-              title="Esse ticket sumiu! 👀"
-              description="O ticket que você está procurando não existe ou foi removido."
+              title={isInCurrentBu ? "Não foi possível acessar este ticket" : "Esse ticket sumiu! 👀"}
+              description={isInCurrentBu
+                ? "Este ticket pertence à BU selecionada, mas o acesso não foi autorizado."
+                : "O ticket que você está procurando não existe ou foi removido."}
               onBack={goBack}
               backLabel="Voltar para lista"
             />
