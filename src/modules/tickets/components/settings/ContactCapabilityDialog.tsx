@@ -23,12 +23,14 @@ interface ContactCapabilityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companyId: string;
+  initialContactId?: string;
 }
 
 export function ContactCapabilityDialog({
   open,
   onOpenChange,
   companyId,
+  initialContactId,
 }: ContactCapabilityDialogProps) {
   const [contactId, setContactId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string>("");
@@ -50,11 +52,11 @@ export function ContactCapabilityDialog({
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (open) {
-      setContactId("");
+      setContactId(initialContactId ?? "");
       setCategoryId("");
       setSubcategoryId("__all__");
     }
-  }, [open]);
+  }, [open, initialContactId]);
 
   // Reset subcategory when category changes
   useEffect(() => {
