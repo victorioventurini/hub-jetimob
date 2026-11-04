@@ -12,7 +12,8 @@ import type { MbrStep, MbrDraftData, MbrTeamOkrSnapshot } from '@/modules/okrs/t
  *
  * Times fora desta lista entram no fim, em ordem alfabética. A comparação é
  * normalizada (sem acentos, `&` ≡ `e`, espaços colapsados), então
- * "Gente & Cultura" casa com "Gente e Cultura".
+ * "Gente & Cultura" casa com "Gente e Cultura". O slot "Design" casa com o
+ * time cadastrado como "Product Design" (ver `TEAM_ORDER_ALIASES`).
  */
 export const TEAM_ANALYSIS_ORDER = [
   'Tecnologia',
