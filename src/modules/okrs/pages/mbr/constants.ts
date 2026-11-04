@@ -29,6 +29,15 @@ const TEAM_ORDER_RANK = new Map(
   TEAM_ANALYSIS_ORDER.map((name, index) => [normalizeTeamName(name), index]),
 );
 
+/**
+ * Apelidos da ordem canônica (definidos por Uriel Canfield em 04/11/2026):
+ * o slot "Design" é ocupado pelo time cadastrado como "Product Design".
+ * Chaves e valores usam o mesmo formato de `normalizeTeamName`.
+ */
+const TEAM_ORDER_ALIASES: Record<string, string> = {
+  'product design': 'design',
+};
+
 /** Chave de comparação: minúsculas, sem acentos, `&` lido como `e`. */
 export function normalizeTeamName(name: string | null | undefined): string {
   return (name ?? '')
