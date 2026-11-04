@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { getProgressBarStyle, TREND_COLORS } from '@/lib/colors';
+import { sortTeamSnapshotsByAnalysisOrder } from '@/modules/okrs/pages/mbr/constants';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -37,7 +38,7 @@ export interface MbrTeamOkrsOverviewStepProps {
 // HELPERS
 // ============================================================
 
-const HEALTH_ORDER: Record<string, number> = { risk: 0, attention: 1, healthy: 2 };
+// Ordem de exibição: TEAM_ANALYSIS_ORDER (Tecnologia → Gente & Cultura).
 
 function getTrendIcon(objectives: MbrTeamOkrSnapshot['objectives']) {
   if (objectives.length === 0) return <Minus className={`h-4 w-4 ${TREND_COLORS.stable}`} />;
@@ -65,9 +66,7 @@ export function MbrTeamOkrsOverviewStep({
   const preSubmittedSet = useMemo(() => new Set(preSubmittedTeamIds), [preSubmittedTeamIds]);
 
   const { sorted, totalAtRisk, avgProgress, totalKrs } = useMemo(() => {
-    const sorted = [...teamOkrSnapshots].sort(
-      (a, b) => (HEALTH_ORDER[a.healthStatus] ?? 2) - (HEALTH_ORDER[b.healthStatus] ?? 2)
-    );
+    const sorted = sortTeamSnapshotsByAnalysisOrder(teamOkrSnapshots);
 
     const totalAtRisk = teamOkrSnapshots.reduce(
       (sumTeams, team) => sumTeams + team.objectives.reduce((sumObj, obj) => sumObj + obj.krsAtRisk, 0),

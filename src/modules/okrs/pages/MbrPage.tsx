@@ -223,6 +223,7 @@ export default function MbrPage() {
     updateDraft,
     preSubmittedTeams,
     preSubmittedTeamsReady: hasFetchedMbrPre && hasFetchedTeams,
+    draftCurrentIndex: draft.data.currentTeamIndex,
   });
 
 
