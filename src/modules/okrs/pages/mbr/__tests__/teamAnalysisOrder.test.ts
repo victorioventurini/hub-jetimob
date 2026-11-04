@@ -49,6 +49,23 @@ describe('ordem canônica de análise dos times no MBR', () => {
     expect(compareTeamNamesByAnalysisOrder('Comercial', 'Gente & Cultura')).toBeLessThan(0);
   });
 
+  it('casa "Product Design" com o slot "Design" da ordem', () => {
+    expect(teamAnalysisRank('Product Design')).toBe(teamAnalysisRank('Design'));
+    expect(teamAnalysisRank('Product Design')).toBe(2);
+    const ordered = sortTeamSnapshotsByAnalysisOrder([
+      snap('d', 'BizOps'),
+      snap('p', 'Product Design'),
+      snap('t', 'Tecnologia'),
+      snap('o', 'Produto'),
+    ]);
+    expect(ordered.map((t) => t.teamName)).toEqual([
+      'Tecnologia',
+      'Produto',
+      'Product Design',
+      'BizOps',
+    ]);
+  });
+
   it('ignora maiúsculas e acentos ao casar', () => {
     expect(compareTeamNamesByAnalysisOrder('customer success', 'Customer Success')).toBe(0);
     expect(teamAnalysisRank('  MARKETING ')).toBe(teamAnalysisRank('Marketing'));
