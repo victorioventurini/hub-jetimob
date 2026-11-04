@@ -28,6 +28,7 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { compareTeamNamesByAnalysisOrder } from '@/modules/okrs/pages/mbr/constants';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge, TeamKrsToggle, KpiStatusBlocks } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
@@ -510,7 +511,12 @@ export function MbrPanoramaStep({
                       return { sub, accelerated, blocked, needsDecision, focus };
                     })
                     .filter((p) => p.accelerated || p.blocked || p.needsDecision || p.focus)
-                    .sort((a, b) => teamLabel(a.sub.teamId).localeCompare(teamLabel(b.sub.teamId)));
+                    .sort((a, b) =>
+                      compareTeamNamesByAnalysisOrder(
+                        teamLabel(a.sub.teamId),
+                        teamLabel(b.sub.teamId),
+                      ),
+                    );
 
                   if (teamPanels.length === 0) return null;
 

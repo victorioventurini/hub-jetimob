@@ -10,7 +10,12 @@ import type {
   MbrOrgOkrSnapshot,
   MbrTeamOkrSnapshot,
 } from '@/modules/okrs/types/wizard';
-import { computeHealthScore, computeHealthStatus } from './constants';
+import {
+  computeHealthScore,
+  computeHealthStatus,
+  isTeamSnapshotOrderCanonical,
+  sortTeamSnapshotsByAnalysisOrder,
+} from './constants';
 
 interface KpiSourceRow {
   id: string;
@@ -119,6 +124,8 @@ export function useSeedTeamOkrSnapshots(args: {
    * existir e os times sem OKR própria ficam fora da pauta.
    */
   preSubmittedTeamsReady?: boolean;
+  /** Índice do time em revisão no draft — remapeado quando a ordem muda. */
+  draftCurrentIndex?: number;
 }) {
   const {
     cycleId,
@@ -129,8 +136,28 @@ export function useSeedTeamOkrSnapshots(args: {
     updateDraft,
     preSubmittedTeams = [],
     preSubmittedTeamsReady = true,
+    draftCurrentIndex = 0,
   } = args;
   const seeded = useRef(false);
+
+  // Normalização idempotente: rascunhos salvos antes da ordem canônica
+  // (Tecnologia → Produto → Design → BizOps → CS → Marketing → Comercial →
+  // Gente & Cultura) são reordenados, com o cursor de revisão remapeado pelo
+  // teamId para o líder não perder o time que estava analisando.
+  useEffect(() => {
+    if (draftTeamOkrSnapshots.length === 0) return;
+    if (isTeamSnapshotOrderCanonical(draftTeamOkrSnapshots)) return;
+    const ordered = sortTeamSnapshotsByAnalysisOrder(draftTeamOkrSnapshots);
+    const currentTeamId = draftTeamOkrSnapshots[draftCurrentIndex]?.teamId;
+    const nextIndex = currentTeamId
+      ? ordered.findIndex((t) => t.teamId === currentTeamId)
+      : -1;
+    updateDraft(
+      nextIndex >= 0
+        ? { teamOkrSnapshots: ordered, currentTeamIndex: nextIndex }
+        : { teamOkrSnapshots: ordered },
+    );
+  }, [draftTeamOkrSnapshots, draftCurrentIndex, updateDraft]);
 
   // Saneamento idempotente: independente do latch de seeding, garante que todo
   // time com Pré-MBR submetido esteja na pauta (conserta drafts já criados).
@@ -141,10 +168,10 @@ export function useSeedTeamOkrSnapshots(args: {
     const missing = preSubmittedTeams.filter((t) => t.teamId && !existing.has(t.teamId));
     if (missing.length === 0) return;
     updateDraft({
-      teamOkrSnapshots: [
+      teamOkrSnapshots: sortTeamSnapshotsByAnalysisOrder([
         ...draftTeamOkrSnapshots,
         ...missing.map((t) => buildEmptyTeamSnapshot(t.teamId, t.teamName)),
-      ],
+      ]),
     });
   }, [draftTeamOkrSnapshots, preSubmittedTeams, preSubmittedTeamsReady, updateDraft]);
 
@@ -318,7 +345,10 @@ export function useSeedTeamOkrSnapshots(args: {
     }
 
     if (snapshots.length > 0) {
-      updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
+      updateDraft({
+        teamOkrSnapshots: sortTeamSnapshotsByAnalysisOrder(snapshots),
+        currentTeamIndex: 0,
+      });
     }
     seeded.current = true;
   }, [

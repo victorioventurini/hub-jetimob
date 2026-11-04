@@ -5,6 +5,74 @@ import { defaultReferenceMonth } from '@/modules/okrs/utils/mbr/referenceMonth';
 import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 import type { MbrStep, MbrDraftData, MbrTeamOkrSnapshot } from '@/modules/okrs/types/wizard';
 
+/**
+ * Ordem canônica de análise dos times no MBR (definida por Uriel Canfield em
+ * 04/11/2026). Vale para "OKRs dos Times", "Análise por Time", painel de
+ * submissões do Panorama e relatório do rito.
+ *
+ * Times fora desta lista entram no fim, em ordem alfabética. A comparação é
+ * normalizada (sem acentos, `&` ≡ `e`, espaços colapsados), então
+ * "Gente & Cultura" casa com "Gente e Cultura".
+ */
+export const TEAM_ANALYSIS_ORDER = [
+  'Tecnologia',
+  'Produto',
+  'Design',
+  'BizOps',
+  'Customer Success',
+  'Marketing',
+  'Comercial',
+  'Gente e Cultura',
+] as const;
+
+const TEAM_ORDER_RANK = new Map(
+  TEAM_ANALYSIS_ORDER.map((name, index) => [normalizeTeamName(name), index]),
+);
+
+/** Chave de comparação: minúsculas, sem acentos, `&` lido como `e`. */
+export function normalizeTeamName(name: string | null | undefined): string {
+  return (name ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, ' e ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Posição do time na ordem canônica; fora da lista ⇒ depois de todos. */
+export function teamAnalysisRank(name: string | null | undefined): number {
+  return TEAM_ORDER_RANK.get(normalizeTeamName(name)) ?? TEAM_ANALYSIS_ORDER.length;
+}
+
+/** Compara dois nomes de time pela ordem canônica de análise. */
+export function compareTeamNamesByAnalysisOrder(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): number {
+  const rankA = teamAnalysisRank(a);
+  const rankB = teamAnalysisRank(b);
+  if (rankA !== rankB) return rankA - rankB;
+  return normalizeTeamName(a).localeCompare(normalizeTeamName(b), 'pt-BR');
+}
+
+/** Ordena snapshots (ou qualquer item com `teamName`) pela ordem canônica. */
+export function sortTeamSnapshotsByAnalysisOrder<T extends { teamName: string | null }>(
+  teams: readonly T[],
+): T[] {
+  return [...teams].sort((a, b) =>
+    compareTeamNamesByAnalysisOrder(a.teamName, b.teamName),
+  );
+}
+
+/** `true` quando a lista já está na ordem canônica (evita reescrita no draft). */
+export function isTeamSnapshotOrderCanonical(
+  teams: readonly { teamId: string; teamName: string | null }[],
+): boolean {
+  const ordered = sortTeamSnapshotsByAnalysisOrder(teams);
+  return ordered.every((team, index) => team.teamId === teams[index]?.teamId);
+}
+
 export const WIZARD_STEPS = [
   { id: 'panorama' as const, label: 'Panorama & Curadoria', description: 'Saúde do mês e pauta do MBR' },
   { id: 'kpi-gate' as const, label: 'KPI Gate', description: 'KPIs críticos' },
