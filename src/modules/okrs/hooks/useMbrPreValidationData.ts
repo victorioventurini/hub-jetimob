@@ -189,6 +189,12 @@ export function useMbrPreValidationData({
           isContributed: !!obj._isContributed,
         };
 
+        // KRs contribuídos pertencem a outro time: o líder não pode fazer
+        // check-in neles, então nunca bloqueiam o Pré-MBR.
+        if (item.isContributed) {
+          ok.push(item);
+          continue;
+        }
         if (!kr.last_checkin_at) {
           pending.push({ kr: item, reason: 'never' });
           continue;
