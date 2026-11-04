@@ -10,11 +10,14 @@ import { BarChart3, Target, Users, CheckCircle2, CalendarDays } from 'lucide-rea
 import { ReportSection, RagBadge, formatValue } from './shared';
 import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { cn } from '@/lib/utils';
+import { sortTeamSnapshotsByAnalysisOrder } from '@/modules/okrs/pages/mbr/constants';
 
 export function MbrReport({ data }: { data: Record<string, any> }) {
   const referenceMonth = data.referenceMonth || '';
   const kpiSnapshots = Array.isArray(data.kpiSnapshots) ? data.kpiSnapshots : [];
-  const teamOkrSnapshots = Array.isArray(data.teamOkrSnapshots) ? data.teamOkrSnapshots : [];
+  const teamOkrSnapshots = sortTeamSnapshotsByAnalysisOrder(
+    Array.isArray(data.teamOkrSnapshots) ? data.teamOkrSnapshots : [],
+  );
   const orgOkrSnapshots = Array.isArray(data.orgOkrSnapshots) ? data.orgOkrSnapshots : [];
   const checklist = data.checklist || {};
   const qbrFollowUpItems = Array.isArray(data.qbrFollowUpItems) ? data.qbrFollowUpItems : [];
