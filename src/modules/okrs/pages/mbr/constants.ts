@@ -51,7 +51,8 @@ export function normalizeTeamName(name: string | null | undefined): string {
 
 /** Posição do time na ordem canônica; fora da lista ⇒ depois de todos. */
 export function teamAnalysisRank(name: string | null | undefined): number {
-  return TEAM_ORDER_RANK.get(normalizeTeamName(name)) ?? TEAM_ANALYSIS_ORDER.length;
+  const key = normalizeTeamName(name);
+  return TEAM_ORDER_RANK.get(TEAM_ORDER_ALIASES[key] ?? key) ?? TEAM_ANALYSIS_ORDER.length;
 }
 
 /** Compara dois nomes de time pela ordem canônica de análise. */
