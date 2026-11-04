@@ -12,7 +12,8 @@ import type { MbrStep, MbrDraftData, MbrTeamOkrSnapshot } from '@/modules/okrs/t
  *
  * Times fora desta lista entram no fim, em ordem alfabética. A comparação é
  * normalizada (sem acentos, `&` ≡ `e`, espaços colapsados), então
- * "Gente & Cultura" casa com "Gente e Cultura".
+ * "Gente & Cultura" casa com "Gente e Cultura". O slot "Design" casa com o
+ * time cadastrado como "Product Design" (ver `TEAM_ORDER_ALIASES`).
  */
 export const TEAM_ANALYSIS_ORDER = [
   'Tecnologia',
@@ -29,6 +30,15 @@ const TEAM_ORDER_RANK = new Map(
   TEAM_ANALYSIS_ORDER.map((name, index) => [normalizeTeamName(name), index]),
 );
 
+/**
+ * Apelidos da ordem canônica (definidos por Uriel Canfield em 04/11/2026):
+ * o slot "Design" é ocupado pelo time cadastrado como "Product Design".
+ * Chaves e valores usam o mesmo formato de `normalizeTeamName`.
+ */
+const TEAM_ORDER_ALIASES: Record<string, string> = {
+  'product design': 'design',
+};
+
 /** Chave de comparação: minúsculas, sem acentos, `&` lido como `e`. */
 export function normalizeTeamName(name: string | null | undefined): string {
   return (name ?? '')
@@ -42,7 +52,8 @@ export function normalizeTeamName(name: string | null | undefined): string {
 
 /** Posição do time na ordem canônica; fora da lista ⇒ depois de todos. */
 export function teamAnalysisRank(name: string | null | undefined): number {
-  return TEAM_ORDER_RANK.get(normalizeTeamName(name)) ?? TEAM_ANALYSIS_ORDER.length;
+  const key = normalizeTeamName(name);
+  return TEAM_ORDER_RANK.get(TEAM_ORDER_ALIASES[key] ?? key) ?? TEAM_ANALYSIS_ORDER.length;
 }
 
 /** Compara dois nomes de time pela ordem canônica de análise. */
