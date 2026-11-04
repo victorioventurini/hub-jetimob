@@ -168,10 +168,10 @@ export function useSeedTeamOkrSnapshots(args: {
     const missing = preSubmittedTeams.filter((t) => t.teamId && !existing.has(t.teamId));
     if (missing.length === 0) return;
     updateDraft({
-      teamOkrSnapshots: [
+      teamOkrSnapshots: sortTeamSnapshotsByAnalysisOrder([
         ...draftTeamOkrSnapshots,
         ...missing.map((t) => buildEmptyTeamSnapshot(t.teamId, t.teamName)),
-      ],
+      ]),
     });
   }, [draftTeamOkrSnapshots, preSubmittedTeams, preSubmittedTeamsReady, updateDraft]);
 
@@ -345,7 +345,10 @@ export function useSeedTeamOkrSnapshots(args: {
     }
 
     if (snapshots.length > 0) {
-      updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
+      updateDraft({
+        teamOkrSnapshots: sortTeamSnapshotsByAnalysisOrder(snapshots),
+        currentTeamIndex: 0,
+      });
     }
     seeded.current = true;
   }, [
