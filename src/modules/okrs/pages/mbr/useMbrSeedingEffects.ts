@@ -191,7 +191,17 @@ export function useSeedTeamOkrSnapshots(args: {
         ),
       );
 
-    if (hasValidKeyResults) {
+    // Rascunho obsoleto: algum time tem OKRs no ciclo, mas o rascunho guarda
+    // esse time sem objetivos (ou nem o guarda). Re-semeia para não exibir
+    // "OKRs dos Times"/"Análise por Time" vazios.
+    const draftObjCountByTeam = new Map(
+      draftTeamOkrSnapshots.map((t) => [t.teamId, t.objectives.length]),
+    );
+    const draftIsStale = (allTeamObjectives || []).some(
+      (obj) => obj.team_id && !draftObjCountByTeam.get(obj.team_id),
+    );
+
+    if (hasValidKeyResults && !draftIsStale) {
       // Times faltantes são acrescentados pelo efeito de saneamento abaixo
       // (idempotente, roda sempre que preSubmittedTeams mudar).
       seeded.current = true;
