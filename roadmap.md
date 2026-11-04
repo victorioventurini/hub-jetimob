@@ -2,6 +2,7 @@
 - [x] Define canonical team sequence (Tecnologia → Gente & Cultura) and apply to MBR team steps, panorama submissions panel and report.
 - [x] Reorder existing drafts, preserving the team under review; add ordering test (6 passed).
 - [x] Verify rendered order in the preview for both "OKRs dos Times" and "Análise por Time".
+- [x] Map the canonical "Design" slot to the registered team "Product Design" (alias + test, 7 passed; rendered in position 3).
 
 # Session cookie isolation
 - [x] Audit auth clients and tracking cookie configuration.
