@@ -57,7 +57,10 @@ Deno.serve(async (req) => {
     const { data, error } = await sb.auth.getUser();
     if (error || !data.user?.email) return json({ error: "unauthorized" }, 401);
     try {
-      return json(await sendDm(data.user.email, "👋 Olá! Esta é a primeira mensagem do Next no Google Chat. Em breve você receberá aqui avisos de tickets, menções e ritos."));
+      const text = body?.kind === "ritual"
+        ? "⏰ *Lembrete: Pré-MBR aberto*\nO Pré-MBR de outubro do seu time está aberto até *sexta-feira*. Leva cerca de 15 minutos.\n👉 https://next.jetimob.com/rituals/mbr-pre\n\n_(mensagem de teste — os lembretes automáticos ainda não estão ligados)_"
+        : "👋 Olá! Esta é a primeira mensagem do Next no Google Chat. Em breve você receberá aqui avisos de tickets, menções e ritos.";
+      return json(await sendDm(data.user.email, text));
     } catch (e) { return json({ ok: false, error: String(e) }, 500); }
   }
 
