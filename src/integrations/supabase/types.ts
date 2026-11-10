@@ -5122,6 +5122,27 @@ export type Database = {
           },
         ]
       }
+      google_chat_user_links: {
+        Row: {
+          chat_user_name: string
+          dm_space_name: string | null
+          email: string
+          updated_at: string
+        }
+        Insert: {
+          chat_user_name: string
+          dm_space_name?: string | null
+          email: string
+          updated_at?: string
+        }
+        Update: {
+          chat_user_name?: string
+          dm_space_name?: string | null
+          email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hub_integrations_catalog: {
         Row: {
           color: string | null
