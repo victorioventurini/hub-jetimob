@@ -12,4 +12,4 @@ export {
   formatDateForTemplate,
   getBuName,
 } from "./templates.ts";
-export { sendGoogleChat } from "./google-chat.ts";
+export { sendGoogleChat, sendGoogleChatText } from "./google-chat.ts";
