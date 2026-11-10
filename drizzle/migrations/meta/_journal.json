@@ -92,6 +92,13 @@
       "when": 1793218312767,
       "tag": "0012_capability_scope_all_users",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794325764197,
+      "tag": "0013_migration",
+      "breakpoints": true
     }
   ]
 }
