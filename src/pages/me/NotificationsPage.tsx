@@ -42,6 +42,7 @@ import {
   Slack,
   MessageCircle,
   Globe,
+  MessagesSquare,
   Lock,
   AlertTriangle,
   AlertCircle,
@@ -107,6 +108,7 @@ const channelIcons: Record<string, React.ComponentType<{ className?: string }>> 
   slack: Slack,
   whatsapp: MessageCircle,
   webhook: Globe,
+  google_chat: MessagesSquare,
 };
 
 const severityConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }> = {

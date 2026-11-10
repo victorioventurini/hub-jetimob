@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Bell, Mail, Slack, MessageCircle, Globe, Lock, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { Bell, Mail, Slack, MessageCircle, Globe, MessagesSquare, Lock, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -32,6 +32,7 @@ const channelIcons: Record<string, React.ComponentType<{ className?: string }>> 
   slack: Slack,
   whatsapp: MessageCircle,
   webhook: Globe,
+  google_chat: MessagesSquare,
 };
 
 const severityConfig = {
