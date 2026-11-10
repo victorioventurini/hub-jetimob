@@ -43,6 +43,7 @@ import {
   sendEmail,
   sendSlack,
   sendWebhook,
+  sendGoogleChat,
   resolveTemplate,
   renderTemplate,
   buildNotificationEmailHtmlFromTemplate,
@@ -187,6 +188,27 @@ async function processOutboxItem(
         return { success: false, error: "Webhook URL not configured" };
       }
       return await sendWebhook(webhookConfig, payload, item);
+    }
+
+    case "google_chat": {
+      const email = recipient?.work_email?.toLowerCase() ?? "";
+      // Bot vive no Google Workspace da Jetimob: só alcança contas @jetimob.com.
+      if (!email.endsWith("@jetimob.com")) {
+        console.log(`[Outbox] google_chat skipped (not a Jetimob Workspace account)`);
+        return { success: true, provider: "google_chat_skipped" };
+      }
+      if (bu_id) {
+        const cfg = await getBuChannelConfig<Record<string, unknown>>(supabase, bu_id, "google_chat");
+        if (!cfg) return { success: true, provider: "google_chat_disabled" };
+      }
+      const base = "https://next.jetimob.com";
+      const rawUrl = payload.context_url as string | undefined;
+      const url = rawUrl ? (rawUrl.startsWith("http") ? rawUrl : `${base}${rawUrl.startsWith("/") ? "" : "/"}${rawUrl}`) : null;
+      return await sendGoogleChat(email, {
+        title: (payload.title as string) || "Nova notificação do Next",
+        message: (payload.message as string) || null,
+        url,
+      });
     }
 
     case "whatsapp": {

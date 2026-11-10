@@ -44,7 +44,7 @@ export interface GoogleChatMessage {
 
 export function buildGoogleChatBody(m: GoogleChatMessage) {
   const text = [`*${m.title}*`, m.message ? String(m.message).slice(0, 1500) : null].filter(Boolean).join("\n");
-  const body: Record<string, unknown> = { text: m.url ? text : text };
+  const body: Record<string, unknown> = { text };
   if (m.url) {
     body.cardsV2 = [{
       cardId: "next",
