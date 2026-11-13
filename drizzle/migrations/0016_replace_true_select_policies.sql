@@ -1,0 +1,16 @@
+ALTER POLICY "okr_reports_config_select_v2" ON public.okr_reports_config USING (auth.uid() IS NOT NULL);
+ALTER POLICY "runbooks_select" ON public.notification_health_runbooks USING (auth.uid() IS NOT NULL);
+ALTER POLICY "Template variables readable by authenticated" ON public.notification_template_variables USING (auth.uid() IS NOT NULL);
+ALTER POLICY "Template versions readable by authenticated" ON public.notification_template_versions USING (auth.uid() IS NOT NULL);
+ALTER POLICY "modules_select_v2" ON public.modules USING (auth.uid() IS NOT NULL);
+ALTER POLICY "permission_catalog_select_v2" ON public.permission_catalog USING (auth.uid() IS NOT NULL);
+ALTER POLICY "Anyone authenticated can read templates v2" ON public.permission_templates_v2 USING (auth.uid() IS NOT NULL);
+ALTER POLICY "Anyone authenticated can read template items v2" ON public.permission_template_items_v2 USING (auth.uid() IS NOT NULL);
+ALTER POLICY "permission_presets_select" ON public.permission_presets USING (auth.uid() IS NOT NULL);
+ALTER POLICY "automation_event_catalog_select" ON public.automation_event_catalog USING (auth.uid() IS NOT NULL);
+ALTER POLICY "automation_action_catalog_select" ON public.automation_action_catalog USING (auth.uid() IS NOT NULL);
+ALTER POLICY "hub_integrations_catalog_select" ON public.hub_integrations_catalog USING (auth.uid() IS NOT NULL);
+ALTER POLICY "notification_templates_select" ON public.notification_templates USING (auth.uid() IS NOT NULL);
+ALTER POLICY "notification_events_select" ON public.notification_events USING (auth.uid() IS NOT NULL);
+ALTER POLICY "notification_channels_select" ON public.notification_channels USING (auth.uid() IS NOT NULL);
+ALTER POLICY "okr_cancellation_reasons_select" ON public.okr_cancellation_reasons USING (auth.uid() IS NOT NULL);
