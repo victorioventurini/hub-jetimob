@@ -106,6 +106,13 @@
       "when": 1794325859271,
       "tag": "0014_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794596477732,
+      "tag": "0015_tighten_audit_avatar_krmetrics_policies",
+      "breakpoints": true
     }
   ]
 }
