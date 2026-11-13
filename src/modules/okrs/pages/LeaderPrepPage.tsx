@@ -230,7 +230,7 @@ export default function LeaderPrepPage() {
   } = useGenericWizardDraft<WizardStep, LeaderPrepDraftData>({
     wizardType: 'leader-prep',
     teamId: teamIdParam,
-    cycleId: quarterlyCycle?.id || 'no-cycle',
+    cycleId: quarterlyCycle?.id ?? null,
     defaultStep: 'overview',
     defaultData: DEFAULT_DATA,
     enabled: !!teamIdParam,
