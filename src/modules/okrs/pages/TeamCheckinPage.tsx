@@ -105,7 +105,7 @@ export default function TeamCheckinPage() {
   } = useGenericWizardDraft<WizardStep, TeamCheckinDraftData>({
     wizardType: 'team-checkin',
     teamId: teamIdParam,
-    cycleId: quarterlyCycle?.id || 'no-cycle',
+    cycleId: quarterlyCycle?.id ?? null,
     defaultStep: 'opening',
     defaultData: DEFAULT_DATA,
     enabled: !!teamIdParam,

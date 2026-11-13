@@ -120,7 +120,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
           .update({
             reflection_data: reflectionData,
             team_id: draftToSave.teamId,
-            cycle_id: draftToSave.cycleId,
+            cycle_id: toDbCycleId(draftToSave.cycleId),
             updated_at: new Date().toISOString(),
           })
           .eq('id', sessionId);
@@ -151,7 +151,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
           .update({
             reflection_data: reflectionData,
             team_id: draftToSave.teamId,
-            cycle_id: draftToSave.cycleId,
+            cycle_id: toDbCycleId(draftToSave.cycleId),
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id);
@@ -168,7 +168,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
             bu_id: currentBu.id,
             wizard_type: wizardType,
             team_id: draftToSave.teamId,
-            cycle_id: draftToSave.cycleId,
+            cycle_id: toDbCycleId(draftToSave.cycleId),
             started_by: profile.id,
             reflection_data: reflectionData,
             structure_version: getCurrentStructureVersion(wizardType),
@@ -227,7 +227,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
             completed_at: completionDateIso,
             reflection_data: reflectionData,
             team_id: draft.teamId,
-            cycle_id: draft.cycleId,
+            cycle_id: toDbCycleId(draft.cycleId),
             updated_at: completionDateIso,
           })
           .eq('id', sessionId)
@@ -276,7 +276,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
             bu_id: currentBu.id,
             wizard_type: wizardType,
             team_id: teamId,
-            cycle_id: cycleId,
+            cycle_id: toDbCycleId(cycleId),
             started_by: profile.id,
             status: 'completed' as const,
             completed_at: completionDateIso,
@@ -367,7 +367,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
         };
 
         invalidateDraftQuery();
-        if (profile?.id && cycleId) {
+        if (profile?.id && toDbCycleId(cycleId)) {
           queryClient.invalidateQueries({
             queryKey: queryKeys.okrs.completedSessionForCycle(
               wizardType,
@@ -396,4 +396,10 @@ export function useWizardSessionStorage<TStep extends string, TData>({
     isSaving: saveDraftMutation.isPending,
     invalidateDraftQuery,
   };
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Placeholders como 'no-cycle' nunca vão ao banco (cycle_id é uuid). */
+export function toDbCycleId(cycleId: string | null | undefined): string | null {
+  return cycleId && UUID_RE.test(cycleId) ? cycleId : null;
 }

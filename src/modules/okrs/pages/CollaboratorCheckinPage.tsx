@@ -176,7 +176,7 @@ export default function CollaboratorCheckinPage() {
     lastSavedAt,
   } = useGenericWizardDraft<WizardStep, CollaboratorDraftData>({
     wizardType: 'collaborator',
-    cycleId: quarterlyCycle?.id || 'no-cycle',
+    cycleId: quarterlyCycle?.id ?? null,
     defaultStep: 'context',
     defaultData: DEFAULT_DATA,
     enabled: true,
@@ -470,6 +470,9 @@ export default function CollaboratorCheckinPage() {
       }
 
       navigate('/wizards');
+    } catch (error) {
+      console.error('[CollaboratorCheckin] completion failed:', error);
+      toast.error('Não foi possível concluir o check-in. Seu rascunho foi preservado — tente novamente.');
     } finally {
       setIsCompleting(false);
     }
