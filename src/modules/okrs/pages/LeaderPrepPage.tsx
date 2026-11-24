@@ -225,6 +225,7 @@ export default function LeaderPrepPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
   } = useGenericWizardDraft<WizardStep, LeaderPrepDraftData>({
@@ -363,9 +364,15 @@ export default function LeaderPrepPage() {
   }, [discardDraft]);
 
   const handleComplete = useCallback(async () => {
-    await clearDraft();
-    toast.success('Preparação concluída! Pronto para o check-in do time.');
-    navigate(`/wizards?wizard=team-checkin`);
+    try {
+      const completedId = await clearDraft();
+      if (!completedId) return;
+      toast.success('Preparação concluída! Pronto para o check-in do time.');
+      navigate(`/wizards?wizard=team-checkin`);
+    } catch (error) {
+      console.error('[LeaderPrepPage] Failed to complete:', error);
+      toast.error('Não foi possível concluir a preparação. Seu rascunho foi preservado — tente novamente.');
+    }
   }, [clearDraft, navigate]);
 
   // Handle team change (admin only)
@@ -532,6 +539,7 @@ export default function LeaderPrepPage() {
             teamName={selectedTeam.name}
             teamKrs={krs}
             parentObjectives={[]}
+            isCompleting={isCompleting}
             onStartCheckin={handleComplete}
             onBack={goBack}
           />

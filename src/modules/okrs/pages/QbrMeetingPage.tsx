@@ -128,6 +128,7 @@ export default function QbrMeetingPage() {
     reopenSession,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
     sessionId,
@@ -588,7 +589,7 @@ export default function QbrMeetingPage() {
             teamsForReview={teamsForReview}
             intentionalGaps={draft.data.intentionalGaps || []}
             onIntentionalGapsChange={(intentionalGaps) => updateDraft({ intentionalGaps })}
-            isCompleting={isCompletingRef.current}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
           />

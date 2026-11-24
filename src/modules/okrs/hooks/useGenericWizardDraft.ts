@@ -52,8 +52,9 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isResumingDraft, setIsResumingDraft] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const isCompletingRef = useRef(false);
-  const hasHydratedStorageRef = useRef(false);
+  const hydratedKeyRef = useRef<string | null>(null);
   const isInitialMount = useRef(true);
 
   // Session sub-hook (handles all DB interactions)
@@ -97,17 +98,29 @@ export function useGenericWizardDraft<TStep extends string, TData>({
 
   const [hasSavedDraft] = useState(() => hasLocalDraft(storageKey, wizardType));
 
-  // Hydrate from localStorage when enabled becomes true (refresh before cycle load)
+  // Hydrate from localStorage when enabled becomes true or storageKey (team) changes
   useEffect(() => {
-    if (!enabled || hasHydratedStorageRef.current) return;
-    hasHydratedStorageRef.current = true;
+    if (!enabled || hydratedKeyRef.current === storageKey) return;
+    const isSwitchingContext = hydratedKeyRef.current !== null;
+    hydratedKeyRef.current = storageKey;
 
     const parsed = readDraftFromStorage<TStep, TData>(storageKey, wizardType);
     if (parsed) {
       setDraft(parsed);
       setIsResumingDraft(parsed.currentStep !== defaultStep);
+    } else if (isSwitchingContext) {
+      setDraft(createEmptyDraft());
+      setIsResumingDraft(false);
     }
-  }, [enabled, storageKey, wizardType, defaultStep]);
+
+    if (isSwitchingContext) {
+      setSessionId(null);
+      setLastSavedAt(null);
+      setIsDirty(false);
+      isCompletingRef.current = false;
+      setIsCompleting(false);
+    }
+  }, [enabled, storageKey, wizardType, defaultStep, createEmptyDraft]);
 
   // Load from DB if localStorage is empty but DB has data
   useEffect(() => {
@@ -238,6 +251,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       return null;
     }
     isCompletingRef.current = true;
+    setIsCompleting(true);
 
     // Persist localStorage with the very latest draft as a safety net
     // BEFORE we attempt the completion UPDATE. If the UPDATE fails we keep
@@ -260,6 +274,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       // Roll back the completion guard so the user can retry. Do NOT clear
       // localStorage or reset React state — data must remain recoverable.
       isCompletingRef.current = false;
+      setIsCompleting(false);
       console.warn('[useGenericWizardDraft] clearDraft failed; preserving draft', error);
       throw error;
     }
@@ -340,6 +355,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     reopenSession,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     hasSavedDraft: hasSavedDraft || !!existingSessionData,
     lastSavedAt,

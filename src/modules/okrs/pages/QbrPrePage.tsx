@@ -148,6 +148,7 @@ export default function QbrPrePage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
   } = useGenericWizardDraft<QbrPreStep, QbrPreDraftData>({
@@ -663,7 +664,7 @@ export default function QbrPrePage() {
           <QbrPreSummary
             draftData={draft.data}
             decisions={draft.data.decisions}
-            isCompleting={false}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}

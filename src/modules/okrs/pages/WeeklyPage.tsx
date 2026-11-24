@@ -99,6 +99,7 @@ export default function WeeklyPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
     sessionId,
@@ -158,7 +159,8 @@ export default function WeeklyPage() {
 
   const handleComplete = useCallback(async () => {
     try {
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('Weekly encerrada.');
       navigate('/rituals');
     } catch (error) {
@@ -269,7 +271,7 @@ export default function WeeklyPage() {
             closing={draft.data.closing}
             onClosingChange={(closing) => updateDraft({ closing })}
             decisions={draft.data.decisions}
-            isCompleting={false}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
           />

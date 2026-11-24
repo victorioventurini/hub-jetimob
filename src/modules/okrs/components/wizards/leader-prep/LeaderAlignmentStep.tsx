@@ -42,6 +42,7 @@ export interface LeaderAlignmentStepProps {
   teamName: string;
   teamKrs: WizardKr[];
   parentObjectives: ParentObjective[];
+  isCompleting?: boolean;
   onStartCheckin: () => void;
   onBack: () => void;
 }
@@ -67,6 +68,7 @@ export function LeaderAlignmentStep({
   teamName,
   teamKrs,
   parentObjectives,
+  isCompleting = false,
   onStartCheckin,
   onBack,
 }: LeaderAlignmentStepProps) {
@@ -231,6 +233,7 @@ export function LeaderAlignmentStep({
           <WizardLastStepFooter
             onBack={onBack}
             onPrimary={onStartCheckin}
+            primaryLoading={isCompleting}
             primaryLabel="Iniciar Check-in do Time"
             confirmTitle={copy?.title ?? 'Concluir Pré-Check-in do Time'}
             confirmDescription={copy?.description}

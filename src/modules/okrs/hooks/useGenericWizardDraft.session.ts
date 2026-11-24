@@ -17,6 +17,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { preWeeklyKeys } from '@/lib/queryKeys/okrs';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 import { getCurrentStructureVersion } from '@/modules/okrs/components/wizards/shared/framework/config/structureVersions';
 import {
@@ -143,7 +144,10 @@ export function useWizardSessionStorage<TStep extends string, TData>({
         existingQuery = existingQuery.is('team_id', null);
       }
 
-      const { data: existing } = await existingQuery.maybeSingle();
+      const { data: existing } = await existingQuery
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (existing) {
         const { error: updateError } = await buSupabase
@@ -210,6 +214,22 @@ export function useWizardSessionStorage<TStep extends string, TData>({
       sessionId: string | null,
       draft: GenericWizardDraft<TStep, TData>,
     ): Promise<string | null> => {
+      const invalidateAfterComplete = () => {
+        invalidateDraftQuery();
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.okrs.ritualHistoryListPrefix(currentBu?.id ?? null),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.okrs.completedSessionForCyclePrefix(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: preWeeklyKeys.prefix(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.okrs.weeklyAggregationListPrefix(currentBu?.id ?? null),
+        });
+      };
+
       const completionDateIso = new Date().toISOString();
 
       if (sessionId) {
@@ -261,6 +281,7 @@ export function useWizardSessionStorage<TStep extends string, TData>({
             console.warn('[completeSession] occurrence association failed (non-blocking):', e);
           }
         }
+        invalidateAfterComplete();
         return sessionId;
       }
 
@@ -305,9 +326,10 @@ export function useWizardSessionStorage<TStep extends string, TData>({
         console.warn('[completeSession] occurrence association failed (non-blocking):', e);
       }
 
+      invalidateAfterComplete();
       return inserted.id;
     },
-    [buSupabase, currentBu?.id, profile?.id, wizardType, teamId, cycleId],
+    [buSupabase, currentBu?.id, profile?.id, wizardType, teamId, cycleId, queryClient, invalidateDraftQuery],
   );
 
   const reopenSession = useCallback(

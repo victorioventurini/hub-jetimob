@@ -99,6 +99,7 @@ export default function TeamCheckinPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
     sessionId,
@@ -197,7 +198,15 @@ export default function TeamCheckinPage() {
   }, [discardDraft]);
   
   const handleComplete = useCallback(async () => {
-    const completedSessionId = await clearDraft();
+    let completedSessionId: string | null = null;
+    try {
+      completedSessionId = await clearDraft();
+    } catch (error) {
+      console.error('[TeamCheckinPage] Failed to complete:', error);
+      toast.error('Não foi possível concluir o check-in do time. Seu rascunho foi preservado — tente novamente.');
+      return;
+    }
+    if (!completedSessionId) return;
     toast.success('Check-in do time concluído!');
     navigate('/okrs');
 
@@ -317,6 +326,7 @@ export default function TeamCheckinPage() {
             onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onChecklistChange={(checklist) => updateDraft({ checklist })}
             carryOverDecisions={carryOverDecisions}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
           />

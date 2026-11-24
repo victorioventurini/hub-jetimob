@@ -57,6 +57,7 @@ export default function AllHandsPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
     sessionId,
@@ -227,7 +228,7 @@ export default function AllHandsPage() {
                 onBack={goBack}
                 primaryLabel="Encerrar All Hands"
                 primaryVariant="success"
-                primaryLoading={isSaving}
+                primaryLoading={isCompleting || isSaving}
               />
             }
           />

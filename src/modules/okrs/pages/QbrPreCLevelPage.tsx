@@ -258,6 +258,7 @@ export default function QbrPreCLevelPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
   } = useGenericWizardDraft<QbrPreCLevelStep, QbrCLevelDraftData>({
@@ -412,6 +413,7 @@ export default function QbrPreCLevelPage() {
             ritualFeedback={[]}
             onRitualFeedbackChange={() => {}}
             hideFeedbackBlock
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
           />

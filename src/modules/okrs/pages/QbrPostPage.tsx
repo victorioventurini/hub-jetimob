@@ -237,7 +237,7 @@ export default function QbrPostPage() {
   }, [teams, orgObjectives]);
 
   // Draft
-  const { draft, updateDraft, setStep, clearDraft, discardDraft, saveDraft, isDirty, isSaving, isResumingDraft, lastSavedAt, sessionId } =
+  const { draft, updateDraft, setStep, clearDraft, discardDraft, saveDraft, isDirty, isSaving, isCompleting, isResumingDraft, lastSavedAt, sessionId } =
     useGenericWizardDraft<QbrPostStep, QbrPostDraftData>({
       wizardType: 'qbr-post', teamId: null, cycleId: quarterlyCycle?.id || null,
       defaultStep: 'okr-promotion', defaultData: { ...DEFAULT_DATA, crossCommitments: meetingCommitments },
@@ -411,6 +411,7 @@ export default function QbrPostPage() {
                 teamsWithoutPromotion,
               };
             })()}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
           />

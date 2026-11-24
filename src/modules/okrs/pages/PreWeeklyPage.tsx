@@ -128,6 +128,7 @@ export default function PreWeeklyPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
   } = useGenericWizardDraft<PreWeeklyStep, PreWeeklyDraftData>({
@@ -181,7 +182,8 @@ export default function PreWeeklyPage() {
 
   const handleComplete = useCallback(async () => {
     try {
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('Pré-Weekly enviado! Sua destilação alimentará a Weekly.');
       navigate('/rituals');
     } catch (error) {
@@ -191,17 +193,13 @@ export default function PreWeeklyPage() {
 
   const handleClose = useCallback(() => {}, []);
 
-  // Troca de time (descarta draft do time anterior)
+  // Troca de time (preserva rascunho segregado por teamId sem descartá-lo)
   const handleTeamChange = useCallback(
     (newTeamId: string) => {
       if (newTeamId === teamIdParam) return;
-      // Limpar rascunho do contexto atual antes de trocar
-      if (teamIdParam) {
-        void discardDraft();
-      }
       setSearchParams({ team: newTeamId });
     },
-    [teamIdParam, discardDraft, setSearchParams],
+    [teamIdParam, setSearchParams],
   );
 
   // Switcher reutilizável (sempre passado ao shell)
@@ -308,7 +306,7 @@ export default function PreWeeklyPage() {
           <PreWeeklySummary
             draftData={draft.data}
             decisions={draft.data.decisions}
-            isCompleting={false}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
           />

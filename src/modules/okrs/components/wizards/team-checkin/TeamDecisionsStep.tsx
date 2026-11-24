@@ -31,6 +31,7 @@ export interface TeamDecisionsStepProps {
   onChecklistChange: (checklist: TeamCheckinChecklist) => void;
   /** Decisões pendentes do check-in anterior do mesmo time (carry-over). */
   carryOverDecisions?: TeamCheckinDecision[];
+  isCompleting?: boolean;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -62,6 +63,7 @@ export function TeamDecisionsStep({
   checklist,
   onChecklistChange,
   carryOverDecisions,
+  isCompleting = false,
   onComplete,
   onBack,
 }: TeamDecisionsStepProps) {
@@ -256,6 +258,7 @@ export function TeamDecisionsStep({
         onBack={onBack}
         onPrimary={onComplete}
         primaryDisabled={!allChecked}
+        primaryLoading={isCompleting}
       />
       {!allChecked && (
         <p className="text-xs text-muted-foreground text-center pb-2">

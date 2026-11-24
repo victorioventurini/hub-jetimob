@@ -108,6 +108,7 @@ export default function MbrPage() {
     saveDraft,
     isDirty,
     isSaving,
+    isCompleting,
     isResumingDraft,
     lastSavedAt,
     sessionId,
@@ -714,7 +715,7 @@ export default function MbrPage() {
             orgOkrSnapshots={draft.data.orgOkrSnapshots}
             qbrFollowUpItems={draft.data.qbrFollowUpItems}
             onComplete={handleComplete}
-            isCompleting={isSaving}
+            isCompleting={isCompleting || isSaving}
             onBack={goBack}
           />
         );
