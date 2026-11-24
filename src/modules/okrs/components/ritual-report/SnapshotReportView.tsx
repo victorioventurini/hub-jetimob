@@ -25,6 +25,8 @@ import { QbrPreReport } from './renderers/QbrPreReport';
 import { QbrCLevelReport } from './renderers/QbrCLevelReport';
 import { QbrMeetingReport } from './renderers/QbrMeetingReport';
 import { QbrPostReport } from './renderers/QbrPostReport';
+import { PreWeeklyReport } from './renderers/PreWeeklyReport';
+import { WeeklyReport } from './renderers/WeeklyReport';
 
 interface SnapshotReportViewProps {
   wizardType: WizardPersona;
@@ -42,6 +44,8 @@ const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Recor
   'team-checkin': TeamCheckinReport,
   'managers-checkin': ManagersCheckinReport,
   'clevel-checkin': CLevelCheckinReport,
+  'pre-weekly': PreWeeklyReport,
+  'weekly': WeeklyReport,
   'mbr': MbrReport,
   'mbr-pre': MbrPreReport,
   'qbr-pre': QbrPreReport,

@@ -20,6 +20,8 @@ export const EVALUATED_OPTIONS = [
 
 export const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos os rituais' },
+  { value: 'pre-weekly', label: 'Pré-Weekly' },
+  { value: 'weekly', label: 'Weekly' },
   { value: 'mbr', label: 'MBR' },
   { value: 'mbr-pre', label: 'Pré-MBR' },
   { value: 'team-checkin', label: 'Check-in do Time' },

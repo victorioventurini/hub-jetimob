@@ -48,6 +48,12 @@ vi.mock('../renderers/QbrMeetingReport', () => ({
 vi.mock('../renderers/QbrPostReport', () => ({
   QbrPostReport: () => <div data-testid="renderer-qbr-post" />,
 }));
+vi.mock('../renderers/PreWeeklyReport', () => ({
+  PreWeeklyReport: () => <div data-testid="renderer-pre-weekly" />,
+}));
+vi.mock('../renderers/WeeklyReport', () => ({
+  WeeklyReport: () => <div data-testid="renderer-weekly" />,
+}));
 
 describe('SnapshotReportView — dispatcher', () => {
   beforeEach(() => {
@@ -60,6 +66,8 @@ describe('SnapshotReportView — dispatcher', () => {
     { persona: 'team-checkin', testId: 'renderer-team-checkin' },
     { persona: 'managers-checkin', testId: 'renderer-managers-checkin' },
     { persona: 'clevel-checkin', testId: 'renderer-clevel-checkin' },
+    { persona: 'pre-weekly', testId: 'renderer-pre-weekly' },
+    { persona: 'weekly', testId: 'renderer-weekly' },
     { persona: 'mbr', testId: 'renderer-mbr' },
     { persona: 'mbr-pre', testId: 'renderer-mbr-pre' },
     { persona: 'qbr-pre', testId: 'renderer-qbr-pre' },
