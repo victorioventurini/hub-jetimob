@@ -457,6 +457,7 @@ export default function CollaboratorCheckinPage() {
       }
 
       const completedSessionId = await clearDraft();
+      if (!completedSessionId) return;
       if (krFailures === 0 && sideFailures === 0) toast.success('Check-in concluído!');
 
       // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)

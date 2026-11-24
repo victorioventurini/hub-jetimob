@@ -302,6 +302,7 @@ export default function MbrPage() {
       );
       return;
     }
+    if (!completedSessionId) return;
     toast.success('MBR concluído com sucesso!');
     navigate('/okrs/executive');
 

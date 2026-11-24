@@ -193,7 +193,7 @@ export interface UseWizardDraftReturn {
   draft: TeamOkrDraft;
   updateDraft: (updates: Partial<TeamOkrDraft>) => void;
   setStep: (step: WizardStep) => void;
-  clearDraft: () => void;
+  clearDraft: () => Promise<void>;
   discardDraft: () => Promise<void>;
   saveDraft: () => Promise<void>;
   isDirty: boolean;
@@ -438,6 +438,12 @@ export function useWizardDraft({
           .from('okr_wizard_sessions')
           .update({ status: 'completed', completed_at: new Date().toISOString() })
           .eq('id', sessionId);
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.okrs.wizardDraft(profile?.id || ''),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.okrs.ritualHistoryListPrefix(currentBu?.id ?? null),
+        });
       } catch (e) {
         console.error('Failed to complete wizard session:', e);
       }
@@ -448,7 +454,7 @@ export function useWizardDraft({
     setLastSavedAt(null);
     setIsDirty(false);
     setIsResumingDraft(false);
-  }, [teamId, cycleId, sessionId]);
+  }, [teamId, cycleId, sessionId, buSupabase, queryClient, profile?.id, currentBu?.id]);
   
   // Persist changes to localStorage
   useEffect(() => {

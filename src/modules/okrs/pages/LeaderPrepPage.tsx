@@ -375,13 +375,13 @@ export default function LeaderPrepPage() {
     }
   }, [clearDraft, navigate]);
 
-  // Handle team change (admin only)
+  // Handle team change (preserva rascunho segregado por teamId)
   const handleTeamChange = useCallback(
     (newTeamId: string) => {
-      discardDraft();
+      if (newTeamId === teamIdParam) return;
       setSearchParams({ team: newTeamId });
     },
-    [discardDraft, setSearchParams],
+    [teamIdParam, setSearchParams],
   );
 
   // ----- Decisões inline (consolidadas no draft) -----

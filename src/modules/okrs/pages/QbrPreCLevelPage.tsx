@@ -312,7 +312,8 @@ export default function QbrPreCLevelPage() {
 
   const handleComplete = useCallback(async () => {
     try {
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('Pré-QBR Executivo concluído!');
       navigate('/okrs');
     } catch (error) {

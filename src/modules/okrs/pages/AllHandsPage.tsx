@@ -150,7 +150,8 @@ export default function AllHandsPage() {
 
   const handleComplete = useCallback(async () => {
     try {
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('All Hands concluído!');
       navigate('/rituals');
     } catch (error) {

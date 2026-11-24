@@ -518,7 +518,8 @@ export default function QbrPrePage() {
         }
       }
 
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('Pré-QBR concluído!');
       navigate('/okrs');
     } catch (error) {
@@ -530,11 +531,11 @@ export default function QbrPrePage() {
   // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
   const handleClose = useCallback(() => {}, []);
 
-  // Handle team change (admin only)
+  // Handle team change (preserva rascunho segregado por teamId)
   const handleTeamChange = useCallback((newTeamId: string) => {
-    discardDraft();
+    if (newTeamId === teamIdParam) return;
     setSearchParams({ team: newTeamId });
-  }, [discardDraft, setSearchParams]);
+  }, [teamIdParam, setSearchParams]);
 
   // Loading
   if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {

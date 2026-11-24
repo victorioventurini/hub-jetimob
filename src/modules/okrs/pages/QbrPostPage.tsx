@@ -262,7 +262,8 @@ export default function QbrPostPage() {
   const handleDiscard = useCallback(async () => { try { await discardDraft(); toast.success('Descartado.'); } catch { toast.error('Erro'); } }, [discardDraft]);
   const handleComplete = useCallback(async () => {
     try {
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('QBR concluído! Ciclo encerrado.');
       navigate('/okrs');
     } catch (e) { handleError(e, { context: 'QBR Post Complete' }); }

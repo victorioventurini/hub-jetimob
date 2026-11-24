@@ -365,7 +365,7 @@ export default function OkrCreationPage() {
       });
       
       toast.success(draft.sourceDraftObjectiveId ? 'OKRs atualizados com sucesso!' : 'OKRs criados com sucesso!');
-      clearDraft();
+      await clearDraft();
       
       setTimeout(() => {
         navigate(`/okrs?team=${teamIdParam}`);

@@ -226,11 +226,11 @@ export default function TeamCheckinPage() {
     }
   }, [clearDraft, navigate, buSupabase, teamIdParam, quarterlyCycle, currentBu]);
   
-  // Handle team change (admin only)
+  // Handle team change (preserva rascunho segregado por teamId)
   const handleTeamChange = useCallback((newTeamId: string) => {
-    discardDraft();
+    if (newTeamId === teamIdParam) return;
     setSearchParams({ team: newTeamId });
-  }, [discardDraft, setSearchParams]);
+  }, [teamIdParam, setSearchParams]);
   
   
   // Loading

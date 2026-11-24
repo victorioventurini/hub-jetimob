@@ -433,6 +433,7 @@ export default function QbrMeetingPage() {
 
     try {
       const completedSessionId = await clearDraft();
+      if (!completedSessionId) return;
       toast.success('QBR concluído com sucesso!');
       navigate('/okrs/executive');
 

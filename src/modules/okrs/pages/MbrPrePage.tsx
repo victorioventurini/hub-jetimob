@@ -410,7 +410,8 @@ export default function MbrPrePage() {
   const handleComplete = useCallback(async () => {
     setIsCompleting(true);
     try {
-      await clearDraft();
+      const completedId = await clearDraft();
+      if (!completedId) return;
       toast.success('Pré-MBR concluído! O facilitador será notificado.');
       navigate('/rituals');
     } catch (error) {
@@ -425,9 +426,9 @@ export default function MbrPrePage() {
   const handleClose = useCallback(() => {}, []);
 
   const handleTeamChange = useCallback((newTeamId: string) => {
-    discardDraft();
+    if (newTeamId === teamIdParam) return;
     setSearchParams({ team: newTeamId });
-  }, [discardDraft, setSearchParams]);
+  }, [teamIdParam, setSearchParams]);
 
   // Loading
   if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingCompletedCheck) {
